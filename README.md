@@ -1,4 +1,4 @@
-# school2019-2
+# University of Queensland Semester 2 2019
 
 Classes this semester are:
 * COMP3301
