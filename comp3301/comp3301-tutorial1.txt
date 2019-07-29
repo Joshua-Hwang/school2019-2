@@ -1,0 +1,6 @@
+The purpose of system calls is for security of the system and to provide
+a simplified, abstracted model without the need for working with unique and
+different hardware devices.
+
+The purpose of system programs is so we (users) can access and use the system
+calls in a way that further simplifies the process.

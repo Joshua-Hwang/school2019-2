@@ -1,0 +1,57 @@
+Q1)
+The CIA triad consists of:
+Confidentiality (prevent access) leaking information
+Integrity (prevent modification) modifying grades
+Availability (prevent witholding) DDoS attack
+
+Authenticity (verify identity) ssh keys
+Non-repudian (people can't escape contracts that they've signed)
+
+Q2)
+A risk is an uncertainty in completing an objective.
+A threat is a source of potential unwanted incident.
+A vulnerability is a weakness in either the asset or the defences that can be exploited by threats.
+
+Q3)
+Environmental threats
+    Flooding destroying data
+    Power outage
+    Fire
+    Government regulations (if not deliberate)
+    Vermin biting wires
+Deliberate threats
+    Government
+    Evil employees (sabotage)
+    Trespassers looking for access to hardware
+    Hackers on the internet
+    Phising emails
+Accidental threats
+    User errors (bumping, falling)
+    Manual data entries by tired staff
+    Not backing up data
+    Poor workplace cyber security policies and protocols
+    Transmission errors (miscommunication)
+
+Q4)
+Five examples of vulnerabilities
+    1. An unsanitised user input
+    2. A file with permissions incorrectly set
+    3. Simple passwords easy to bruteforce
+    4. No backups
+    5. No backup generators
+Extra
+    Building is poorly made
+    doors aren't locked
+    Lack of antivirus
+    employee ignorance
+    not updating software
+
+Q5)
+ARO 0.80 per year
+SLE we lose roughly 3 hourse of uptime.
+Thus our company loses $40/hr * 3hrs * 100 = $12000.
+ALE = ARO * SLE = $9600
+
+Assume the software works 100% thus reducing ARO to 0.
+Thus it is more beneficial to buy the anti-virus for $4700 than lose $9600
+for 3hrs of down time each year.
