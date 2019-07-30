@@ -1,0 +1,38 @@
+1. The prob space consists of
+Omega (all outcomes)
+F (collections of outcomes)
+P (the prob function for each F)
+
+Omega is a set of TTTTT...H
+F is the power set of Omega
+P is summation of 0.5^n where n is the number of Ts
+
+P will change if the coin isn't even
+
+2.
+a. Convert intersects to unions with de morgans law.
+Make use of the fact that they're complements
+b. Convert A\B to A intersect complement B.
+Which is pretty easy since both complements and intersects are closed under event set.
+c. same as part a but since we have the infinite union as one of the three axioms
+d. C = (A union B) intersect (A intersect B)^c
+
+3. Counterexample
+Note this is a event space {{1,2},{3,4},{1,2,3,4}}
+but {2,3} is a subset of {1,2,3,4}
+
+4.
+a. Use the P(A|B) = P(A intersect B)/P(B)
+which makes the first step easy.
+P(A|B intersect C) * P(B intersect C)
+b. base case is the above
+kth step is
+P(A_{k-1} intersect B) = P(A_{k-1}|B)P(B)
+where A was the previous step and B is the new one.
+k+1 step
+P(A_{k} intersect B) = P(A_{k-1} intersect A_k intersect B) = P(A_{k}|B)P(B)
+[ZZZ yeah this wasn't the best way to do it]
+c. P(R^c intersect R^c interset ... 4 times) = 10/15 * 9/14 * 8/13 * 7/12
+
+5.
+a. P(A union B) = P(A) + P(B) - P(A intersect B)
