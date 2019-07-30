@@ -70,3 +70,25 @@ If A is a strict subset of B then P(A) <= P(B)
 Proof: replaces B as A union (B interset complement A) (see page 02-08)
 
 [Stopped at 27 July Lecture 3]
+
+Definition of random variable------------------------------------------------
+A random variable is defined as a mapping from Omega to the reals.
+With an extra requirement that the sets {w in Omega : X(w) <= x} for some x are
+events in F.
+
+The idea of using an element from Omega seems confusing. I think it's a way
+to decouple the idea of events with a score.
+
+A random set of students turn up to class on particular day (Omega)
+X is the number of students who attend (Omega to Integer which is a subset of reals)
+Y is the average grade of the students who attended (Omega to Reals)
+
+Clearly many random variables can be produced from Omega.
+
+This enitre course assumes the sets {w in Omega : X(w) <= x} for some x are
+events in F always holds.
+
+Example:
+Let Omega = {(h,w) : h, w > 0} be a sample space for the height and weight of
+a random individual. We define a random variable X which is that persons BMI.
+X(h,w) = w/h^2
