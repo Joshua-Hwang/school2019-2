@@ -11,6 +11,13 @@ Q2)
 A risk is an uncertainty in completing an objective.
 A threat is a source of potential unwanted incident.
 A vulnerability is a weakness in either the asset or the defences that can be exploited by threats.
+[better answer]
+A threat is any circumstance or event with the potential to cause harm to an information system. A
+vulnerability is a weakness of the system (computer, network etc.) through which a threat can be realised.
+A Threat exists outside of the information system considered. It is something (event, circumstances, people
+etc.) that can potentially cause harm to an information system. Threats can be realised by exploiting existing
+vulnerabilities. Whereas, a risk is the likelihood that a particular threat, will exploit a particular vulnerability
+of a system resulting in a particular impact.
 
 Q3)
 Environmental threats
