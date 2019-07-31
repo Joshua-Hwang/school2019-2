@@ -1,0 +1,19 @@
+Understanding what the spec wants----------------------------------------------
+Right so we have either a tunnel (a virtual network interface) or
+a tap (a virtual ethernet interface). These devices can be identified by
+a "key" which create a unique tuple (network layer, key) (maybe not that order).
+
+Both the tunnel and tap devices send and receive packets
+(for this spec assume random payloads). Our greu program should take these packets and
+encapsulate them in a UDP frame AND a GRE frame then shuck them of one when receiving.
+
+An issue that comes with this is multiplexing. This means
+we need to find a way to distinguish the packets we receive and transfer them
+to the appropriate tunnels and taps. Either using keys or hard-coded the
+subnet masks (or likely something better).
+
+Generic Routing Encapsulation seems to be a kind of "middle" protocol.
+The GRE contains the payload BUT it needs to be protected by a delivery
+protocol (which in our case in UDP). GRE has an optional header property
+which is the Key. The key helps determine which tunnel/tap it should send
+our message to.
