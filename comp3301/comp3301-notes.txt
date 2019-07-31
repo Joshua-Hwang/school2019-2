@@ -47,7 +47,6 @@ in the program or events.
 An operating system is "interrupt driven"
 When an interrupt occurs the operating system preserves the state of the CPU
 by storing it in registers and the program counter
-[ZZZ don't really know what that means]
 
 The operating system also determines what type of interrupt has occurred:
 A polling [look it up]
@@ -245,7 +244,7 @@ File manipulation (touch),
 Status information (ls, whoami),
 File modification (vim),
 Programming language support (gcc),
-Program loading and executing [ZZZ big words i don't understand section 2.18],
+Program loading and executing,
 Communications (mechanisms for communication like mail and pipes),
 Background services (run in user land) (aka services, subsystems, daemons),
 Application programs (not considered part of OS)
@@ -283,4 +282,176 @@ in memory.
 A small piece of code *bootstracp loader* stored in either
 ROM or EEPROM locates the kernel, loads it up and executes it
 
-[ZZZ Stopped at 27 July Lecture 1]
+Processes---------------------------------------------------------------
+An intuitive definition of a process is "a program in execution, which forms
+the basis of all computation"
+
+A *Batch* Operating System executes *jobs*
+*Time-shared* systems execute *user programs* or *tasks*
+(time share means that it's more than a single process running and completing
+cpu switches jobs on the fly)
+
+"A process is program in execution; process execution must progress in
+sequential fashion."
+
+The anatomy of a process includes:
+text section (the program code that is stored in memory)
+current activity including program counter, processor registers
+the stack
+the heap
+data section (separate from stack or heap) that contains global variables
+
+placement of all these parts are seen on page 3.5
+
+Note: one program can be made of several processes
+
+A process can change into one of the following states:
+new - process is created
+running - instructions are being executed
+waiting - process is waiting for an event to occur
+ready - process is waiting to be assigned a processor
+terminated - process has finished execution
+
+A finitie state machine can be constructed naturally from this but for clarity
+see 3.7
+
+Process Control Block (aka task control block) contains all information
+about a process. This includes:
+Process state - see above
+Program counter - location of instruction to next execute
+CPU registers - contents of all process-centric registers
+CPU scheduling information - priorities, scheduling queue pointers
+Memory-management information - memory allocated to the process
+Accounting information - CPU used, clock time elapsed since start, time limits
+I/O status information - I/O devices allowed to process, list of open files
+
+see 3.8 for a visual of how it's stored
+
+A CPU can use these PCBs to save (freeze) the state of a process and load another.
+
+As mentioned before a program may have more than one program counter if it
+is multithreaded.
+
+A process scheduler is what selects which process the cpu should run next.
+It does with a bunch of scheduling queues including
+job queue - set of all processes in the system
+ready queue - processes that are in the ready state
+device queues - processes waiting for I/O
+processes migrate among the various queues
+
+see 3.14 for an excellent queueing diagram which makes the whole thing really
+clear
+
+A long-term scheduler (aka the job scheduler) selects which processes should be
+brought into the ready queue. It is invoked infrequenty (every second or so)
+A short-term scheduler (aka CPU scheduler) selects which process should be
+executed next. It is invoked frequently (millisecond)
+
+The long-term scheduler controls the *degree of multiprogramming*.
+Processes can be described as I/O-bound which spend more time doing I/O than
+computation (short CPU burst) or CPU-bound which is the opposite (long CPU burst)
+The long-term scheduler strives for a good mix of both.
+
+We can add a new scheduler called the medium-term scheduler. Which stores
+process states on disk rather than memory.
+
+The act of swapping out a process (then saving it) and loading a saved state
+is called a context switch.
+It is called such because of the context that is stored in the PCB.
+The larger the PCB and more complex the OS we end up with longer context switches.
+
+Some hardware offers multiple sets of registers per CPU this allows for
+multiple contexts to be loaded at once.
+
+A process can be created through the parent child paradigm. This results in
+a tree of processes. Generally a process is identified and managed via a process identifier
+(pid).
+A parent and child have various sharing options:
+Parent and child share all resources
+Parents share a subset of all their resources
+Parents share no resources
+
+There are also different options for execution:
+Parent and child execute concurrently and independently
+Parent waits for child to terminate
+
+Though you have done this in CSSE2310 take a look at 3.23 for fork exec code example.
+
+A child process can be terminated in various ways. We can wait for the child to
+exit via wait. We can force the child to terminate via abort.
+pid t_pid; int status;
+pid = wait(&status)
+
+If no parent is waiting then the terminated process becomes a zombie.
+If a parent dies then the child process is an orphan.
+
+Processes can either be independent (no communication) or cooperating.
+Cooperating processes would allow for information sharing, computation speed,
+modularity, convenience.
+To have this we need interprocess communication (IPC).
+There are two models for IPC:
+Shared memory
+Message passing
+see 3.26 for an example of each
+
+On the other hand independent processes cannot affect or be affected by the
+execution of another process; (deterministic). But screw that.
+
+A common paradigm between cooperating processes is the producer-consumer.
+In this we could have an unbounded buffer or a bounded buffer.
+(What both do should be obvious from the titles)
+
+If we're going to implement the message passing IPC then we need:
+a mechanism for process communication to synchronize their actions
+we cannot resort to shared variables to know where the messages are
+
+We normally have to operations:
+send(message)
+receive(message)
+If process P and process Q wish to communicate they will also need to establish a
+communication link which they can use to send a receive.
+
+We can implement such a link physically (shared memory or hardware bus) or
+logically (direct or indirect, synchronous or asynchronous, automatic or explicit buffering, we discuess these further down)
+
+We must ask ourselves other implementation questions:
+How are the links established?
+Can a link be associated with more than two processes?
+How many links can there be between every pair of communicating processes.
+What is the capacity of a link?
+Is the size of a message that the link can accomodate fixed or variable?
+Is a link unidirectional or bidirectional?
+
+Direct communication - processes must name each other explicitly
+The send AND receive calls requires the pid.
+This means to accept messages we need to know the pid
+The benefit is that links are established automatically.
+unidirectional and bidirectional are both possible with direct communication
+
+Indirect Communication - messages are directed and received from mailboxes (aka ports)
+Think more of a mailbox/messageboard in an apartment complex
+Each mailbox has a unique id
+Processes can communicate only if they share a mailbox
+send and receive requires the id of the mailbox
+Maybe even create and destory mailboxes
+This means a link may be associated with many processes all using the same mailbox
+Links will only be made for processes with the same mailboxes.
+unidirectional and bidirectional are both possible with indirect communication
+
+Sychronization - blocking and non-blocking I/O
+Blocking is synchronous and vice-versa
+If both send a receive are synchronised (blocking) then we have a rendezvous.
+
+Buffer - the amount of messages that can build up
+zero capacity - sender must wait for receiver to accept the single message (rendezvous)
+bounded capacity - finite length of n messages. The sender must wait if the buffer is full
+unbounded capacity - infinite buffer. Sender never waits.
+
+Some examples of IPC systems on 3.37 onward
+The examples are briefly listed below
+Sockets
+Remote Procedure Calls (RPC)
+Pipes (aka in Windows as anonymous pipes)
+Named pipes
+
+[ZZZ Stopped at Chapter 3 have not seen lecture 30 July]
