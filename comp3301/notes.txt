@@ -1,4 +1,4 @@
-23/07/2019 Lecture-------------------------------------------------------
+Define an OS-------------------------------------------------------------------
 An OS is a program that acts as a middle man between the computer user and the
 hardware.
 
@@ -315,6 +315,7 @@ terminated - process has finished execution
 A finitie state machine can be constructed naturally from this but for clarity
 see 3.7
 
+Multiprocess------------------------------------------------------------------
 Process Control Block (aka task control block) contains all information
 about a process. This includes:
 Process state - see above
@@ -332,6 +333,7 @@ A CPU can use these PCBs to save (freeze) the state of a process and load anothe
 As mentioned before a program may have more than one program counter if it
 is multithreaded.
 
+Scheduling---------------------------------------------------------------------
 A process scheduler is what selects which process the cpu should run next.
 It does with a bunch of scheduling queues including
 job queue - set of all processes in the system
@@ -363,6 +365,7 @@ The larger the PCB and more complex the OS we end up with longer context switche
 Some hardware offers multiple sets of registers per CPU this allows for
 multiple contexts to be loaded at once.
 
+Creating processes-------------------------------------------------------------
 A process can be created through the parent child paradigm. This results in
 a tree of processes. Generally a process is identified and managed via a process identifier
 (pid).
@@ -395,7 +398,8 @@ Message passing
 see 3.26 for an example of each
 
 On the other hand independent processes cannot affect or be affected by the
-execution of another process; (deterministic). But screw that.
+execution of another process; (deterministic). But screw that that's not as
+cool as processes that can communicate.
 
 A common paradigm between cooperating processes is the producer-consumer.
 In this we could have an unbounded buffer or a bounded buffer.
@@ -454,4 +458,137 @@ Remote Procedure Calls (RPC)
 Pipes (aka in Windows as anonymous pipes)
 Named pipes
 
-[ZZZ Stopped at Chapter 3 have not seen lecture 30 July]
+Threads------------------------------------------------------------------------
+Why threads instead of multiprocess?
+Thread creation is light-weight in comparison to process creation.
+Threads are a great way for interactability in programs; responsive.
+Kernels are generally multithreaded themselves.
+Threads share resources in an easier way than shared memory or message parsing.
+Thread switching has lower overhead than context switching.
+Threads can take advantage of multiprocess architecture.
+
+*Multicore programming* (aka mutliprocessor) makes use of all cores to run a
+program. The challenges with multiprocessor systems include:
+Dividing activities
+balance
+data splitting
+data dependency
+testing and debugging (non-deterministic)
+
+Parallelism - a system can perform more than one task simultaneously
+Concurrency - more than one task is making progress (time sharing and switching)
+
+Data parallelism - distributes subsets of data across multiple cores, same operation on each.
+Task parallelism - distribute threads across cores, each thread is performing unique operations.
+
+Throughout the years as the number of threads a program runs increases so does
+the architectural support for threading. A CPU can have *hardware threads*.
+e.g. the Oracle SPARC T4 with 8 cores and 8 hardware threads per core.
+
+4.9 shows a clear diagram of the difference between single and multithreaded.
+Each thread requires its own registers and stack but they all share the same
+code, data and files.
+
+Amdahl's law
+$$$
+speedup \leq \frac{1}{S+\frac{1-S}{N}}
+$$$
+Where S is the serial portion (percentage of the program that is in serial)
+N is the number of cores
+
+We can see as the number of cores approaches infinity the speedup depends on
+1/S.
+
+*User threads* where management (creating, destroying, etc.) is done by
+user-level thread libraries. Such
+threads are POSIX Pthreads, Windows threads and Java threads.
+
+*Kernel threads* where the kernel handles it. e.g. Windows, Solaris, Linux,
+MACOSX
+
+There are three models for multithreading
+Many-to-one where many userland threads are mapped to a single kernel thread.
+If one of the threads blocks then all the threads have to wait.
+This is a system that is no longer used.
+e.g. GNU Portable threads, Solaris Green Threads
+
+One-to-one where each userland thread is mapped to a single kernel thread.
+The number of threads per process sometimes gets restricted due to overhead.
+e.g. Windows, Linux, Solaris 9 and later
+
+Many-to-many where many user threads can be mapped to many kernel threads.
+Sometimes sharing a kernel thread and sometimes not. This allows the OS
+to create a sufficient number of threads then, when needed, make the userland
+threads share kernel threads.
+e.g. Solaris prior to version 9, windows with ThreadFiber package
+
+User-level threading libraries-------------------------------------------------
+Pthreads may be provided either as user-level or kernel-level (pthreads work
+in windows)
+POSIX is a standard (IEEE 1003.1c) API for thread creation and synchronization.
+NOTE it is a specification (also a standard) NOT an implementation.
+Many UNIX systems have Pthreads by default.
+
+Java threads are managed by the JVM. Typically implemented with the underlying
+OS's threading model.
+4.18 for how to create java threads
+
+Implicit threading. Since the number of threads a program can create is
+becoming unmanageable and becoming difficult to ensure correctness.
+Implicit threading lets the compiler and runtime libraries manage threading.
+We explore the following methods:
+Thread Pools
+OpenMP
+Grand Central Dispatch
+Microsoft Threading Building Blocks (not explored)
+java.util.concurrent (not explored)
+
+Thread pools-------------------------------------------------------------------
+Create a bunch of threads where they await work.
+This is a good idea because requesting an existing thread is usually faster
+than creating a new one.
+The thread limit is determined by what's in the pool.
+Paradigm is easier to work with (apparently).
+
+OpenMP-------------------------------------------------------------------------
+Set of compiler directives (the #pragma thingy) with an API for
+C, C++ and FORTRAN.
+It identifies parallel regions in the code where it can parallelise.
+see 4.21 for an example of using the compiler directives.
+
+Grand Central Dispatch---------------------------------------------------------
+A technology made by Apple for Mac OSX and iOS.
+It identifies parallel sections like OpenMP
+Each block is placed in a dispatch queue. The block then leaves the queue and
+gets assigned to a thread in the thread pool.
+
+The dispatch queue could be:
+serial (aka main queue) there is a single queue per process
+concurrent where several blocks can be popped off at once (there are three queues labelled "high priority" "default" and "high")
+
+Tough decisions implementing threads-------------------------------------------
+Does fork() duplicate only the calling thread of all threads?
+Does exec() replace all running threads in the process? (usually yes)
+
+Signals are defined below (somewhere)
+Should a signal be sent to the thread which the signal applies?
+Send to every thread in the process?
+Send to specific threads?
+Assign an signal handling thread?
+
+Thread-Local Storage (TLS)-----------------------------------------------------
+is where a thread has its own copy of data.
+This is useful when thread creation process is implicit (OpenMP etc.)
+
+This is different to local variables since local variables are only
+visible during single function invocation. TLS is visible across functions
+invocations. TLS is like global and static variables but only for that thread.
+
+Signals------------------------------------------------------------------------
+Signals are used in UNIX systems to notify a process of an event.
+A signal handler is used to process signals. A programmer can override the default signal handle.
+
+Linux threads------------------------------------------------------------------
+Linux refers to threads as tasks. See 4.27 for an details on creating threads for Linux.
+
+[ZZZ Stopped at Chapter 4 have not seen lecture 30 July]

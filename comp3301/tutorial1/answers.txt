@@ -1,0 +1,9 @@
+My answer gave benefits of system calls (which I would say are alright)
+The answer was, "to allow uesr-level processes to request services of the
+operating system."
+
+My answer is slightly wrong. It's so we can run common system operations withou
+having to write these basic system programs ourselves.
+"System programs can be thought of as bundles of useful system calls.
+They provide basic functionality to users so that users do not need to
+write their own programs to solve common problems."
