@@ -92,3 +92,107 @@ Example:
 Let Omega = {(h,w) : h, w > 0} be a sample space for the height and weight of
 a random individual. We define a random variable X which is that persons BMI.
 X(h,w) = w/h^2
+
+We can specify the probability distribution of random variable X if we can
+specify the probability of each event involving X.
+As a matter of fact we can create a function that perfectly encapsulates this
+distribution F_x (x) = P(X \leq x) for all x in the reals.
+
+We've seen this function before and it's called the cumulative distribution
+function. This function takes values in [0,1] is right-continuous and is
+non-decreasing.
+
+We say a random variable is discrete or has a discrete distribution if X takes
+values in a set (at most countably infinite) with P(X=x_i) > 0. In this case
+we define a probability mass function (PMF) by f(x) = P(X=x) (different to
+what was discussed before).
+
+A continuous random variable has a distribution defined by
+P(X \in A) = \int_A f(x) dx for the event set A. This function is called
+the probability density function. The function is defined on the reals
+(or something that can map to it)
+and takes values in [0, \infty)
+
+Definitions of Independence---------------------------------------------------
+Two events are independent if P(F intersect G) = P(F) P(G). Also note if
+P(F) > 0 and P(G) > 0 then P(F|G) = P(F). This definition can be extended for
+collections of events.
+
+We say two random variables are independent if P(X;Y) = P(X) P(Y).
+If the random variable is discrete then its pmf specifies the probability.
+P(X \in A) = \sum P(X=x)
+
+Definitions of expectation and variance---------------------------------------
+For discrete random variables it is as discussed in previous courses.
+E(X) = \sum x P(X=x) = \sum x f(x)
+Var(x) = E(X-E(X))^2
+standard deviation = \sqrt{Var(x)}
+k^{th} moment = E(X^k)
+
+We now list the same properties for continuous functions
+E(X) = \int_{reals} x f(x) dx.
+Variance and moment are defined equivalent to the discrete case.
+[05-06 contains examples of continuous distributions]
+
+Helpful tools:
+E(aX+b) = a(E(X)) + b (linearity of expectation)
+Var(X) = E(X^2) - E(X)^2
+Var(aX+b) = a^2 Var(X)
+Var(X_1 + X_2 + ... + X_n) = \sum Var(X_i) assuming they are independent
+
+We explore an example looking for a parameter \theta. We have a set of
+random variables that X_1 ... X_n which are indpendent and identically
+distributed (iid) with X_i \sim Unif[0,\theta].
+
+We can calculate the sample mean in the usual way with our samples.
+We consider 2\bar{X} (where the bar is the sample mean)
+as a good estimator for our parameter.
+They prove this [see 05-08] by taking the expectation of 2\bar{X} and
+evaluating it to \theta.
+We then ask the question, what is the variance of this estimator?
+We solve this by evaluating E(\bar{\theta} - \theta)^2
+
+Chebyshev's Inequality--------------------------------------------------------
+If Y is a random variable and E(Y^2) < \infty then
+P(|Y|>t) \leq \frac{1}{t^2} E(Y^2) for t>0
+
+Proof: We define a random variable Z which takes event sets
+Z(w) = t if |Y(w)| > t
+Z(w) = 0 if |Y(w)| \leq t
+Where each Y(i) is a new result
+(think of an indicator that is either 0 or is less than Y(w) at all w)
+
+Observe Y^2 \geq Z^2 so
+E(Y^2) \geq E(Z^2) = t^2 P(Z=t) + 0P(Z=0) [since Z has only two options, it's either t or 0]
+= t^2 P(|y|>t)
+
+Thus we get our result
+P(|Y|>t) \leq \frac{1}{t^2} E(Y^2) for t>0
+
+Limits and probability--------------------------------------------------------
+We say that a sequence of random variables converges in probability if,
+lim_{n\to\infty} P(|y_n - y| > \epsilon) = 0
+
+Using the same kind of MATH2400 ideas.
+
+Weak law of large numbers-----------------------------------------------------
+We now attempt to prove the sample mean converges in probability to the actual mean.
+
+P(|\frac{1}{n} \sum X_i - \mu| > \epsilon) = P((\frac{1}{n} \sum X_i - \mu)^2 > \epsilon^2)
+\leq \frac{1}{\epsilon^2} E((\frac{1}{n} \sum X_i - \mu)^2) [by Chebyshev's Inequality]
+
+Now we prove E((\frac{1}{n} \sum X_i - \mu)^2) approaches 0
+E(\bar{X} - \mu) = E(\bar{X} - E(\bar{X})) (a proof for this is similar the the example above)
+= Var(\bar{X})
+We note that the X_i that make up \bar{X} are independent. So,
+Var(\bar{X}) = \frac{1}{n^2} \sum Var(X_i) = \frac{1}{n^2} \sum_{to n} \sigma^2
+= \frac{1}{n}\sigma^2
+As n \to \infty our result approaches 0.
+
+Central limit theorem---------------------------------------------------------
+No proof here but consider the sequence
+Z_n = \sqrt{n} \frac{\bar{X} - \mu}{\sigma}
+
+Z_\infty \sim N(0,1)
+
+[ZZZ stopped at 2 August lecture 6]

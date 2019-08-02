@@ -17,3 +17,12 @@ The GRE contains the payload BUT it needs to be protected by a delivery
 protocol (which in our case in UDP). GRE has an optional header property
 which is the Key. The key helps determine which tunnel/tap it should send
 our message to.
+
+We will somehow use the DHCP to learn about each tunnels subnet.
+(The offer always spits back the subnet).
+
+What's the deal with keys not matching the subnets? Should we shuck the UDP,
+look at the GRE header and send it to the tunnel determined by the key?
+Based on RFC2890 it seems the key field is there to override any other
+information. ("packets may need to be routed based on context information not
+present in the encapsulated data.")

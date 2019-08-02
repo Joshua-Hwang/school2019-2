@@ -55,6 +55,7 @@ The definition of risk assessment as determined by ISO/IEC 27000:2018 is,
 "overall process of risk identification, risk analysis and risk evaluation."
 
 Risk analysis----------------------------------------------------------------
+A qunatitative risk analysis largely resolves around the following.
 A model for quantifying the cost is taking the expected value of the
 event occuring (prob * impact).
 
@@ -67,4 +68,83 @@ The impact of a single type of this event occurring.
 ALE (Annualised Loss Expectancy)
 ALE = ARO * SLE
 
-[Stopped at 27 July Lecture 1]
+It is often difficult however to get these probabilities and also to
+quantify the impact and cost of an event.
+
+Instead we might use a more qualitative method.
+Risk assessment matrices.
+
+ISO31000:2018 Risk Management Principles and Guidelines
+The flow chart is referenced in images/standards-flow.png
+
+Trust------------------------------------------------------------------------
+When an entity is trusted is different than if they are trustworthy.
+Hopefully the difference is obvious.
+
+Direct trust can be developed by two parties.
+
+Indirect trust involves trusting a third party who claims others are trustworthy.
+
+Access Control----------------------------------------------------------------
+There are two separate but important functions to establish identity:
+Establishing the identity which involves:
+    Identification - Determine who the entity is
+    Authentication - Verity and prove you are who you say you are.
+Authorisation, once identity is established a decision can be made about
+granting or denying access.
+
+Most access control is determined by identity. Which has a second benefit of
+accountability (we can track who did what when in the system).
+
+How do you prove (authenticate) your identity?--------------------------------
+Passwords have been the goto for years. It is based on "something you know"
+
+The problems include:
+forgetting passwords
+same password in multiple places
+weak passwords
+passwords not kept secret
+default passwords
+
+Passwords can be
+guessed via bruteforce
+social engineering and phising attacks
+eavesdropping
+bogus (fake) interfaces which look like login screens
+keylogging
+
+Storing passwords also leads to a point of vulnerability.
+
+Cryptography------------------------------------------------------------------
+Cryptography is about keeping messages secure.
+Literally means secret writing.
+
+Cyrptanalysis is the science of breaking message security.
+
+Cryptology is the theory associated with cryptography and cryptanalysis.
+
+The aim of cryptography is confidentiality but it can also be used to
+authenticate a user, ensure no messages have been modified and
+might even be used for digital signing.
+
+Hash functions----------------------------------------------------------------
+hash functions compress an arbitrarily long input x into a fixed size output.
+hash functions should be designed to be easy to compute.
+
+one-way hash functions have the one-way property. It is computationally
+infeasable to find x given h(x). One-way is also called pre-image resistance.
+
+Now cryptographic one-way functions have another property called
+collision resistance.
+Strong collision resistance means its hard to find two distinct x1 and x2 such that h(x1) = h(x2)
+Weak collision resistance (aka 2nd pre-image resistance) given a specific
+y=h(x1) it is hard to find x2 such that h(x1) = h(x2)
+
+Cryptography keys------------------------------------------------------------
+The problem with using a different and hidden protocol for all communications
+between people is that no one can talk to new people. Instead we have
+cryptography keys which alter the algorithm in a way that still ensures it's
+impractical to crack. This is Kerckhoff's Principle,
+    "The security of a cipher should rely on the secrecy of the key only."
+
+[ZZZ Stopped at 01 July Week 2]
