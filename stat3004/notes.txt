@@ -188,3 +188,93 @@ as a stable fixed point.
 (The lecturer then gives some examples of different X variables and solves them 24 July at 43:00)
 
 [ZZZ Stopped at 24 July]
+
+Random walks-------------------------------------------------------------------
+The most elementary stochastic process is an infinite set of iid variables.
+(This is not interesting since it's just a bunch of independent states).
+
+Perhaps a more interesting process would be a random walk.
+We define the scenario as such. Where S_i is the i^{th} state of the
+random walk while X_i is some random variable (the Xs should all be iid).
+S_0 = X_0 = x_0 (starting)
+S_n = S_{n-1} + X_n
+
+If we were to evaluate and expand this recursive definition we would find
+That S_n is just a sum of many iid random variables. By the Central
+Limit Theorem this means that S_n approximates a normal distribution.
+
+S and X do not need to have the same state-space (Bernoulli and Binomial).
+
+An example could be coin flips which determine
+walk forward or not at all.
+Coin flips are Bernouilli [spell check] and summing these coin flips gives
+Binomial distribution.
+It is important to remember that these random variables are dependent of
+each other. e.g. S_{n+1} | S_n \sim S_n + Ber(p) and
+S_{n+k} | S_n \sim S_n + Bin(k,p)
+
+[see 29 July 30:00 for proof]
+
+Magically we find the the Covariance of S_{n+k} and S_n is np(1-p) for
+our above example.
+
+Using this we can find our correlation to be \sqrt{\frac{n}{n+k}}
+
+We explore a new question with random walks. Does the walker reach a desired
+destination and if they do when?
+
+Side note, if the walker is required to move every step then the walker is
+required to flip odd and even number locations at each time step. (pretty neat)
+
+Let \tau_d be the first time the random walker reaches the desired destination.
+If we never reach home then \tau = \infty.
+Another way to define \tau_d is the infinum of the set {n \in naturals : S_n = d}
+(the set of times n that satisfy the random walker achieving a desired value)
+
+We redefine our question concisely as P(\tau_d < \infty)
+
+We define r_k = P(\tau_d < \infty | S_0 = k)
+r is the probability that we reach our destination in finite time knowing
+our starting position was k. Our question gets redefined again to become
+what is r_0?
+
+We observe a trivial case, r_d (the starting position is the desired position)
+gives certain chance.
+
+We also note that r_{d-i} = r_{d+i} there is equal chance getting i steps
+away from the starting point on either side.
+
+We perform a method called First-step analysis (aka conditioning).
+This method involves considering everything that could happen in one unit
+of time.
+We expand r_k using conditional probability,
+r_k = P(\tau_d < \infty | S_0 = k)
+= P(\tau < \infty | S_0 = k, X_1 = +1) P(X_1 = +1 | S_0 = k)
++ P(\tau < \infty | S_0 = k, X_1 = -1) P(X_1 = -1 | S_0 = k)
+
+We note that P(X_1 = +1 | S_0 = k) are independent so in reality it's just
+P(X_1 = +1) which we'll assume is \frac{1}{2} for an unbiased random walk.
+r_k = \frac{1}{2} (P(\tau < \infty | S_0 = k, X_1 = +1) + P(\tau < \infty | S_0 = k, X_1 = -1))
+
+We further simplify since knowing S_0 = k and X_1 = +1 we in actuality know
+S_1 = k+1.
+r_k = \frac{1}{2} (P(\tau < \infty | S_1 = k+1) + P(\tau < \infty | S_1 = k-1))
+
+Now we note that time is arbitrary and we let time 1 = 0 and time 0 = -1
+r_k = \frac{1}{2} (P(\tau < \infty | S_0 = k+1) + P(\tau < \infty | S_0 = k-1))
+
+From here we realise these are just the r_k definition again
+r_k = \frac{1}{2} (r_{k+1} + r_{k-1})
+
+We said earlier that r_{d-i} = r_{d+i} (we're letting d=0)
+r_k = r_{k-1}
+
+This works for all k and we also know that r_0 = 1 thus r_k = 1.
+
+[To see another two examples of using single-step analysis see 31 July 00:00]
+We run an example involving two \taus, bankrupt and money goal.
+He goes indepth on this example and how to solve it.
+Another example takes into consideration that time is important (previously
+we recentered time but now we can't)
+
+[ZZZ stopped at 31 July]
