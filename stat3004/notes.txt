@@ -15,7 +15,7 @@ You can have a thing called a random field where T has no order.
 Much like with a random variable Y we can specify the probabilistic behaviour
 of a stochastic process X via its Finite-dimensional Distribution (FDD).
 
-A FDD is specified by,
+An FDD is specified by,
 P(X(t1) <= x1, X(t2) <= x2, ... , X(tn) <= xn)
 Seems familiar to a CDF in STAT2003.
 Note: X could return an n-dimensional vector.
@@ -26,7 +26,7 @@ then E is a statespace for X. E is where X takes all its values from.
 X(t;Omega) means the stochastic process given Omega. X(t;Omega) is called a
 sample path. (name should make usage obvious)
 
-Branching Processes----------------------------------------------------
+Probability Generating Functions-------------------------------------------
 Recall the probability generating function from STAT2003. (It only works for
 discrete random variables)
 G(z) = Expectation z^X
@@ -51,12 +51,16 @@ Observe that if two random variables share a PGF then they are exactly equal.
 The lecturer derives the PGF of Poisson and Geometric distributions.
 (See 23 July at 00:00)
 
+Branching Processes----------------------------------------------------
 We consider a stochastic process (S) where each "animal" has a random number
 of children (X). (See W01-Branching_Processes_II.pdf)
 We start the process off with S_0 = 1. X_{i,n} is the number of offspring of the i^{th}
 individual of the n^{th} generation.
 To simplify we let X = X_{i,n} for all i and n, it's the same probability for
 everyone (also all independent).
+
+We immediately have a few starting facts,
+S_n = 1 + sum^{S_{n-1}} X
 
 Will the animals become extinct? Does there exist a generation m such that
 S_m = 0?
@@ -158,11 +162,13 @@ We now attempt to find what happens when mu >= 1 and variance != 0.
 eta_n = P(S_n = 0)
 = E[P(S_n = 0 | S_1)] (We could've done this for any abitrary S_m)
 = sum from 0 to infinity P(S_1 = k) P(S_n = 0 | S_1 = k) (definition of expectation)
-= sum from 0 to infinity P(X = k) P(S_n = 0 | X = k) (Since S_0 = 1 and recall X is the number of children of a single animal)
+= sum from 0 to infinity P(X = k) P(S_n = 0 | S_1 = k) (Since S_0 = 1 and recall X is the number of children of a single animal)
 The probability we go extinct is determined by all animals in the previous generation failing to bear children thus,
 = sum from 0 to infinity P(X = k) P(S_{n-1} = 0)^k
 We observe this is the PGF of eta_{n-1}!
 = G(eta_{n-1})
+
+(G is the PGF of X)
 
 Since we have a fixed initial state we can actually generate each eta_n.
 
@@ -186,8 +192,6 @@ while the one at extinction is unstable. In comparison, Option 2 has extinction
 as a stable fixed point.
 
 (The lecturer then gives some examples of different X variables and solves them 24 July at 43:00)
-
-[ZZZ Stopped at 24 July]
 
 Random walks-------------------------------------------------------------------
 The most elementary stochastic process is an infinite set of iid variables.

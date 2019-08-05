@@ -1,0 +1,42 @@
+Q1)
+* Customer/user personal details. Customer faith in our business.
+    Potential lawsuits if we didn't do our due diligence.
+* Propreitary source code. We can no longer sell our product.
+* Company e-mails. Damning corporate secrets could be leaked.
+
+Q2)
+Quantitative allows us to put an exact numeric (dollar) impact of our choices
+to improve/slacken company security.
+In comparison, qualitative risk analysis involves taking our own subject
+understanding of the risks and categorising them in a matrix of levels
+of risk. This is less exact but more practical since we don't always get
+an exact probability or cost/impact of an attack.
+
+Q3)
+Identification maps the current user to a set of information we have known as
+the identity. (e.g. please input your username)
+Authentication involves asking the user to verify and prove they are this identity.
+(e.g. please input the password)
+
+Q4)
+There are three ways to authenticate
+something I know (password)
+something I am (thumbprint)
+something I have (key)
+
+two-factor is using two of these
+
+The given scenario is not two-factor since it is two things that you have.
+
+Q5)
+Hash functions have the property that they take an arbitrary length input
+and output a fixed size result. They should be easy to compute as well.
+It is computationally infeasable to reverse the hash.
+
+Cryptographic hashes have a second property that they are collision resistant
+(strong or weak). Strong means it's hard to find two keys that will collide
+while weak resistance means it's hard to find another input that gives the
+same output as a previously input.
+
+Q6)
+It is not cryptographic since it is VERY easy to find a collision of inputs.

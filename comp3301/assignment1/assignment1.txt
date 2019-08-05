@@ -26,3 +26,5 @@ look at the GRE header and send it to the tunnel determined by the key?
 Based on RFC2890 it seems the key field is there to override any other
 information. ("packets may need to be routed based on context information not
 present in the encapsulated data.")
+
+We can daemonise using the function daemon (see man pages)
