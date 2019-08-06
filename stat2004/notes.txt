@@ -45,6 +45,7 @@ The abritrary set of intersections is also an element of F
 
 
 Definition of P---------------------------------------------------------
+(aka probability measure)
 P can be seen as a function that takes an event set and maps it to a real number.
 The obvious limites of the function must apply,
 P >= 0 for all F

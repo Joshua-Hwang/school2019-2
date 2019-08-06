@@ -1,0 +1,30 @@
+Q1)
+Answer is notebook (please send it here)
+
+Q2)
+Because X \sim N(\mu, \sigma^2). But I don't think that's a very good proof.
+
+Q3)
+a)
+We first find P(Y \leq y). Since Y is the max of X_1 to X_n to achieve
+P(Y \leq y) we need P(X_1 \leq y) AND P(X_2 \leq y) ... which gives
+(assuming y \in [0,1]) y^n which is our cdf.
+Differentiation gives ny^{n-1} which is now our pdf.
+b)
+Expectation and variance of Y.
+Expectation is determined by \int y \times ny^{n-1}
+and the variance requires the second moment of the expectation.
+
+Q4)
+a)
+I THINK you're allowed to use the weak law of large numbers
+
+We must prove P(|y_n - y| > \epsilon) = 0
+
+P(|\frac{1}{n} \sum X_i - p| > \epsilon)
+\leq \frac{1}{\epsilon^2} E((\frac{1}{n} \sum X_i - p)^2)
+
+Let's take a look at the expectation of the sample mean. Since each X_i
+is iid we can generate each E(X_i) = 1*p + 0*(1-p) = p.
+Thus our sum is n*p and we now divide by n to get p. Thus our sample means
+is expected to be
