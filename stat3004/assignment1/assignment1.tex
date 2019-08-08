@@ -83,8 +83,13 @@ We now extend our result for $\expect\left[X^\alpha\right]$.
     &= \expect \left[X^\alpha\right] & \text{Definition of expectation}
 \end{align*}
 
-\section{Q3}
-ZZZ - yeah got no idea
+\section{Q3 NOT DONE YET}
+% we show the first case G_1(z) is actually G(z)
+% this is done by showing something???
+% then you prove the second statement by G(G(G(G(z)))) which can be
+% compressed into what you want
+% expand using the law of total expectation
+% sub S_i somehow into S_{i-1}
 We recall that the PGF of a branching process gives the probability of
 extinction.
 \begin{align*}
@@ -151,17 +156,28 @@ for the chance of ultimate extinction.
 
 \section{Q5}
 \subsection{a}
-Can be done
-ZZZ - check answer
+% define notation
+% Use E[X] = E[E[X|Y]]
+PGF is $G(z) = \expect \left[z^X\right]$.
+\begin{align*}
+    \expect \left[z^X\right]
+    &= \sum_i p_i \times \expect \left[z^i\right] \\
+    &= p \expect\left[z^A\right] + (1-p) \expect \left[z^B\right] \\
+    &= p G_A + (1-p) G_B \\
+\end{align*}
+
+ZZZ don't think that this is enough proof\ldots
 
 \section{Q6}
 \subsection{a}
-ZZZ - does he actually mean $P(X \geq 4) = 0$? Because $P(X \geq 4) < 1$ is always
+% B is actually generation
+ZZZ does he actually mean $P(X \geq 4) = 0$? Because $P(X \geq 4) < 1$ is always
 guaranteed
 
-ZZZ - Also $B_n$ is the distance from the origin but my $S_n$ is about the balloons
+ZZZ Also $B_n$ is the distance from the origin but my $S_n$ is about the balloons
 popped at generation n. How do I compare them?
 
 \subsection{b}
+% check eta no?
 
 \end{document}

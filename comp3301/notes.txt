@@ -592,3 +592,156 @@ Linux threads------------------------------------------------------------------
 Linux refers to threads as tasks. See 4.27 for an details on creating threads for Linux.
 
 [ZZZ Stopped at Chapter 4 have not seen lecture 30 July]
+CPU scheduling---------------------------------------------------------
+(aka short-term scheduler)
+Maximum CPU utilization is achieved via multiprogramming.
+In this paradigm we have a CPU-I/O Burst cycle. Where we have a burst of CPU
+time then we wait for I/O, then we repeat.
+
+CPU scheduling decisions may take place when a process:
+Switches from running to waiting
+Terminates
+Switches from running to ready
+Switches from waiting to ready,
+
+Switching from the first two cases is nonpreemptive this means it waits till
+the process has done what it wants to. In comparison, with preemptive
+we cut the process off whenever we want. Consider when an important OS task
+must be completed then we perform preemptive scheduling and kick our current
+process back on the ready queue.
+
+Dispatcher-----------------------------------------------------------------
+The dispatcher module gives control of the CPU to the process selected
+by the short term scheduler.
+This involves:
+switching context
+switching to user land
+jumping to the proper location in the user program to restart the program
+
+Dispatch latency is the time it takes for the dispatcher to stop one process
+and start another running
+
+Scheduling Criteria-------------------------------------------------------
+Scheduling can be measured by
+CPU utilization is maximal
+Throughput (num of processes that complete execution per time unit)
+Turnaround time (amount of time to execute a process)
+Waiting time (amount of time a process has been in the waiting queue)
+Response time (amount of time it takes from request to first response)
+
+Optimally, we want to:
+Maximise CPU utilization and throughput
+Minimise turnaround time, waiting time and response time.
+
+Some scheduling methods----------------------------------------------------
+First come first served (FCFS) [see fcfs.png for example]
+Notice that the waiting times and process time change when we reorder the
+example.
+
+This is the convoy effect that occurs when short processes are put before
+long processes.
+
+Shortest job first (SJF) makes use of this convoy rule. SJF is acutally
+optimal the only problem is it's hard to know the size of the request
+beforehand.
+No examples is shown for SJF since it's just like the above but you
+reorder beforehand.
+
+You could estimate the length of the next CPU burst by assuming that the
+next burst will be like the previous one. Given
+t_n = actual length of the nth CPU burst
+\tau_n = the length that was predicted
+\tau_{n+1} = the prediction for the next length
+\alpha = some arbitrary number for weighing prediction against data (usually 0.5)
+\tau_{n+1} = \alpha t_n + (1-\alpha)\tau_n
+
+This method is called exponential averaging [see expavg.png]
+
+Shortest remaining time accounts for variable arrival time and uses
+preemption to cut processes short. i.e. P_1 is run for 1 second then P_2
+arrives and requires less time so we move over to that one. After completing
+P_2 we swap back to P_1 to finish.
+
+Priority scheduling defines priority numbers to each process which determines
+how much sequential CPU time a process gets. A smaller intger means
+a higher priority. SJF is essentially priority scheduling but where the
+priorities are determined by the inverse of the predicted CPU burst time.
+
+Starvation (low priority processes always get superseded)
+may occur in these cases we make it that as time progresses the priority
+increases over time.
+
+Round robin (RR) gives each process an equal and small amount of CPU time
+called time quantum q; q is usually 10-100 milliseconds. After this the
+process is preempted and requeued.
+
+Round robin sucks if the overhead for context switching is higher than
+the benefits of such a simple scheduling system.
+
+RR typically has a higher average turnaround but better response time.
+A context switch is usually 10 microseconds.
+The time quantum should be greater than 80% of all CPU bursts.
+
+Multilevel queue-------------------------------------------------------
+Multilevel queue involves creating several ready queues. e.g. A foreground
+queue (interactive) and a background queue (batch).
+Processes permanently live in one of these queues. Each queue uses its own
+scheduling algorithm. foreground uses RR while background uses FCFS.
+
+The issue now becomes how we can schedule the different queues.
+Fixed priority scheduling attempts to evaluate all in foreground then
+from background. This causes issues with starvation again.
+
+Time slice where each queue is treated round robin style (maybe giving
+each queue a different weighting 80% forground 20% background).
+
+Multilevel Feedback Queue--------------------------------------------
+Modifies multilevel queues. Processes are now allowed to move between the
+queues. We implement aging with this new ability.
+Now we need to know how to upgrade a process to a new queue, how to demote
+a process, and which queue to put a new process into. [see 6.27 for an
+example of a multilevel feedback queue]
+
+Thread scheduling------------------------------------------------------
+When threads are supported in the OS threads are what are scheduled and not
+processes.
+
+Thread libraries that implement many-to-one and many-to-many user-level threads
+they use lightweight processes (LWP).
+Since scheduling is now a competition within a process this is called
+process-contention scope (PCS). This is typically handled by the programmer.
+On the other hand system-contention scope (SCS) occurs when competition
+occurs between all threas on the system regardless of process.
+
+Multi-processor scheduling----------------------------------------------
+CPU scheduling becomes far more complex when multiple CPUs are available.
+Various algorithms can alleviate this:
+
+Homogeneous processors which all do the same tasks
+
+Asymmetric multiprocessing which assigns one processor to accessing system
+data structures which alleviates the need for data sharing
+
+Symmetric multiprocessing (SMP) each processor is self-scheduling and
+may or may not share a common ready queue. (This method is currently the
+most common among real systems)
+
+Processor affinity where processes has a bias to be run on a certain processor
+either soft affinity, hard affinity and other variations.
+
+Load balancing-------------------------------------------------------------
+If we're using SMP then we must ensure the workload is evenly distributed
+across all the cores.
+Push migration is a periodic task that checks the load of various CPUs to move
+tasks around to other processes.
+Pull migration on the other hand lets idle processors steal waiting tasks from
+busy processors.
+
+Another problem with multi-processor is retrieving memory that the current
+CPU is not privy to or does not have fast access for. This causes obvious
+overhead cost.
+
+The current trend is having multiple processors on the same chip which
+consumes less power than mutliple chips. There is also a desire to increase
+the number of threads per core, this allows the system to take advantage of
+memory stalls and work on another thread.
