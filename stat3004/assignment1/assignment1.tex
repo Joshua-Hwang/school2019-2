@@ -77,18 +77,44 @@ We now extend our result for $\expect\left[X^\alpha\right]$.
 \begin{align*}
     \int_0^\infty \alpha x^{\alpha-1} \prob(X \geq x) \diff x
     &= \int_0^\infty \int_x^\infty \alpha x^{\alpha-1} f(t) \diff t \diff x \\
-    &= \alpha \int_0^\infty f(t) \int_0^t x^{\alpha-1} \diff x \diff t
+    &= \alpha \int_0^\infty f(t) \diff t \int_0^t x^{\alpha-1} \diff x \diff t
     & \text{Swap integrals} \\
     &= \int_0^\infty t^\alpha f(t) \diff t \\
     &= \expect \left[X^\alpha\right] & \text{Definition of expectation}
 \end{align*}
 
-\section{Q3 NOT DONE YET}
+\section{Q3}
 % we show the first case G_1(z) is actually G(z)
 % this is done by showing something???
 % then you prove the second statement by G(G(G(G(z)))) which can be
 % compressed into what you want
 % expand using the law of total expectation
+% sub S_i somehow into S_{i-1}
+We note from lectures that $S_1 = G(z)$ and $S_0 = 1$. This first step
+obviously satisfies the requirement since,
+\begin{align*}
+    G_0(z) &= z \\
+    G_1(z) &= G(G_0(z)) = G_0(G(z)) \\
+\end{align*}
+
+We take a more general case. Note that since we're looking at a branching
+process, $S_{k+1} = \sum_{i=1}^{S_k} X_{i,k+1}$. Where $X_{i,k+1}$ are iid.
+\begin{align*}
+    G_k(z) &= \expect z^{S_k} \\
+    &= \expect \expect\left[ \prod_{i=1}^{S_{k-1}} z^{X_{i,k}} \middle| S_{k-1} \right] \\
+    &= \expect \left[ \prod_{i=1}^{S_{k-1}} z^{X_{i,k}} \right] \\
+    &= \expect \left[ \prod_{i=1}^{S_{k-1}} G(z) \right] \\
+    &= \expect \left[ G{(z)}^{S_{k-1}} \right] \\
+    &= G\left( G{(z)}^{S_{k-1}} \right) \\
+\end{align*}
+
+% From here you can notice that the pattern is recursive and then expand
+% then simplify
+
+\section{Q4}
+\subsection{a}
+The offspring distribution is either 2 or 0 with probability. Thus we can
+model this as Bernoulli.% expand using the law of total expectation
 % sub S_i somehow into S_{i-1}
 We recall that the PGF of a branching process gives the probability of
 extinction.
@@ -101,6 +127,7 @@ extinction.
 \subsection{a}
 The offspring distribution is either 2 or 0 with probability. Thus we can
 model this as Bernoulli.
+
 \begin{align*}
     X &\sim 2 \times Ber(p)
 \end{align*}
@@ -156,17 +183,14 @@ for the chance of ultimate extinction.
 
 \section{Q5}
 \subsection{a}
-% define notation
-% Use E[X] = E[E[X|Y]]
 PGF is $G(z) = \expect \left[z^X\right]$.
 \begin{align*}
     \expect \left[z^X\right]
-    &= \sum_i p_i \times \expect \left[z^i\right] \\
+    \expect \expect \left[z^X \middle| X \right] \\
+    &= \expect \left[pz^A + (1-p)z^B\right] \\
     &= p \expect\left[z^A\right] + (1-p) \expect \left[z^B\right] \\
     &= p G_A + (1-p) G_B \\
 \end{align*}
-
-ZZZ don't think that this is enough proof\ldots
 
 \section{Q6}
 \subsection{a}

@@ -47,7 +47,7 @@ The abritrary set of intersections is also an element of F
 Definition of P---------------------------------------------------------
 (aka probability measure)
 P can be seen as a function that takes an event set and maps it to a real number.
-The obvious limites of the function must apply,
+The obvious limits of the function must apply,
 P >= 0 for all F
 P(Omega) = 1
 P(Union of As) = sum of each P(A) (must be unions of disjoint) (is infinite sum/union)
@@ -196,4 +196,35 @@ Z_n = \sqrt{n} \frac{\bar{X} - \mu}{\sigma}
 
 Z_\infty \sim N(0,1)
 
-[ZZZ stopped at 2 August lecture 6]
+Family of distributions-----------------------------------------------------
+Given a random variable X (usually some standard like the standard normal)
+Y = a + bX where b > 0 can create the set also known as the *location-scale
+family of distributions* associated with X. i.e. all normal distributions
+are just the standard normal.
+
+Probability theory vs statistics--------------------------------------------
+Probability theory starts with a probability space or measure and is
+interested in the likelihood of certain outcomes.
+
+Statistics starts with an outcome and is interested in the probability space.
+
+Statistics follows this cyclic flow:
+We have reality/data which, when mixed with expert knowledge, generates a model.
+Mathematical analysis is applied to the model to generate conclusions and
+implications from the model. Expert knowledge comes back in to make conclusions
+about reality. When/if we find data that contradicts our model then we're back
+to a bunch of data with no model and we start again.
+
+When statisticians gather data they try and calculate metrics about certain
+properties. Sample median, sample mean, sample variance, sample quartiles.
+They might even make graphical interpretations of the data through graphs and
+boxplots etc.
+
+QQ-plots
+A \alpha quantile of a cdf is defined as the area under the curve that
+amasses to \alpha (from the tail end).
+
+Interestingly the quantile is a linear "distance" [made that up] from any
+other cdf in the location-scale family.
+
+[ZZZ Week 3 Lecture 8]

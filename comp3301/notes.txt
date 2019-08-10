@@ -591,7 +591,6 @@ A signal handler is used to process signals. A programmer can override the defau
 Linux threads------------------------------------------------------------------
 Linux refers to threads as tasks. See 4.27 for an details on creating threads for Linux.
 
-[ZZZ Stopped at Chapter 4 have not seen lecture 30 July]
 CPU scheduling---------------------------------------------------------
 (aka short-term scheduler)
 Maximum CPU utilization is achieved via multiprogramming.
@@ -745,3 +744,112 @@ The current trend is having multiple processors on the same chip which
 consumes less power than mutliple chips. There is also a desire to increase
 the number of threads per core, this allows the system to take advantage of
 memory stalls and work on another thread.
+
+Virtualisation and scheduling----------------------------------------------
+Virtualisation software does the scheduling for multiple guests on the CPU.
+Each guest does its own scheduling completely oblivious to the fact that
+they don't own the CPU.
+This can cause problems with poor response time and even can effect
+the clocks of the guest.
+
+Real-time CPU scheduling---------------------------------------------------
+Real time systems can be categorised as either:
+Soft real-time systems where there is not guarantee to when critical time-based
+processes will be scheduled.
+Hard real-time systems where there is a stronger guarantee to meeting deadlines.
+
+Hard real-time systems have to deal with two types of latencies:
+Interrupt latency - time from input of interrupt to start of interrupt process
+Dispatch latency - essentially context switch overhead
+
+As shown in diagram conflict.png
+The dispatch latency contains a conflict phase. This is due to either
+preemption (context switching) of processes running in kernel mode or
+releasing low-priority processes for high-priority processes.
+
+It's a good idea to implement real-time systems using priority based
+scheduling to ensure certain tasks get completed quicker than others.
+Unfortunately this only gets us to soft real-time.
+
+To implement hard real-time we add a new characteristic called periodics.
+Processing time (t), deadline (d), period (p).
+0 \leq t \leq d \leq p
+The rate of a period task is 1/p
+The idea is that in a section of time (the period) we MUST complete t
+processing time before the deadline (d). This gets repeated every period.
+
+One way of implementing priority now is to make it the inverse of the period.
+Shorter period = higher priority.
+Note: it's still possible to miss the deadline.
+To guarantee scheduling we must have a CPU utilization that is at least
+N(2^(1/N) - 1)
+
+Now instead of priority based on period we base it on deadlines. Earlier
+deadline gets top priority.
+
+Proportional Share Scheduling (ZZZ I don't know where this is meant to go)
+
+Real world examples----------------------------------------------------
+Linux scheduling works by a system known as Completely Fair Scheduler (CFS).
+There are scheduling classes which are ordered in priority. The scheduler
+will pick the highest priority task in the highest scheduling class.
+Instead of fixed time, quantum time based allotment we have CPU time
+proportions.
+By default there are 2 scheduling classes but more can be added;
+default and real-time.
+
+A *target latency* is calculated which gives and interval of time during
+which a task should run at least once. The target latency can be increased
+if maintaining that target is too hard.
+
+The predicted run time is stored in a variable *vruntime*. This runtime also
+considers the priority of the process. The scheduler chooses the lowest
+virtual time.
+
+The linux scheduler has a *global priority scheme* which maps 100 to 139 as
+normal priority (nice value -20 to +19). The range 0 to 99 is for the
+realtime class.
+
+Windows scheduling uses priority-based preemptive scheduling. It's simply the
+highest priority thread that runs next.
+The dispatcher is the scheduler.
+Threads run until a block happens, using time-slice or preempted by a higher
+priority process.
+Real-time threads can preempt non-real-time.
+There are 32 levels in the windows priority scheme. 1-15 is variable and
+16-31 is real-time.
+Priority 0 is memory-management thread. Each priority has it's own queue.
+If no thread is ready ye tthen run idle thread.
+
+Solaris uses priority based scheduling. Six classes are used:
+Time sharing (default) (TS)
+Interactive (IA)
+Real time (RT)
+System (SYS)
+Fair Share (FSS)
+Fixed priority (FP)
+
+Each thread is associated with a single class. Each class has its own
+scheduling algorithms. See multi-level feedback queue.
+
+Evaluating algorithms----------------------------------------------------
+We can either do it deterministically via deterministic modelling where
+we consider an example case and see how our model performs in it.
+
+We could use queue models where we consider the average number of arrivals,
+I/O bursts etc.
+
+Little's Formula assumes the system is in a steady state which means the
+number of processes arriving is equal to the number of processes leaving.
+n = \lambda \times W
+Where n is the average queue length
+W is the average waiting time
+\lambda is the average arrival rate
+Little's law states \lambda \times W = n
+
+Another way to evaluate algorithms is to run them in a simulation which has
+many variables but perfectly describes what will happen in a real-world
+setting. But even the simulations can't to everything, high cost and
+environments vary.
+
+[ZZZ Stopped at Week 3 8 Aug]

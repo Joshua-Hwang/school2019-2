@@ -140,6 +140,20 @@ Strong collision resistance means its hard to find two distinct x1 and x2 such t
 Weak collision resistance (aka 2nd pre-image resistance) given a specific
 y=h(x1) it is hard to find x2 such that h(x1) = h(x2)
 
+An ideal one-way cryptographic function can be visualised as such.
+"Has this input arrived before?" If yes rereturn the output. If no then
+make a random sequence. This model is called a *random oracle model*
+
+To find a weak collision we need 2^n but for a strong collision we just need
+2^{n/2} since birthday paradox.
+
+A cryptographic hash is considered broken if collisions can be found with
+significantly less work than brute force.
+
+An offline attack on passwords is when the attacker has access to the hashes
+of the password. The hacker can then apply numerous exploits on the file
+to get a collision/reverse the hash.
+
 Cryptography keys------------------------------------------------------------
 The problem with using a different and hidden protocol for all communications
 between people is that no one can talk to new people. Instead we have
@@ -147,4 +161,33 @@ cryptography keys which alter the algorithm in a way that still ensures it's
 impractical to crack. This is Kerckhoff's Principle,
     "The security of a cipher should rely on the secrecy of the key only."
 
-[ZZZ Stopped at 01 July Week 2]
+Types of attacks------------------------------------------------------------
+Much like in MATH3302 we have the different types of cipher attacks:
+Ciphertext only
+    The attacker has obtained a piece of ciphertext but no decoding
+Known-plaintext attack
+    The attacker has obtained a piece of ciphertext and its corresponding
+    plaintext
+Chosen-plaintext attack
+    The attacker has temporary access to the encryption machine
+Adaptive Chosen-Plaintext attack
+    The attacker has the encryption machine for quite some time
+
+Different ciphers-------------------------------------------------------
+The lecture talks about a few ciphers
+The Caesar cipher [remember MATH3302]
+Monoalphabetic substitution cipher (a set permutation of the alphabet)
+Vigenere cipher [remember MATH3302]
+One time pads
+
+Transposition cipher (we create a matrix of the message (secret rows and
+columns) we then read off the matrix in the transpose way
+[see transpositioncipher.png].
+
+Computational security is security from the key length, the resources of the
+attacker and how long the information needs to be kept secret.
+
+Perfect security is explored as well.
+A proof involving the one time pad is shown.
+
+[ZZZ Stopped at 08 Aug Week 3]
