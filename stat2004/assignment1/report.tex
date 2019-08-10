@@ -19,6 +19,7 @@
 \newcommand{\diff}{\mathop{}\!\mathrm{d}}
 \newcommand{\prob}{\mathbb{P}}
 \newcommand{\expect}{\mathbb{E}}
+\newcommand{\var}{\text{Var}}
 
 \DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
 \DeclarePairedDelimiter\norm{\lVert}{\rVert}
@@ -117,17 +118,41 @@ There's only a $50\%$ chance that he committed the crime.
 % ZZZ Research biased variance quickly
 
 \section{Exercise 4}
-We consider a new random variable $W = X - Y$. We can create samples of this
-random variable by taking our $X_i$ and $Y_i$; $W_i = X_i - Y_i$.
+We consider a new random variable $D = X - Y$. We can create samples of this
+random variable by taking our $X_i$ and $Y_i$; $D_i = X_i - Y_i$.
 
-We now try and put $W$ into the form that satisfies the Central Limit Theorem.
+We now try and put $D$ into the form that satisfies the Central Limit Theorem.
 From there we expand to reveal that this is $D_n$. Since $W$ in this form
 converges to the standard normal, we conclude $D_n$ converges in distribution
 to a standard normal distribution.
 
-To put $W$ in standard normal form, we need to find the variance and expectation.
+To put $D$ in standard normal form, we need to find the variance and expectation.
 \begin{align*}
-
+    \expect [D] &= \expect [X - Y] \\
+    &= \expect [X] - \expect [Y] & \text{Since X and Y are independent} \\
+    &= \expect [X] - \expect [Y] \\
+    &= \mu - \mu \\
+    &= 0 \\
 \end{align*}
+
+\begin{align*}
+    \var (D) &= \var (X - Y) \\
+    &= \var (X)+ \var(-Y) & \text{Since they are independent} \\
+    &= \var (X)+ {(-1)}^2 \var(Y) \\
+    &= \sigma^2 + \sigma^2 \\
+    &= 2 \sigma^2 \\
+\end{align*}
+
+From here we generate the form that satifies the CLT\@.
+
+\begin{align*}
+    \sqrt{n} \frac{\bar{D} - 0}{\sqrt{2} \sigma}
+    &= \sqrt{n} \frac{\frac{1}{n}\sum D_i}{\sqrt{2} \sigma} \\
+    &= \frac{\sum D_i}{\sqrt{2n\sigma^2}} \\
+    &= \frac{\sum X_i - \sum Y_i}{\sqrt{2n\sigma^2}} \\
+\end{align*}
+
+Since $\sqrt{n} \frac{\bar{W} - 0}{\sqrt{2} \sigma}$ will approach the standard
+normal as $n \to \infty$. The bottom equation will as well.
 
 \end{document}
