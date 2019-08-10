@@ -29,6 +29,7 @@
 \author{Joshua Hwang (44302650)}
 
 \begin{document}
+\maketitle
 \section{Q1}
 We will attempt to show that $\var(X) = \expect \var(X|Y) + \var(\expect[X|Y])$
 
@@ -83,7 +84,7 @@ We now extend our result for $\expect\left[X^\alpha\right]$.
     &= \expect \left[X^\alpha\right] & \text{Definition of expectation}
 \end{align*}
 
-\section{Q3}
+\section{Q3 NOT DONE YET}
 % we show the first case G_1(z) is actually G(z)
 % this is done by showing something???
 % then you prove the second statement by G(G(G(G(z)))) which can be
@@ -105,23 +106,19 @@ process, $S_{k+1} = \sum_{i=1}^{S_k} X_{i,k+1}$. Where $X_{i,k+1}$ are iid.
     &= \expect \left[ \prod_{i=1}^{S_{k-1}} z^{X_{i,k}} \right] \\
     &= \expect \left[ \prod_{i=1}^{S_{k-1}} G(z) \right] \\
     &= \expect \left[ G{(z)}^{S_{k-1}} \right] \\
-    &= G\left( G{(z)}^{S_{k-1}} \right) \\
+    &= G_{k-1}\left( G(z) \right) \\
 \end{align*}
 
-% From here you can notice that the pattern is recursive and then expand
-% then simplify
-
-\section{Q4}
-\subsection{a}
-The offspring distribution is either 2 or 0 with probability. Thus we can
-model this as Bernoulli.% expand using the law of total expectation
-% sub S_i somehow into S_{i-1}
-We recall that the PGF of a branching process gives the probability of
-extinction.
+From here you can notice that the pattern is recursive. We note that our
+initial case, $S_1 \to G(z)$. Each iteration afterwards composes the
+previous PGF with $G(z)$. Thus we expand our formula into,
 \begin{align*}
-    \eta_n &= \prob(S_n = 0) \\
-    \eta_n &= G(\eta_{n-1}) \\
+    G_{k-1}(z) &= G(\ldots G(z) \ldots ) & \text{Done $k-1$ times} \\
+    G_k(z) &= G(\ldots G(z) \ldots ) & \text{Done $k$ times} \\
+    &= G(G_{k-1}(z)) \\
 \end{align*}
+
+Thus both versions $G(z) = G(G_{k-1}(z)) = G_{k-1}(G(z))$ have been proven.
 
 \section{Q4}
 \subsection{a}
@@ -135,9 +132,10 @@ model this as Bernoulli.
 The PGF is given by,
 \begin{align*}
     G(z) &= \expect z^X \\
-    &= z^2 \times p + z^0 \times (p-1) \\
-    &= z^2 p + p - 1 \\
-    &= \left(z^2 + 1\right) p - 1 \\
+    G(z) &= \expect \expect \left[z^X \middle| X \right] \\
+    &= \expect \left[z^2 \times p + z^0 \times (1-p)\right] \\
+    &= \expect \left[z^2 p + 1 - p\right] \\
+    &= z^2 p - p + 1 \\
 \end{align*}
 
 \subsection{b}
@@ -164,13 +162,12 @@ It's clear that $p = 0.5$ it is critical, $p > 0.5$ is subcritical and
 $p < 0.5$ is supercritical.
 
 \subsection{c}
-From the lectures we know we're looking, $\eta = G(\eta)$. Where $\eta$ is
+From the lectures we know we're looking for a fixed point,
+$\eta = G(\eta)$. Where $\eta$ is
 the chance of ultimate extinction and $G(z)$ is the PGF of the offspring
 distribution.
 \begin{align*}
     \eta &= G(\eta) \\
-    \eta &= \sum \eta^k \prob(X=k) \\
-    \eta &= \eta^2 \prob(X=2) + \eta^0 \prob(X=0) \\
     \eta &= \eta^2 p + 1 - p \\
     0 &= \eta^2 p - \eta + 1 - p \\
     0 &= (\eta - 1)(p \eta + p - 1)  \\
@@ -194,14 +191,40 @@ PGF is $G(z) = \expect \left[z^X\right]$.
 
 \section{Q6}
 \subsection{a}
-% B is actually generation
-ZZZ does he actually mean $P(X \geq 4) = 0$? Because $P(X \geq 4) < 1$ is always
-guaranteed
+To create a branching process we must have an offspring distribution that
+remains constant each generation. In the $B_n$ case this is not possible
+since the popping of balloons in the previous generation has a limiting
+effect on the balloons that can be popped presently (i.e.\ the origin
+balloon can no longer be popped thus the first generation can at most pop
+3 balloons).
 
-ZZZ Also $B_n$ is the distance from the origin but my $S_n$ is about the balloons
-popped at generation n. How do I compare them?
+We simplify (at the same time giving it a strict upper bound) by considering
+the case where multiple ballloons are present at each location. Each generation
+a single ballooon on that point will pop. It will also be possible for multiple
+balloons to pop the same location. This ensure that offspring distribution
+remains constant. Since each balloon can pop any of its neighbours with
+chance $p$ independent of each other we model our offspring
+$X \sim \text{Bin}(p,4)$. The rest of our model is standard for a branching
+process model.
+
+This new model will also be a strict upper bound for the scenario. This is
+because the number of balloons that can be popped in the $S_n$ model is always
+4. But in our $B_n$ model the number of balloons that can be popped may be
+less than that, much like in the $B_1$ generation where each offspring
+can only pop up to 3 balloons.
 
 \subsection{b}
-% check eta no?
+We must determine at what probability our model is guaranteed to stop popping.
+Based on our knowledge of the branching process model we know this takes place
+when $\mu < 1$, where $\mu$ is the expectation of the offspring distrubution
+$X$.
+
+\begin{align*}
+    \expect X = 4\times p &= \mu \\
+    4\times p < 1  \\
+    p < \frac{1}{4}  \\
+\end{align*}
+
+The popping is guaranteed to stop when $p < \frac{1}{4}$.
 
 \end{document}
