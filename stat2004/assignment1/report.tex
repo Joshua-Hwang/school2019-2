@@ -28,6 +28,8 @@
 \author{Joshua Hwang (44302650)}
 
 \begin{document}
+\maketitle
+
 \section{Exercise 1}
 \subsection{a}
 Contradiction with B is the empty set. Thus probability is 0 but our definition
@@ -99,5 +101,33 @@ There's only a $50\%$ chance that he committed the crime.
 
 \section{Exercise 3}
 \subsection{a}
+\begin{align*}
+    \expect \bar{X}_n
+    &= \expect \frac{1}{n} \sum_{i=1}^n X_i \\
+    &= \frac{1}{n} \expect \sum_{i=1}^n X_i \\
+    &= \frac{1}{n} \sum_{i=1}^n \expect X_i & \text{This is okay since iid} \\
+    &= \frac{1}{n} \sum_{i=1}^n \mu \\
+    &= \mu \\
+\end{align*}
+
+\subsection{b NOT DONE YET}
+% ZZZ I don't know how to do this
+
+\subsection{c NOT DONE YET}
+% ZZZ Research biased variance quickly
+
+\section{Exercise 4}
+We consider a new random variable $W = X - Y$. We can create samples of this
+random variable by taking our $X_i$ and $Y_i$; $W_i = X_i - Y_i$.
+
+We now try and put $W$ into the form that satisfies the Central Limit Theorem.
+From there we expand to reveal that this is $D_n$. Since $W$ in this form
+converges to the standard normal, we conclude $D_n$ converges in distribution
+to a standard normal distribution.
+
+To put $W$ in standard normal form, we need to find the variance and expectation.
+\begin{align*}
+
+\end{align*}
 
 \end{document}
