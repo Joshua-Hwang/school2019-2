@@ -224,7 +224,45 @@ QQ-plots
 A \alpha quantile of a cdf is defined as the area under the curve that
 amasses to \alpha (from the tail end).
 
+The function that takes a quantile and returns the score is the anti-cdf.
+In this case we refer to it as F^-1 (\alpha). The inverse of the cdf.
+
 Interestingly the quantile is a linear "distance" [made that up] from any
-other cdf in the location-scale family.
+other cdf in the location-scale family. Let F_{a,b}^{-1} represent the quantile
+function of the a + bX where X is the "standard" random variable for that
+family.
+F_{a,b}^{-1} = a + b F^{-1}
+
+A QQ-plot associates each data point with an index (determined by ordering the data).
+The y-value for this plot then takes quantile function with respect to the
+percentage of the way through the data.
+
+If i is the index and n is the maximum then F^{-1} (i/n).
 
 [ZZZ Week 3 Lecture 8]
+When modelling data we go through an interesting process.
+We first assume our data fits a probability distribution P_\theta with
+parameter (or set of parameters) \theta.
+
+When we run our experiment we gather n independent realisations of random
+variables which all share a distribution depending on some unknown \theta.
+
+The question becomes how we find this theta and if our initial assumption
+about our statistical model is valid.
+
+We find our parameter by taking a function T that maps data to a value
+close to the "true" parameter \theta.
+An estimator or statistic is such a T that only depends on the data points.
+An estimator cannot rely on the unknown parameter. i.e. T(X) = \expect (X)
+won't work since knowing the expectation of the random variable requires
+knowledge of the parameter (usually).
+
+We now ask the question, "Can we measure the quality of the estimator?" how
+quickly can we converge to the true parameter.
+
+We create a metric called the mean-square error formed as,
+MSE(\theta ; T) = \expect_\theta (T - \theta)^2
+We desire a small MSE.
+
+Note that his formula requires \theta. The final evaluation will contain
+\theta in it. [see 09-08]
