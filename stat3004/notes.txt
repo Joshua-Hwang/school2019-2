@@ -282,3 +282,112 @@ Another example takes into consideration that time is important (previously
 we recentered time but now we can't)
 
 [ZZZ stopped at 31 July]
+
+Markov processes--------------------------------------------------------------
+We define (X_t, t\in T) as a stochastic process % meant to be a fancy T
+Where X is the state at time t. A Markov processes must be closd on its
+states. The probability you land somewhere else in the state space is
+100%.
+
+A Markov process has a neat property where,
+if for any s,t \in T and any A \subset E (Where E is the state space).
+Then
+\prob(X_{t+s} \in A | T_t) = \prob(X_{t+s} \in A | X_t)
+[probability of state X at time t+s knowing all
+history up to and including t]
+
+This means that our process only depends on the latest past state. History
+beyond this does not matter.
+
+This is known as a discrete time markov chain. This is because we are using
+discrete timesteps and discrete states. [Later on we will discuss discrete
+state continuous time markov chains]
+
+Insane notation:
+P_{ij}^m (n) means going from state i at step n to state j at step n+m
+
+We explore an example using P_{ij}^2 (n), this demo teaches us about
+exploiting the simplification of history.
+We're currently at time n and we move to time n+1.
+\sum_{k\in possible states} P(X_{n+2} = j | X_n = i, X_{n+1} = k) \times P(X_{n+1} = k | X_n = i)
+\sum_{k\in possible states} P(X_{n+2} = j | X_{n+1} = k) \times P(X_{n+1} = k | X_n = i)
+\sum_{k\in possible states} P_{kj}^1 (n+1) \times P_{ik}^1 (n)
+
+Now we just calculate a single step. Easy.
+Amazing observation, this is just matrix multiplication! i,j represents the
+location in the matrix. Note: P_{ij}^1 (n) may have a different matrix to
+P_{ij}^1 (m) since it is at a different time.
+
+P^m (n) = P^1 (n) \times P^1 (n+1) \ldots P^1(n+m-1)
+[keep in mind matrix multiplication is not commutative]
+
+We create an initial probability represented as \pi^{(0)}_x = \prob(X_0 = x)
+each element (probability at the state x initially).
+
+[The notation he goes on to make is too hard to do,
+he says we won't ever see it again. See 45:00 5 Aug]
+
+Every row of the matrix determines "where could I go given I'm in row i"
+[ZZZ redo this thinking]
+
+If you have a countably infinite number of states a matrix won't do you
+any good. Instead we call upon the help of linear operators.
+
+Figuring out what happens to a markov chain at infinite time.
+We make use of fancy shmancy eigenvalue and eigenvectors.
+If the state space is finite and all eigenvalues are distinct then we
+have a diagonalisable matrix.
+P = V \Lambda V^{-1} where \Lambda is the diagonal matrix with the diagonals
+being the eigenvalues.
+
+This diagonalised state is useful since we can add powers which
+only adds those powers to the diagonalised part.
+
+Eigenvectors and eigenvalues-------------------------------------------------
+We will use the spectral method to find the diagonalisation.
+We attempt to solve a more general (and hopefully easier form)
+P = V \Lambda W [note that it isn't V^{-1}]
+
+We first denote what a left eigenvalue and a right eigenvalue is.
+Right: v_i is a column vector
+P v_i = \lambda v_i
+Left: w_i is a row vector
+w_i P = w_i \lambda_i
+
+We desire our eigenvectors to multiply to give 1; w_i \dot v_i = 1.
+
+We prove that if all \lambda are distinct then (w_j v_i = 0). The eigenvectors
+will be orthogonal.
+[ZZZ i'm hungry so i didn't write the proof. See 35:15 6 Aug]
+
+We use this fact to prove that W = V^{-1}
+[ZZZ proof not written down because i'm hungry See 35:15 6 Aug]
+
+[ZZZ a bunch of properties that i'm guessing are important but I can't seem
+to understand the relevance yet See 35:15 6 Aug]
+
+If our markov process behaves nicely (as determined by the stuff up above)
+then our process will have a limiting distribution at infinity. We denote
+this distribution as a vector \pi.
+
+From the bunch of stuff that happened above we can rewrite our P matrix as
+P^n = \pi + \sum \sigma_k^n R_k where R_k = v_k w_k
+From observation we can clearly see that |\sigma| < 1 for all our \sigma
+then our limit exists and in fact is \pi.
+
+Gershigerin[?] Circle Theorem (brief)
+Create closed discs D_i in the complex plain with centres at p_{ii}
+and radii r_i = 1 - p_{ii}. Then every eigenvalue \lambda_i of p lies in at
+least one of the {D_i} [See 15:00 7 Aug for the intuition]
+
+This theorem means that all the eigenvalues will be less than or equal in
+distance of 1 from the origin. (also the limiting distribution is unique
+as long as finite states)
+
+We attempt to solve a fixed point system \pi P = \pi
+Here \pi is known as a stationary distribution. The fixed point distribution
+is a good method for finding the limiting distribution.
+
+[example of solving such an equation at 31:00 7 Aug]
+
+[stopped at 7 Aug]

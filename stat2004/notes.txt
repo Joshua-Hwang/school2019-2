@@ -239,7 +239,6 @@ percentage of the way through the data.
 
 If i is the index and n is the maximum then F^{-1} (i/n).
 
-[ZZZ Week 3 Lecture 8]
 When modelling data we go through an interesting process.
 We first assume our data fits a probability distribution P_\theta with
 parameter (or set of parameters) \theta.
@@ -266,3 +265,5 @@ We desire a small MSE.
 
 Note that his formula requires \theta. The final evaluation will contain
 \theta in it. [see 09-08]
+
+[ZZZ Week 3 Lecture 9]

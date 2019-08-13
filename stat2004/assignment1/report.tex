@@ -33,8 +33,10 @@
 
 \section{Exercise 1}
 \subsection{a}
-Contradiction with B is the empty set. Thus probability is 0 but our definition
-states that P(B) > 0.
+We attempt to prove by contradiction. Assume that B is the empty set.
+Thus probability is 0 but our definition states that $P(B) > 0$. Thus we've
+proven that B must be non-empty.
+
 A sample space must be non-empty and hold all the possible outcomes of the
 experiment. We then create a new experiment where B must always happen, based
 on the previous experiment where Omega happens.
@@ -44,24 +46,62 @@ We prove three properties of event sets,
 It's non-empty which is true since A in F A must be Omega once. From this
 we conclude that B in G.
 
-We must prove the complement exists (complement exists w.r.t. B). We do this
-by creating a new complement which satisfies the fact they must be disjoint
-but union to give the whole set B.
+We must prove the complement exists (complement exists w.r.t. B).
+We do this by creating a new complement
+\begin{align*}
+    A^c_B &= A^c \cap B \\
+\end{align*}
+
+We know this exists because $A \in \mathcal{F}$ and so its inverse also exists.
+
+This complement satisfies two properties of
+a complement. The fact they must be disjoint and the fact that the
+union gives the whole set B.
+\begin{align*}
+    A^c_B \cap A_B &= (A^c \cap B) \cap (A \cap B) \\
+    &= A^c \cap A \cap B \cap B \\
+    &= \varnothing \\
+\end{align*}
+\begin{align*}
+    A^c_B \cup A_B &= (A^c \cap B) \cup (A \cap B) \\
+    &= (A^c \cup A) \cap B \\
+    &= B \\
+\end{align*}
 
 We must prove the union of all elements in G must also be in G. We do this
 by doing set algebra on the elements to get the intersection with B on the
 outside. Since the complement of all As are also in the event set then
 our unions are also.
+\begin{align*}
+    \bigcup (A_i \cap B) &= \left(\bigcup A_i\right) \cap B \\
+\end{align*}
+
+Since all $A_i \in \mathcal{F}$ and $\bigcup A_i \in \mathcal{F}$ the union
+in $\mathcal{G}$ also works out.
 
 \subsection{c}
 Three properties must be satisfied for it to be a probability measure.
-Must be >= 0 for all inputs. P(\Omega) = 1. P(Union of As) = sum of
-P(A).
-The first property is simple since P(X) is always non-negative and division
-of two non-negatives is always non-negative.
-The final part is simple since we make use of the fact that Q(A U B U C)
-= P(A U B U C)/P(B) and A, B, C are all dijoint and we're using the standard
+Must be $\geq 0$ for all inputs. $\prob(\Omega) = 1$. $P(\bigcup A) = \sum P(A)$
+where all $A$ are independent.
+
+The first property is simple since $\prob(X)$ is always non-negative and
+division of two non-negatives is always non-negative.
+
+We simply demonstrate the second property.
+\begin{align*}
+    \mathbb{Q} (B) &= \frac{\prob(B)}{\prob(B)} \\
+    &= 1 \\
+\end{align*}
+
+The final part is simple since we make use of the fact that
+$\mathbb{Q}(X \cup Y \cup Z) = \frac{\prob(X \cup Y \cup Z)}{\prob(B)}$
+when $X$, $Y$, $Z$ are all dijoint and we're using the standard
 probability measure so we're good.
+\begin{align*}
+    \mathbb{Q} \left(\bigcup A_i\right) &= \frac{\sum \prob (A_i)}{\prob(B)} \\
+    &= \sum \frac{\prob (A_i)}{\prob(B)} \\
+    &= \sum \mathbb{Q} (A_i) \\
+\end{align*}
 
 \subsection{d}
 Thus we satisfy all required properties for a probability space.
@@ -88,7 +128,8 @@ A person in the general public has a $p$ chance of having this DNA profile.
     \prob(R|E)
     &= \frac{\prob(E|R) \prob(R)}{\prob(E|R)\prob(R)
         + \prob\left(E\middle|R^c\right)\prob\left(R^c\right)} \\
-    &= \frac{1 \times \frac{1}{n+1}}{1 \times \frac{1}{n+1} + p \times \frac{n}{n+1}} \\
+    &= \frac{1 \times \frac{1}{n+1}}{1 \times \frac{1}{n+1}
+        + p \times \frac{n}{n+1}} \\
     &= \frac{1}{1 + pn} \\
 \end{align*}
 
@@ -111,11 +152,45 @@ There's only a $50\%$ chance that he committed the crime.
     &= \mu \\
 \end{align*}
 
-\subsection{b NOT DONE YET}
-% ZZZ I don't know how to do this
+\subsection{b}
+\begin{align*}
+    \expect S^2_n
+    &= \expect \frac{1}{n-1} \sum_{i=1}^n {(X_i - \bar{X_n})}^2 \\
+    &= \expect \frac{1}{n-1} \sum_{i=1}^n {((X_i - \mu) - (\bar{X_n} - \mu))}^2 \\
+    &= \frac{1}{n-1} \expect \sum_{i=1}^n {((X_i - \mu) - (\bar{X_n} - \mu))}^2 \\
+    &= \frac{1}{n-1} \expect
+        \sum_{i=1}^n ({(X_i - \mu)}^2 - 2 (X_i - \mu) (\bar{X_n} - \mu)
+        + {(\bar{X_n} - \mu)}^2) \\
+    &= \frac{1}{n-1} \expect
+        \sum_{i=1}^n ({(X_i - \mu)}^2 - 2 \sum_{i=1}^n (X_i - \mu) (\bar{X_n} - \mu)
+        + \sum_{i=1}^n {(\bar{X_n} - \mu)}^2) \\
+    &= \frac{1}{n-1} \expect
+        \sum_{i=1}^n {(X_i - \mu)}^2 - 2 n {(\bar{X_n} - \mu)}^2
+        + n{(\bar{X_n} - \mu)}^2 \\
+    &= \frac{1}{n-1} \expect
+        \sum_{i=1}^n {(X_i - \mu)}^2 - n {(\bar{X_n} - \mu)}^2 \\
+    &= \frac{1}{n-1}
+        \sum_{i=1}^n \expect {(X_i - \mu)}^2 - n \expect {(\bar{X_n} - \mu)}^2 \\
+    &= \frac{1}{n-1}
+        \sum_{i=1}^n \var(X_i) - n \var(\bar{X}) \\
+    &= \frac{1}{n-1}
+        \sum_{i=1}^n \sigma^2 - n \frac{\sigma^2}{n} \\
+    &= \frac{1}{n-1}
+        \left(n \sigma^2 - \sigma^2\right) \\
+    &= \sigma^2
+\end{align*}
 
-\subsection{c NOT DONE YET}
-% ZZZ Research biased variance quickly
+\subsection{c}
+An unbiased estimator is called such if it satisfies,
+\begin{align*}
+    \expect_\theta T &= \theta \\
+\end{align*}
+
+In our above case $S_n^2$ achieves this property.
+
+If we were to repeat this process with $\frac{1}{n}$ instead of $\frac{1}{n-1}$
+then our result would be $\frac{n-1}{n} \sigma^2$. This obviously shows
+bias.
 
 \section{Exercise 4}
 We consider a new random variable $D = X - Y$. We can create samples of this
