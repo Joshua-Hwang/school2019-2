@@ -344,6 +344,7 @@ This diagonalised state is useful since we can add powers which
 only adds those powers to the diagonalised part.
 
 Eigenvectors and eigenvalues-------------------------------------------------
+[ZZZ spectral analysis is NOT the usual diagonalisation with V and V^{-1}]
 We will use the spectral method to find the diagonalisation.
 We attempt to solve a more general (and hopefully easier form)
 P = V \Lambda W [note that it isn't V^{-1}]
