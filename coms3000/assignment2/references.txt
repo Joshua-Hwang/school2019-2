@@ -1,0 +1,144 @@
+Data_Security_in_Cloud_Computing.pdf
+implementing-critical-security-controls-cloud-36725.pdf
+Multilevel-classification-of-security-concerns-_2017_Applied-Computing-and-I.pdf
+Security-Algorithms-for-Cloud-Computing_2016_Procedia-Computer-Science.pdf
+Security-Issues-in-Service-Model-of-Cloud-Computing_2016_Procedia-Computer-S.pdf
+
+1403.5627.pdf-------------------------------------------------------------------
+There are a few spelling and grammar errors in this document I would be
+wary of its validity.
+
+There's a bunch of nice issues to look at
+Multi tenancy and elasticity
+
+Many people sometimes sharing the same resources.
+This means that information leakage is possible.
+This can be controlled by data encryption
+
+
+Since we're using a non-local solution we also have new networking
+threats and issues
+MITM attacks
+DDOS attacks
+These can be controlled with
+authentication, authorization and accounting
+
+1-s2.0-S1877050917313030-main.pdf-----------------------------------------------
+41% of commercial entities run significant workload on public clouds.
+49% of the businesses are delaying cloud deployment due to security skill gap
+and concerns.
+
+Urgent problems include
+Privileged User Access Management
+Regulartory Compliance
+Data Location
+Data Segregation
+Data Protection and Recovery Support
+Investigate Support
+Long-term Viability
+
+Certain types of cloud service models may put security responsibility into the
+hands of the provider and customer equally or entirely on the cloud provider.
+This could be risky if the cloud provider is not held accountable for their
+security.
+
+Shared technology vulnerability since the cloud provider is using a single
+piece of technology to handle the cloud it gives attackers a single point
+of attack to potentially damage numerous clients.
+
+Data breach is now commonly the issue of the provider. This would be fine if
+the cloud provider we choose is respectable. This will require work on our end.
+
+Account of Service traffic hijacking. Though our services may be accessed
+through the internet (which is nice) it does mean our services (that have
+not been hardened) are at a higher risk of attacks.
+
+Denial of Service. Since we're on the internet we may lose access to our own
+platform.
+
+Malicious insider. A determined insider can find more ways to attack and cover
+their tracks in the cloud. Especially if they are employees of the cloud
+provider.
+
+We must now use the internet stack with all it's vulnerabilities and well
+studied attacks present. IP spoofing, ARP spoofing, DNS Poisoning.
+
+The three major vectors of attack are network, hypervisor and hardware.
+
+We control these via:
+End to end encryption
+Scanning for malicious activities
+The cloud provider needs to ensure the cloud consumers are behaving.
+Ensure APIs are secure
+Cloud provider needs to screen their employees
+Business continuity plans which document organisation response to incidents
+
+A-combined-approach-to-ensure-data-securi_2012...-------------------------------
+Talks about how to run controls so risk is mitigated on all ends.
+This is done by end to end encryption (stops malicious insider at the cloud
+provider)
+SSL to ensure our move to the open internet affects our communications to our
+services.
+Finally login details are required for access to the services.
+
+Addressing-cloud-computing-security-iss_2012_F...-------------------------------
+Note this paper is from 2010
+
+It seems to echo the same issues 1-s2.0-S1877050917313030-main.pdf had.
+Traditionally we could employ a strong security policy which locked down
+all unnecessary attack vectors. In the public cloud, the data and process owners
+are not the infrastructure owners. This means we must trust our cloud
+providers.
+It's important to note that a private cloud is owned by the company so in this
+case nothing has changed.
+
+The proposed control measure is to introduce a Trusted Third Party.
+
+Due to virtual separation of logical drives and lack of hardware separation
+between multiple users on a single infrastructure, data remanence may lead to
+the unwilling disclosure of private data. Also a malicious user may claim
+a large amount of disk space and scavenge for sensitive data.
+
+Data-Security-Challenges-and-Its-Solutions-in-Clo...----------------------------
+In cloud computing, the data is distributed over the number of regions and to
+find the location of data is difficult. When the data is moved to different
+geographical locations the laws governing on that data can also change. So there
+is an issue of compliance and data privacy laws in cloud computing.
+
+If the data center is hit by a natural disaster and the cloud provider
+failed to provide offsite backups then they are liable for the loss of data.
+
+mcd2018010060.pdf---------------------------------------------------------------
+Current Australian paper on the topic but not statistics.
+Talks about high level controls that can automatically reduce the impact
+of attacks. Even how to handle zero day attacks.
+
+8167.0 - Characteristics of Australian Business , 2017-18.html------------------
+11% of businesses reported they had an internet security breach
+Manufacturing and wholesale were the worst with 18%
+52% say the worst impact of the breach was downtime of the service
+52% of larger companies (200+ employees) upgraded their cyber security policies
+and standards this is an up from 2015-2016 which was only 34%.
+
+Cloud climbs to new heights in Australia as market g...-------------------------
+77% of companies using cloud use at least two providers.
+49% use four or more. This is a huge risk in trust.
+
+36% of companies place no policy on cloud.
+
+Highly polarising:
+40% considered moving to cloud a more secure option while
+42% held off on cloud for security reasons
+
+37% of large organisations outsource cloud MANAGEMENT to third parties.
+
+Roughly half of organisations interviewed believed their cloud computing
+practices were compliant with GDPR (General Data Protection Regulation).
+An EU data protection law.
+
+Deloitte_ Australian cloud productivity worth $9.4 billio...--------------------
+It seems the most used application of the cloud is the scaling of resources
+dependent on the resources used [real numbers provided]
+Though this may be great for finance it is a major risk for security.
+Since we're using shared resources on a public cloud it is likely (if the
+cloud provider isn't doing their due diligence) to have sensitive data leaked.

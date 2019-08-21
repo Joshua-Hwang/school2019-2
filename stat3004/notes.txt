@@ -391,4 +391,97 @@ is a good method for finding the limiting distribution.
 
 [example of solving such an equation at 31:00 7 Aug]
 
-[stopped at 7 Aug]
+[00:00 12 Aug
+The lecturer considers a toy example Markov chain involving two states.
+He creates a matrix describing this system and performs spectral analysis on it.
+He is able to perform the analysis quickly since he knows a few tricks like
+the trace of the original matrix is equal to the sum of the eigenvalues
+and since the matrix is normalised he also knows one of the eigenvalues
+is 1.]
+
+[18:00 12 Aug we now look at the even simpler state of the identity matrix.
+This system means that each state is only allowed to remain in the same
+state. This is an interesting system since the initial distribution is also
+the limiting distribution (can't go anywhere). It also means that all
+distributions are the limiting distribution; also stationary.]
+
+[23:00 12 Aug an actual demonstration of spectral analysis]
+
+The rest of lecture talks about all 5 systems that happen from a two state
+system.
+* We stay in the same state (identity)
+* We travel directly to the next state ((0 1) (1 0))
+* We have a chance of changing to a new state but this new state kicks us back
+((1-s s) (1 0))
+* We have a chance of changing to a new state but this new state traps us
+((1-s s) (0 1))
+* The normal system ((1-s s) (r 1-r))
+
+We now explore more complicated Markov chain systems.
+We create some new notation and revise some old ones.
+Recall,
+\prob_x() = \prob( | X_0 = x)
+\expect_x() = \expect( | X_0 = x)
+
+We now write,
+\tau_y = inf{n > 0 : X_n = y}
+\tau_y^{(k)} = inf{n > \tau_y^{(k-1)} : X_n = y}
+
+\tau refers to the amount of time, n, taken for us to reach state
+y. The \tau_y^{(k)} refers to the kth time we've reached state y.
+This is clearly larger than the previous \tau as it has to be
+later in time.
+
+r_{xy}^{(k)} = \prob_x (\tau_y^{(k)} < \infty)
+This means what's the chance this process goes on forever and
+never touches y knowing that it started at state x.
+The k involves the kth time we reach state y.
+If r = 1 then it's guaranteed that we wll reach state y. If r = 0
+then it's guaranteed to never reach state y. If it's anything
+in between then there's a chance we never get to state y.
+
+We now implement this new notation.
+r_{yy}^{(2)} = \prob_y(\tau_y^{(2)} < \infty)
+= \prob_y(\tau_y^{(2)} < \infty | \tau_y^{(1)} < \infty)
+\times \prob_y(\tau_y^{(1)} < \infty)
+
+But \prob_y(\tau_y^{(1)} < \infty) is just the chance it happens
+at all so.
+= \prob_y(\tau_y^{(2)} < \infty | \tau_y^{(1)} < \infty) \times r_{yy}
+
+Since the Markov system only relies on the immediate history
+AND note the \prob_y which means we're starting from y like the
+previous time. It's also helpful to know that the previous k actually
+exists wihch further confirms our conclusion that the two
+probabilities are iid.
+
+= \prob_y(\tau_y^{(1)} < \infty | \tau_y^{(1)} < \infty) \times r_{yy}
+[We know \tau_y^{(2)} has the same distribution as \tau_y^{(1)}
+that's why we're getting rid of the conditional but keeping the
+distribution]
+= \prob_y(\tau_y^{(1)} < \infty) \times r_{yy}
+= r_{yy} \times r_{yy}
+= r_{yy}^2 [This is referred to as the Strong Markov Property]
+
+Intuitively we see the r_{yy}^{(k)} = r_{yy}^k.
+We can now see some interesting implications.
+
+If r_{yy} < 1 then the chance of hitting state y after a large
+amount of time is now becoming impossible. We call this y a
+*transient state*.
+
+If r_{yy} = 1 then we are always guaranteed to hit our state y.
+This is called a recurrent state.
+
+We now move on to r_{xy}.
+
+If r_{xy} > 0 then we say that x "leads to" y and write x \to y.
+[It's possible that y does not lead back to x]
+
+If x \to y AND y \to x then we say the x and y communicate.
+
+The relation \to is transitive since give x \to y and y \to z then
+x \to z. [Proof of this at 32:00 13 Aug]
+
+If x is recurrent and x \to y then y is also recurrent.
+[Proof at 47:00 13 Aug]

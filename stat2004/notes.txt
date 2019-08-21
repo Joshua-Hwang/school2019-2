@@ -266,4 +266,41 @@ We desire a small MSE.
 Note that his formula requires \theta. The final evaluation will contain
 \theta in it. [see 09-08]
 
-[ZZZ Week 3 Lecture 9]
+We can decompose this definition into
+MSE(\theta ; T) = Var_\theta (T) + (\expect_\theta T - \theta)^2
+
+In words, this means "T is equal to the variance + the squared bias"
+
+[10-03 shows a proof of this decomposition.
+
+The quality of an estimator becomes this balancing act between variance and
+bias. Typically aiming for a small bias leads to a large variance and vice versa.
+For example, given a distribution U[0,\theta] (uniform from 0 to \theta).
+Can be estimated by 2\bar{X}. This estimator is unbiased but has a large
+variance (2^2 I believe). On the opposite end the estimator \bar{X} has better
+variance but is now biased.
+
+[10-06 shows an example of analysing the quality of an estimator]
+The conclusion of this example is that there could be multiple estimators that
+unbiased and some that are objectively better. In this example a stratified
+sample of the population gives a lower MSE (which is variance for unbiased).
+
+Moments-------------------------------------------------------------------------
+The k-th moment of a random variable X with some unknown parameter \theta is
+given by \expect_\theta X^k.
+The moment can be estimated "sensibly" by
+\bar{X}_n^k = \frac{1}{n} \sum_{i=1}^n X_i^k
+
+This is proven with the law of large numbers. Since we're summing a bunch of
+iid random variables then dividing by the number of random variables we achieve
+our result.
+
+Method of moments estimator-----------------------------------------------------
+This is defined as \hat{\theta} which satisfies,
+\expect_\hat{\theta} X_i^k = \bar{X}_n^k
+This means that the expectation from the estimated parameter \hat{\theta} for
+any of the data points we have is equal to the global estimated moment.
+
+[11-04 examples shown]
+
+[ZZZ Week 4 Lecture 2]
