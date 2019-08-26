@@ -190,4 +190,272 @@ attacker and how long the information needs to be kept secret.
 Perfect security is explored as well.
 A proof involving the one time pad is shown.
 
-[ZZZ Stopped at 08 Aug Week 3]
+Creating a cipher---------------------------------------------------------------
+As we learnt in MATH3302 there is no way yet to practically measure the security
+of a cipher. It's either "too hard" to wrap our heads around or it's founded on
+a computational problem that does not have efficient algorithms for.
+
+The goal of creating a cipher is computation security, this is where the best
+attack option is brute-force there are no shortcuts to get to the key.
+From here it's simply key length that determines security; it's a simple brute
+force job.
+
+The only way we can "prove" this is to show that our cipher is secure against
+all CURRENTLY known attacks.
+
+Symmetric ciphers------------------------------------------------------------
+Many modern ciphers are product ciphers.
+A product cipher is a composition of either substitutions or permutations
+(which are also just substitutions). They are iterated several times to increase
+security.
+
+Feistel ciphers are what you've already seen in MATH3302 so I hope you remember
+them. Many product ciphers are Feistel ciphers.
+
+Transposition involving swapping the two blocks being encrypted.
+Substitution using S-boxes.
+Decryption is also encryption but with the round keys in reverse order.
+
+Note that the F function does not have to be reversible since XOR twice results
+in the original solution.
+
+DES---------------------------------------------------------------------------
+DES uses 16 rounds with 64 bit blocks and 56-bit key with 8 bits for parity.
+The round function expands 32 bits into 48 bits.
+The S-box converts 6 bits into 4 bits
+
+The DES challenge was an attempt to break the DES by bruteforce.
+1997 took 3 months
+1998 took 3 days and cost $250K
+1999 took 22 hours with machine created from the 1997 and 1998 challenges
+2006 took 7 days for $10K (COPACOBANA)
+
+Each new key bit doubles the time required for a brute force. This means a
+128-bit key will take 90 billion billion years for COPACOBANA to crack it.
+
+Choosing to double DES via
+c = E_{K2}(E_{K1}(p)) and
+p = D_{K1}(D_{K2}(c))
+
+Now we should theoretically have double the key size. Unfortunately 2-DES is
+vulnerable to meet-in-the-middle attacks.
+
+If you manage to find the inbetween value (so E_{K1}(p) = D_{K2}(c)) then we
+can look for a collision between the two key spaces.
+Because we need x this is technically a known-plaintext attack.
+
+Instead we use triple DES.
+c = E(D(E(p)))
+
+You may not that we're decrypting for the second function this is so that if
+K1=K2=K3 then this is essentially single DES. Which helps with compatibility.
+
+AES--------------------------------------------------------------------------
+In 1998 NIST (US National Institue of Standards and Technology) announced
+development of AES
+2000 NIST chose the cipher we know as AES.
+
+Selection process for AES was public and 15 candidates were brought.
+5 were found to be broken
+5 weren't that good
+5 finalists
+* Serpent
+* Rijndael
+* Twofish
+* Mars (IBM)
+* RC6 (RSA Data Security Inc.)
+
+Rijndael won with its symmetric block cipher (not Feistel).
+128-bit data blocks
+You could choose key lengths with 128 (10 rounds), 192 (12 rounds)
+and 256 bytes (14 rounds). It could even be
+extended though this feature is not part of the standard.
+
+AES is seen as a block of data (an actual square).
+Initial round
+Adds the round key via XOR
+
+Normal rounds
+Each byte is substituted via a lookup table.
+Each row is then shifted cyclically.
+The columns are mixed
+Add the round key like the initial round
+
+Final round
+Same as Normal rounds but without mixing rows.
+
+The choice of S-box was based on a bunch of stuff that won't be covered.
+
+The US Government
+AES-128 is used for SECRET classification
+AES-192 or AES-256 for TOP SECRET
+
+AES modes-----------------------------------------------------------------------
+ECB (electronic book mode)
+This involves generating a single key and XORing this key to each block of
+input. This is obviously weak since we're using the same key for mutliple
+plaintext and there is not dependency between the blocks.
+
+The ECB mode is simple, implementation, parallelisable,
+errors only affect that single block (blocks aren't dependent) but it is weak.
+
+CBC, CFB and OFB build off of ECB by embedding dependency and feedback.
+
+CBC uses a single key but now the encrypted block is XORed with the next message
+block before being XORed with the key. The first block is XORed with an
+initialisation vector (IV). Decryption involves XORing the key then XORing the
+IV (in that order).
+
+Turns out IV does not need to be secret but it should be changed frequently.
+
+CBC can actually self-recover from bit errors.
+CBC is the most commonly used cipher mode.
+
+Side Channel Attacks------------------------------------------------------------
+are attacks against the implementation rather than the
+algorithm itself.
+We gain new information like, timing, power consumption etc.
+
+AES implementations have been broken using Side Channel Attacks
+One implementation uses caches which makes certain inputs faster than usual.
+You could probably use this information to attack the system.
+
+Interestingly Intel and AMD have inbuilt AES instructions.
+
+Stream ciphers vs Block ciphers-----------------------------------------------
+As you should already know block ciphers take blocks of the input and converts
+it into blocks of encrypted input.
+A stream cipher generates a stream of pseudorandom keys (unlike OTP which uses
+truly random key stream)
+
+Encryption usually involves XORing the pseudorandom keys.
+
+RC4 (aka Ron's Code who is also the R in RSA) is the most widely used
+stream cipher, implemented in MS Word, Excel, Wireless LANs (WEP).
+
+RC4 has been found to have some vulnerabilities.
+
+Lamport's Hashed Password Scheme
+The idea is the create a sequence of one-time passwords using a one-way hash
+function.
+
+The client selects an initial secret password p_0
+We can compute the p_n = h(p_{n-1}).
+The server is keeping a track of the current p and current n.
+The server sends the client the current counter.
+User sends p_n and the server checks its own version with what was sent.
+Now the server DECREMENTS n by one. This way that if eavesdropping occurs
+that the entire sequence doesn't get destroyed.
+
+Password cracking--------------------------------------------------------------
+Dictionary attacks
+Brute-force attacks
+Hybrid which is common words + some random numbers
+
+These are off-line attacks where the attacker has access to the hashed passwords
+(and plenty of time with them). This is kinda like a ciphertext only attack.
+An on-line password attack involves the attacker talking to a live system. This
+is obviously much harder since the system might give you timeouts.
+
+What if two users happen to choose the same password? Consider the /etc/passwd
+which contain the hashed passwords of all users. If a user shares the same
+password with another user then they will know the other user's password.
+
+This is solved via SALTing. Unix uses 12 random bits in a modified DES algorithm
+to fix this.
+
+You may think that PINs with 4 digits are weak but in reality attackers must
+always plug the PIN into a live system. After 3 unsuccessful attempts the
+ATM 'eats' the card!
+
+Authentication-----------------------------------------------------------------
+How on earth do you send your password over the internet to verify?
+You COULD send the hashed password over the network but an eavesdropper can
+perform a replay attack.
+
+Instead we choose a Challenge-Response Protocol.
+The server gives a client a "challenge", c
+(often called the nonce number-used-once)
+
+Client calculates a response which is a cryptographic hash of c AND the password
+either as r = h(c||p) (concatenation) or r = h(c XOR p).
+
+Note that *choosing* the challenge does not affect the strength. The only
+requirement is that the challenge only happens once.
+
+HTTP--------------------------------------------------------------------------
+HTTP has two modes, Basic and Digest.
+
+In basic:
+1. Browser sends a GET request to a web server.
+2. Server says that the user is not authorised and requires basic authentication
+3. User sends another GET request with authentication detail
+
+The issue here is that the password is in cleartext
+
+In digest:
+1. Browser sends a GET request to a web server.
+2. Server says that the user is not authorised and requires digest
+authentication. A nonce is provided as a digit.
+3. The browser then computes a hash with
+(username, password, realm (folder you want to access), nonce, URL)
+
+The problem with this new system is that the main password must be stored
+in the server. It is also still vulnerable to man in the middle attacks.
+
+SSH--------------------------------------------------------------------------
+SSH-1 can be authenticated via multiple methods; password, public key etc.
+The password authentication is still vulnerable to man in the middle attacks.
+
+The public key authentication is actually better since it isn't vulnerable
+to man in the middle attacks.
+
+SSH-2 uses stronger key exchanges including:
+Diffie-Hellman
+RSA
+Generic Security Service Application Program Interface (GSS-API)
+AES Galois Counter Mode
+Elliptic Curve Algorithm
+SHA-2 Data Integrity Verification
+
+Multi-factor authentication------------------------------------------------
+Two-factor authentication involves using one of the two methods:
+Something you know and something you are (password and fingerprint)
+Something you know and something you have (password and physical key)
+Something you are and something you have (fingerprint and physical key)
+
+For example using an ATM requires a card and knowing the PIN.
+
+SecureID is a way to have a "physical key" for internet usage. This makes use of
+a piece of hardware that generates "random" numbers which are synced with an
+authentication server.
+
+Biometrics------------------------------------------------------------------
+Criteria for good biometrics involve:
+Universality (everyone must have one)
+Distinctiveness (should be unique for each person)
+Permanence (must not change)
+Performance (must be fast to recognise)
+Acceptability (are people okay using this body part for identification)
+Circumvention (how easy to trick the system and perform replay attacks)
+
+Tiny fingerprint features calle Minutiae are stored instead of an image.
+
+Verification mode is a one-to-one match with a single template in the database.
+Identification mode is a one-to-many match.
+
+Intuitively the identification mode is more likely to pop up a false accept.
+
+There are two main types of errors:
+False accept (False Match) which allows non-users access thinking they are the
+template.
+False reject (False Non-Match) which prevents true users from accessing their
+own template.
+In addition:
+Failure to Enrol (FTE) failure to create a valid template from a new user's
+input.
+
+I'm trusting that you can actually calculate the false match and false non-match
+[take a look at slide 30 of week 5 biometrics]
+
+[ZZZ Stopped at 26 Aug Week 5]

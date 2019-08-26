@@ -1,5 +1,7 @@
 Intuition: Stochastic just means random.
-Examples: Branching processes, Poisson processes, Markov chains (discrete time and continuous time), Random walks
+Examples: Branching processes, Poisson processes, Markov chains
+(discrete time and continuous time), Random walks
+
 Definition: A stochastic process (X(t), t in T)
 is a collection of random variables indexed by
 some indexed set T.
@@ -191,7 +193,7 @@ solutions. Also note that in Option 1 the interesting fixed point is stable
 while the one at extinction is unstable. In comparison, Option 2 has extinction
 as a stable fixed point.
 
-(The lecturer then gives some examples of different X variables and solves them 24 July at 43:00)
+[The lecturer then gives some examples of different X variables and solves them 24 July at 43:00]
 
 Random walks-------------------------------------------------------------------
 The most elementary stochastic process is an infinite set of iid variables.
@@ -211,7 +213,7 @@ S and X do not need to have the same state-space (Bernoulli and Binomial).
 
 An example could be coin flips which determine
 walk forward or not at all.
-Coin flips are Bernouilli [spell check] and summing these coin flips gives
+Coin flips are Bernouilli [ZZZ spell check] and summing these coin flips gives
 Binomial distribution.
 It is important to remember that these random variables are dependent of
 each other. e.g. S_{n+1} | S_n \sim S_n + Ber(p) and
@@ -280,8 +282,6 @@ We run an example involving two \taus, bankrupt and money goal.
 He goes indepth on this example and how to solve it.
 Another example takes into consideration that time is important (previously
 we recentered time but now we can't)
-
-[ZZZ stopped at 31 July]
 
 Markov processes--------------------------------------------------------------
 We define (X_t, t\in T) as a stochastic process % meant to be a fancy T
