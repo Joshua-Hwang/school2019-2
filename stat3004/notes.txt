@@ -485,3 +485,91 @@ x \to z. [Proof of this at 32:00 13 Aug]
 
 If x is recurrent and x \to y then y is also recurrent.
 [Proof at 47:00 13 Aug]
+
+A set of states in a Markov system is called a communicating class
+if \forall x,y \in A x \leftrightarrow y and if z not in A then there
+is no x \leftrightarrow z.
+
+If the communicating class is the entire state space then the state
+space is called irreducible.
+
+A set of states is called closed if r_{xy}=0 for x \in A and y \in A^c.
+Equivalently, states in A can only reach other states in A.
+
+Now if A={a} then the state "a" is called absorbing.
+
+We can actually simplify our Markov system and categorise them via
+transience or recursiveness.
+The a few of the top rows will contain all transient families while
+the remaining rows
+will be a diagonal of recurrence families. [Better example at 19 Aug 22:00]
+
+If C is a finite, closed, communicating class then all states in this family
+are recurrrent.
+
+We construct an identifier
+I_x = \{ n \geq 1 : p^n_{xx} > 0}
+This means that I is the set such that the probability of ending back
+at state x after n steps is greater than 0.
+
+The period of a recurrent state family is determined by the gcd
+of all n in the set I_x. If gcd(I_x) = 1 then the set of states is aperiodic.
+Interestingly, if x \leftrightarrow y then x and y have the same period.
+
+Redefine recurrent states for infinite state systems-----------------
+The idea of \prob_x (\tau_x < \infty) = 1 means that we will certainly
+arrive back at x. Before it was simpler because there were only finite
+states it meant that arriving back to state x only took finite time.
+
+Instead if we have an infinite number of states we require new
+definitions. \expect_x [\tau_x] < \infty then x is positive recurrent.
+If \expect [\tau_x] = \infty then x is null recurrent.
+
+Global Balance Equations--------------------------------------------------------
+We return to the problem finding a stationary distribution, \pi P = \pi
+We know attempt to do this for an infinite number of states. Such a system
+is unable to be represented by a matrix.
+
+Instead we try and solve a Global Balance Equation
+\sum_{x\in E} \pi_x P_{xy} = \pi y
+I believe this equation means for the state y it's equivalent to summing up
+every other state multiplied by the probability state x goes to state y.
+
+This equation is hard to solve in general. Instead we'll attempt to solve
+a Local Balance Equation. They are of the form,
+\pi_x P_{xy} = \pi P{yx}
+and solving these will eventually give us a solution to the global balance as
+well. Local balance seems to be a subset of all possible global balances since
+all local balances are global but not all global are local balances.
+This is just the balanced flux equation from STAT2004.
+
+We solve an example with our local balancing equations with doubly stochastic
+systems. [14:00 20 Aug]
+
+[ZZZ 20 Aug recording cuts out]
+
+[0:00 21 Aug random walker example with single boundary]
+[14:00 21 Aug explains how a branching process IS a markov DTMC]
+
+You can construct a y_m = x_{n-m} where 0 \leq m \leq n.
+This y is called the reverse chain. It visits the states that X
+did but in reverse.
+
+Let's say we want to find a distribution such that the markov chain
+x and its reverse y cannot be told apart. This is called being
+reversible. This only occurs when the distribution is stationary.
+
+Kolmogorov cycle condition-------------------------------------------
+If X is irreducible then X is reversible iff P_{ij} > 0 implies
+that P_{ij} > 0 and for any loop of states (which we can get to) it
+holds that
+\prod_{i=1}^n p_{x_i x_{i-1}} = \prod_{i=1}^n p_{x_{i-1} x_i}
+
+If Kolmogorov cycle condition holds then X has a stationary
+distribution.
+
+If X is irreducible and positive recurrent then there is a
+*unique* stationary distribution. Moreover if X is also aperiodic
+then all distributions lead to the limiting distribution (which is
+also the stationary distribution.
+[ZZZ Finished 20 Aug]
