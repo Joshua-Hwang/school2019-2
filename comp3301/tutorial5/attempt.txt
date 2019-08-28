@@ -1,0 +1,25 @@
+8.2
+Consider a system in which a program can be separated into two parts: code and
+data. The CPU knows whether it wants an instruction (instruction fetch) or data
+(data fetch or store). Therefore, two base–limit register pairs are provided:
+one for instructions and one for data.
+The instruction base–limit register pair is automatically read-only,
+so programs can be shared
+among different users.
+
+Discuss the advantages and disadvantages of this scheme.
+
+An advantage is that there is a level of security between execution and reading.
+We ensure that an attacker cannot plant data and then execute it.
+
+8.4
+Consider a logical address space of 64 pages of 1024 words each, mapped onto a
+physical memory of 32 frames.
+a) how many bits are there in the logical address
+There are 1024*64 = 65536 words which means 2^16 possibilities which
+needs 16 bits.
+
+b) Since frames have the same number of words as pages (otherwise mapping don't
+work) we have log2(32*1024) = 15 bits.
+
+[ZZZ not done yet]

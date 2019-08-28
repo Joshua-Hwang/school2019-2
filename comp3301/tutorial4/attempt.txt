@@ -1,0 +1,14 @@
+I did it using what I have in my book. Not sure if there's an easier way though.
+
+Denote a timeline and the tasks on top
+
+\| 1 | 2 | 3 | 4 | 5 |
+-+---+---+---+---+---+
+0| 20|   |   |   |   |
+1| 19| 6 |   |   |   |
+2|   | 5 | 2 |   |   |
+3| 19| 4 |   |   |   |
+4| 18|   |   |   |   |
+
+It's preferable to do this ON the lines of a workbook instead of the spaces
+helps clearly define the time.
