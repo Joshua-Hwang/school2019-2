@@ -1,5 +1,4 @@
-Define an OS-------------------------------------------------------------------
-An OS is a program that acts as a middle man between the computer user and the
+Define an OS------------------------------------------------------------------- An OS is a program that acts as a middle man between the computer user and the
 hardware.
 
 The goals of an operating system are:
@@ -853,3 +852,44 @@ setting. But even the simulations can't to everything, high cost and
 environments vary.
 
 [ZZZ Stopped at Week 3 8 Aug]
+
+[ZZZ ch 5,7,8,9]
+Data races---------------------------------------------------------------
+A common issue is two processes taking a common variable into their
+registers, modifying it, then putting it back into the variable.
+If two processes take the same value into their registers at the same time
+then each process will incorrectly change the variable based on old data.
+
+Critical Section Problem
+There are multiple processes with a *critical
+section* where the process changes common variables or updates tables or
+writes to a file, etc.
+
+A solution to this problem would be for each process to ask permission to
+enter critical section in something called an entry section,
+which may then follow with an
+exit section after doing the critical work. The stuff after the exit section
+is called the remainder section.
+
+We mark solutions to the critical selection problem against three properties.
+
+Mutual exclusion ensures if process P is doing critical work then no other
+processes can be doing critical work.
+
+Progress ensures that if no process is in their critical section and a process
+would like to be in it that they are not forced to wait indefinitely for
+the opportunity to do their work.
+
+Bounded Waiting ensures a bound exists for the number of times a process
+is allowed to enter their critical section in a given time frame.
+
+We have seen this kind of problem before when processes require kernel mode
+or userland mode.
+In a preemptive kernel, it's easy to pause the process who's in kernel mode
+and let another process do someting in kernel mode alongside other kernel mode
+processes.
+In a non-preemptive kernel we have to wait for the process in kernel mode
+to get back to userland.
+
+Peterson's solution
+[ZZZ - stopped at slide 13 ch 5]
