@@ -537,7 +537,7 @@ every other state multiplied by the probability state x goes to state y.
 
 This equation is hard to solve in general. Instead we'll attempt to solve
 a Local Balance Equation. They are of the form,
-\pi_x P_{xy} = \pi P{yx}
+\pi_x P_{xy} = \pi_y P{yx}
 and solving these will eventually give us a solution to the global balance as
 well. Local balance seems to be a subset of all possible global balances since
 all local balances are global but not all global are local balances.
@@ -572,4 +572,101 @@ If X is irreducible and positive recurrent then there is a
 *unique* stationary distribution. Moreover if X is also aperiodic
 then all distributions lead to the limiting distribution (which is
 also the stationary distribution.
-[ZZZ Finished 20 Aug]
+
+Poisson Processes-------------------------------------------------------------
+We first introduce this topic with two simpler, examples.
+Consider a random walker that flips a coin and either moves forwards
+or stays still. At each time stage n the result of the coin flip is B_n.
+The overal distance the random walker has gone after n flips is S_n.
+The process S_n is called a *Bernoulli process*.
+
+Now we start to consider continuous time but with discrete counts still.
+We now have a function N(t) which is the continuous analogue of S_n with
+continuous time t. At each jump from N(t) = 0 to N(t) = 1 we become piecewise.
+N(0) = 0 and N(t) \in naturals.
+This is called a *counting process*. We define each T_i as the time when
+the ith jump happens.
+An obvious but vital insight is
+{N(t) \geq n} = {T_n \leq t}
+Which says, if the counter is larger than n at time t then the time this
+happened is less then time t.
+
+Now a Poisson process is a counting process if for any interval I \in reals then
+N(I) \sim Poi(\lambda |I|)
+Any interval in the counting set has a distribution similar to a poisson
+distribution. Also all disjoint intervals must be independent.
+
+[43:14 26 Aug shows some kind of proof/derivation to produce a
+Poisson counting process]
+
+[ZZZ Finished 26 Aug]
+For a Poisson process we have various intervals before each jump in count.
+i.e. from t=0 to t=A_1 called interval A_1, from t=A_1 to t=A_1+A_2 called
+interval A_2. We consider each interval a random process and in fact
+are all iid Exponentials with lambda as the parameter.
+
+We claim if we let (N_t, t \geq 0) be a Poisson process with rate \lambda > 0.
+Then for any fixed time s > 0, any time from 0 to s (N_r, 0 \leq r \leq s)
+and any time in the interval (N(t+s) - N(s), t \geq 0)
+[note that N(t+s) - N(s) is equivalent to N(s,t+s]]. Are independent poisson
+processes AND independent of each other. This is very like the memoryless
+property we see in exponential distributions and the like.
+
+A Poisson process can be recognised by the following definition.
+\prob (N(t+h) = m | N(t) = n) has four possibilities.
+If m < n then there's no chance. It's a counting process, it can't go down.
+If m = n then 1 - \lambda h + o(h).
+if m = n+1 then \lambda h + o(h). Exactly one jump has occurred in the interval.
+If m > n+1 then o(h).
+
+This o(h) is the opposite of the O(h) we see in algorithm analysis.
+We use it to ensure o(h)/h \to 0 when h \to 0.
+
+If we have a process that follows these probabilities then we define it as
+a Poisson process.
+
+[Page 4 Lecture 16 The lecturer then derives a Poisson process from
+t/h Bernoulli processes (one for each point in time) as h \to 0 we
+end up getting the Poisson process]
+
+We now attempt to prove that the times of our counting events in our counting
+process (knowing that the count N(t) = n) has the same distribution as an
+ordered list of uniform random variables. [15:00 28 Aug for the proof]
+
+The PDF of n random variables is 1/t^n in the region and 0 otherwise.
+The PDF of n sorted random variables is n!/t^n in the region (which is now
+smaller btw) and 0 otherwise.
+Think of this like the uniform random variables have been realised. There
+are n! ways of ordering them and we funnel all n! possibilities into the same
+sorted list thus n! \times 1/t^n.
+
+We can simulate a Poisson process in two ways. One which is fast and smart
+and another which is naive.
+
+Naive making use of the fact that the event times are random exponentials:
+T = {}
+T[0] = 0
+n = 0
+while T[n] < t
+    T[n+1] = T[n] + Exp(\lambda)
+    n = n+1
+
+Smart making use of what we've just learnt:
+N = Poi(\lambda*t)
+Generate N Unif(0,t) into list U[]
+Sort U[]
+Return T[k] = U[k]
+
+Non-homogeneous Poisson process-----------------------------------------------
+Previously our Poisson process depended on a constant lambda for all time.
+Instead we consider lambda a function in time. [It's possible to use the
+same derivation as show in Lecture 16]
+
+In essence we get N(a,b] \sim Poi(\int_a^b \lambda(s) \diff s)
+We get the integral in there which is in essence just a summation where
+h \to 0.
+
+Should be noted some of our previous properties we've found for homogeneous
+Poisson processes are no longer true. The interval times are no longer
+exponentially distributed (so no longer memoryless) and they are no longer
+independent.

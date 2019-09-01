@@ -1,4 +1,5 @@
-Define an OS------------------------------------------------------------------- An OS is a program that acts as a middle man between the computer user and the
+Define an OS-------------------------------------------------------------------
+An OS is a program that acts as a middle man between the computer user and the
 hardware.
 
 The goals of an operating system are:
@@ -851,9 +852,6 @@ many variables but perfectly describes what will happen in a real-world
 setting. But even the simulations can't to everything, high cost and
 environments vary.
 
-[ZZZ Stopped at Week 3 8 Aug]
-
-[ZZZ ch 5,7,8,9]
 Data races---------------------------------------------------------------
 A common issue is two processes taking a common variable into their
 registers, modifying it, then putting it back into the variable.
@@ -872,13 +870,15 @@ exit section after doing the critical work. The stuff after the exit section
 is called the remainder section.
 
 We mark solutions to the critical selection problem against three properties.
+If these properties don't hold then it doesn't work.
 
 Mutual exclusion ensures if process P is doing critical work then no other
 processes can be doing critical work.
 
 Progress ensures that if no process is in their critical section and a process
 would like to be in it that they are not forced to wait indefinitely for
-the opportunity to do their work.
+the opportunity to do their work. Note, a process is allowed to hog
+critical mode.
 
 Bounded Waiting ensures a bound exists for the number of times a process
 is allowed to enter their critical section in a given time frame.
@@ -892,4 +892,534 @@ In a non-preemptive kernel we have to wait for the process in kernel mode
 to get back to userland.
 
 Peterson's solution
-[ZZZ - stopped at slide 13 ch 5]
+An example of how it works uses two processes. The processes share two
+variables,
+int turn
+Boolean flag[2]
+turn indicates whose turn it is to enter their critical section
+flag[i] == true implies that the process i is ready.
+
+Both processes follow this algorithm
+do {
+    flag[i] = true;
+    turn = j;
+    while (flag[j] && turn == j);
+    // critical section
+    flag[i] = false;
+    // remainder section
+} while (true);
+
+[Get comfortable with the fact that this algorithm satisfies the three
+requirements for a solution. Past you doesn't know how but is hoping you do.]
+
+Many systems provide a solution by the idea of locking.
+[5.18 onwards shows some nice imlementations for locks using some atomic
+operations]
+
+Mutex locks
+The solutions shown above require work on the programmers part. This kinda
+sucks especially for application programmers. Instead OS designers have
+created a simple mutex lock. You acquire() the lock then release() it.
+acquire() doesn't wait for the lock but instead results in a busy wait
+scenario. This kind of lock is called a spinlock.
+
+Semaphores provide a more sophisticated way to synchronise.
+Access of a mutex is done via two atomic operations; wait() and signal()
+[aka P() and V()]
+
+wait(S) {
+    while (S <= 0); // busy wait
+    s--;
+}
+
+signal(S) { S++; }
+
+You have likely seen these in CSSE2310. A clear use case for these is queues.
+You add to the queue and signal the semaphore (acting like a counter).
+Once a process/thread is willing to work on the next element on the queue
+they'll dequeue it and drop the semaphore by one.
+
+You can also use semaphores by jumping between 0 and 1 which essentially
+becomes mutex lock; aka binary semaphore.
+
+The implementation for wait you saw above makes use of busy waiting.
+This is certainly not a good way of doing things. We reimplement semaphores
+using a waiting queue for each semaphore and a ready queue.
+We now havw two new operations for the queues; block() puts the process that
+called block onto the waiting queue, wakeup(P) removes a process P from the
+waiting queue and puts it into the ready queue.
+
+The semaphore is now a struct containing the int value for counting and
+a pointer to a linked list of processes.
+
+wait(semaphorek *S) {
+    S->value--;
+    if (S->value < 0) {
+        add this process to S->list;
+        block();
+    }
+}
+
+signal(semaphore *S) {
+    S->value++;
+    if (S->value <= 0) {
+        remove a process P from S->list;
+        wakeup(P);
+    }
+}
+
+In this way each process waiting for a signal is put on a waiting list.
+The OS doesn't even bother running this process until the semaphore let's us
+know that it's ready for a new process. From here we dequeue some process
+(unimportant which) and get it ready for running.
+
+We introduce some new terms needed for describing new problems.
+Deadlock is exactly as you've seen in CSSE2310. Requiring two deadlocks
+means that a deadlock state can occur.
+
+Deadlocks can occur if four conditions hold simulataneously
+1. Mutual exclusion means a single process can use a resource at a time.
+2. A process is already holding a single resource and is waiting to hold another aswell
+3. No preemption, it cannot be released when the process wants to
+4. Circular wait, everyone wants what everyone else has
+
+Starvation is the event when a semaphore will never be removed from a semaphores
+waiting list. Starvation occurs in a deadlock.
+
+Priority Inversion is where a lower priority process holds a lock needed
+for a higher-priority process.
+
+The new synch schemes we'll explore are first explained in the context of these
+classic problems:
+Bounded-buffer problem. This is where you have a consumer and producer process
+who are adding and taking from a queue. The problem is, can you construct such
+a pattern with your synching tools. [5.32 shows an implementation with
+semaphores]
+
+Reader-Writers problem. This is where we have processes that are readers and
+those that are writers (can read and write). We should allow multiple readers
+but only one writer.
+There are two variations to this problem.
+1. No reader is kept waiting unless the writer is doing something
+2. Writer performs the modification ASAP
+In the first case the writer may be forced to wait for readers to finish
+reading while the second case may kick readers out.
+[5.35 shows an implementation with semaphores]
+
+Dining-Philosophers problem. Imagine a round table with a chopstick on either
+side of each chair. The problem is that two neighbouring chairs are sharing
+a single chopstick. Thus given 5 philosophers there are only 5 chopsticks.
+Each philosopher must use both chopsticks to eat and there is no way for the
+philosophers to communicate.
+
+This is obviously difficult since deadlocks can occur. A potential solution
+is to somehow allow a philosopher to only pick up both chopsticks when
+both are available. But even then, what happens if two philosophers
+attempt to reach for their chopsticks?
+You make use of an asymmetric solution. An odd numbered philosopher picks up
+their left chopstick first while an even numbered philosopher picks up their
+right chopstick first.
+
+Higher level sync constructs-------------------------------------------------
+A monitor is a higher level construct that can be used for shared variables.
+The monitor object contains variables and methods in it. Only one process is
+allowed to call the procedures and access the variables within it. It can
+be implemented with semaphores (semaphores can be implemented with it as well).
+
+Condition variable. Condition variables are like events.
+Think of a condition variable x like a gate.
+Processes call x.wait() and are stuck until someone calls x.signal().
+Once x.signal() is called then all processes that are waiting in x.wait()
+are woken up.
+A choice that must be made is which process should x.signal() release. FCFS
+is not adequate for the most part. Instead we should release the process
+with the highest priority. It could be implemented with a x.wait(c) where
+c is the priority of the process.
+[ZZZ yeah don't understand the problems with condition variables as shown in
+5.47 so I'm gonna let you figure that out]
+
+[Implementation for the above are show from 5.48 onward]
+
+Single resource allocation uses same idea as the condition variable.
+Consider ResourceAllocator R such that R.acquire(t) specifies the amount of
+time t we will use the resource for. From here the ResourceAllocator determines
+when you're allowed to access the resource. Afterwards you call R.release
+[ZZZ I don't see the difference]
+
+Alternative sync ideas-------------------------------------------------------
+Transactional memory
+Make the read-write operations to memory atomic.
+
+OpenMP and Function Programming Languages both make use of fancy compiler
+tricks to parallelise programs.
+
+Real world sync examples------------------------------------------------------
+Solaris synchronisation
+Uses adaptive mutexes, condition variables, readers-writers and turnstiles.
+[slides don't say anything about turnstiles]
+
+Windows synchronisation
+Uses spinlocks, dispatcher objects which act like mutexes, semaphores
+events and timers.
+
+Linux synchronisation
+Uses semaphores, atomic integers, spinlocks, reader-writer both versions
+
+Pthreads synchronisation
+Pthreads is an OS-independent API
+It provides mutex locks and condition variables
+It also sometimes provides read-write locks and spinlocks
+
+System model-----------------------------------------------------------------
+We construct a graph to visualise the system.
+[7.8 shows the symbols we'll be using]
+
+From the graph we observe that if the graph doens't contain a cycle then
+there aren't any deadlocks. If there are cycles then there MIGHT be a deadlock.
+
+Deadlock prevention and avoidance---------------------------------------
+We intend to find a way to deal with deadlocks either we
+prevent deadlocks (deadlock prevention) or we avoid deadlocks
+(deadlock avoidance).
+We could also find a way to handle the deadlock state and recover. You could
+also ignore the problem and pretend deadlocks never occur like most modern
+operating systems do.
+
+In deadlock prevention we solve the following:
+Mutual exclusion is not required for sharable resources.
+Hold and wait, processes aren't allowed to hold multiple resources. Another
+option could be to allocate all resources when the process first begins.
+This could obviously cause starvation.
+
+No preemption. If a process is holding a few resources and would like another
+yet it can't get it then all resources it was holding will get released.
+The process then has to rewait for all of the resources. The process will
+restart when it can get all its resources (and the one it wants) back.
+
+Circular wait. We impose a total ordering of resources. From here when
+processes request resources they have to do it in the defined order.
+
+In deadlock avoidance, the processes must tell the OS a priori,
+what resources they would like to use beforehand.
+This allows a deadlock-avoidance algorithm
+to dynamically examine the resource state to ensure a deadlock condition
+may never occur. The algorithm determines if allocating the resources to a
+particular process will keep the allocation in a *safe state*.
+
+A system is in a safe state if there exists a sequence <P_1, P_2, ..., P_n>
+of ALL the processes in the systems such that for each P_i, the resources
+that P_i can still request can be satisfied by currently available resources
++ resources held by all the P_j, with j < i. That is:
+* If P_i resource needs are not immediately available,
+then P_i can wait until all P_j have finished
+* When P_j is finished, P_i can obtain resources, execute, return allocated
+resources, and terminate
+* When P_i terminates, P_{i+1} can obtain its needed resources, and so on
+In this safe state no deadlocks can occur.
+
+[It's likely a resource allocation graph will be on the exam along with
+determining if it's in a safe state or not. 7.23 shows some examples of
+safe and unsafe graphs.]
+
+Banker's algorithm attempts to implement deadlock avoidance. In Banker's
+algorithm each process must make a priori claim of maximum use. A process
+may have to wait for a resource and when it gets the resource it must return
+it in finite time.
+[See 7.28 for details] Essentially it groups the resources
+into groups and calls each element of the group an instance. The process
+becomes calculating matrices where the rows are the processes and the columns
+are the resource types. Safety is also checked.
+
+Deadlock recovery-------------------------------------------------------------
+The alternative solution is to somehow recover from a deadlock state.
+If we create and maintain a wait-for graph (different from a resource
+allocation graph) then we can simply check this graph for cycles periodically.
+If a cycle exists then we've detected a deadlock. Unfortunately all cycle
+detection algorithms require n^2 operations.
+
+A wait-for graph is essentially a resource allocation graph but with the
+resource nodes removed. Processes simply pointing to other processes.
+The graph is represented as a vector and stuff is done to it.
+[see 7.37 for details]
+
+The question now becomes how do you recover? We have a few options.
+* Abort all deadlocked processes
+* Abort one process at a time until the deadlock cycle is eliminated.
+In the second case we need to determine which process should be eliminated
+first.
+
+From there we select the victim, then we rollback this victim to some previous
+safe state. It's likely that our selection algorithm will choose the same
+victim over and over again so we should also change the selection to make
+that process less likely.
+
+Memory-------------------------------------------------------------------------
+In our logical address apce the operating system takes the first few addresses
+(e.g. 0 to 25600). For other processes we partition a portion of memory.
+This segment is defined by a base (the smaller address) to a limit. On every
+memory access the CPU needs to check that the access is within the limit and the
+base.
+
+Programs are stored on disk in storage. Those programs need to be loaded into
+memory for the CPU to run them as processes. The programs that are waiting to
+enter memory are put into the input queue. Processes are free to be placed
+anywhere in memory. The beginning address 0000 is not the only option.
+
+Imagine you're writing a piece of code, how does the OS determine the memory
+for this program? When the compiler has read the program it then needs to decide
+how to order the memory in your program in an preferable way. A compiler
+typically binds these symbolic addresses (like a stack variable called count)
+to relocatable (relative) addresses such as "14 bytes from the beginning of
+the module". The linkage editor or loader (I call linker) binds the relocatable
+addresses to absolute addresses (such as 17014).
+
+Address binding can happen at any of the three stages:
+Compile time
+When the program compiles the variables and memory are given
+absolute addresses. If the memory location is required to change then the
+program would be forced to recompile. MS-DOS.COM programs did this.
+Load time
+Final binding to absolute addresses is done just before loading
+the program into memory.
+Execution time
+The program can be moved even during execution of the process.
+To do this we need special hardware. Most general-purpose OSs use this method.
+
+Like taught in CSSE2310 the memory addresses generated by the CPU
+are called logical or virtual addresses. While the memory unit talks in
+physical addresses.
+
+Logical and physical addresses are the same in compile-time and load-time
+address-binding schemes but not in execution time address binding schemes.
+
+A memory management unit (MMU) is a piece of hardware that maps the logical
+address space onto the physical address space. There are many different methods
+for the MMU to operate.
+
+Perhaps the simplest form is to map each process to a new base; in this method
+the base register is now called to relocation register. For example
+say the memory for a user process is offset by 14000 then an access to
+logical address 0 will lead to physical addres 14000 and logical address 346
+will map to physical address 14346.
+
+Dynamic loading---------------------------------------------------------
+An optimisation trick is to only load the necessary routines on demand.
+The unloaded routines are kept on disk in a relocatable load format. This
+method is preferable for low memory and also for routines that are rarely
+called but have massive code bases. The OS does not need to add any new
+features for this optimsation. It is up to the user to make use of this
+optimisation.
+
+Linking---------------------------------------------------------------------
+Static linking adds all the libraries to the final binary.
+Instead we have a binary that only gets linked at execution time much
+like in dynamic loading. This dynamic linking is also known as shared libraries.
+With dynamic linking a stub is placed in the binary which is used to locate
+the appropriate memory-resident library routine.
+The OS checks if the routine is in memory. If it is then the stub gets
+replaced with the routine address otherwise the routine gets loaded in then
+linked.
+It's important to consider the specific version of the system library we're
+linking to. Perhaps incompatible version may cause surprises.
+
+Standard swapping------------------------------------------------------------
+A process can be swapped out of memory and stored on storage and be brought
+back for continued execution. The place where the process gets stored on disk
+is called a backing store. o
+
+It's important to only swap the lower priority process so higher priority
+processes can take valuable memory space. The system maintains a ready
+queue with ready-to-run processes which have memory images on the disk.
+
+Now a question arises, does the swapped out process need to swap back
+in to the same physical addresses? This is determined by the binding
+method we have chosen.
+
+Swapping out costs time; proportional to the size of the process that
+needs to get swapped out. This time is called the transfer time.
+When the CPU intends to switch to a process that isn't available in memory
+it must grab it from storage. This could make the context switch time
+very long. It can be reduced slightly by knowing the *exact* amount
+of memory the process is using.
+
+When swapping out processes we have to keep in mind that we're swapping out
+chunks of memory; not just CPU attention. Consider a pending I/O operation.
+If the process that's requesting I/O gets swapped out then the physical
+memory location will be replaced with a different process. If the I/O operation
+comes back to this new process then this could cause issues in memory.
+There are two main ways to avoid this scenario:
+Just prevent swapping when I/O is being performed.
+Let the kernel handle all I/O. This is known as double buffering and it
+comes with additional overhead.
+
+This standard swapping is rarely implemented in modern OSs since it is too
+slow. A modified version of standard swapping is implemented instead and
+is used in the most extreme cases.
+
+In the mobile world swapping is not done at all. This is because the tiny
+flash memory on mobile devices is precious storage space. Flash has a small
+amount of space, limited number of write cycles and has poor throughput.
+
+iOS asks apps to volutarily relinquish allocated memory. Read-only data
+get thrown out of memory and reloaded from flash on demand.
+Android terminates apps if there is little free memory but first writes
+the application state to flash for fast restart. [This is kinda like swapping
+isn't it?]
+
+Contiguous allocation----------------------------------------------------
+As we've seen memory is in short supply and should be treated as such.
+One possible way of maximising memory is to find a way to fit all the
+processes together as tightly as possible in memory. Contiguous allocation
+is a primitive way to do just that.
+Memory is usually split into two sections.
+The resident operating system usually held in the first few addresses of
+memory. After that we have the user processes which are held in high memory.
+Each process is contained in a single contiguous section of memory.
+
+The relocation registers mentioned before are used as boundaries for
+each process.
+
+If the bounds are dynamic and we keep some of the kernel code saved
+in storage rather than running in memory then we call it transient
+operating system code and this allows the kernel to change sizes.
+
+Multiple partition allocation----------------------------------------------
+The memory is split into fixed size partitions. When a partition is free
+it is available for another process to take it. The degree of multiprogramming
+is such a system is limited by the number of partitions.
+
+Another version is variable partition where a *hole* is empty space for a
+process to fill. From INFS2200 you know there's some issues with this
+kind of method because of fragmentation.
+
+There are a few methods on how to fill holes with processes.
+First-fit. Allocate the first hole big enough
+Best-fit. Allocate the smallest hold big enough
+Worst-fit Allocate the largest hole.
+
+There are two measures for fragmentation.
+External fragmentation is when there's technically enough space to fulfill
+a process but the space is fragmented such that it can't be used.
+Internal fragmentation is when the space given to the process is more than
+required.
+
+First fit analysis reveals that that 50% of blocks get lost to fragmentation.
+This means a third of memory may be unusable aka the 50 percent rule.
+[ZZZ No idea where the 1/3 bit came from]
+
+Another options is to just move the processes around in memory. This is
+known as compaction. Of course we can only do this if relocation is
+dynamic on execution. Moving processes also hits the problem of swapping
+and I/O requests. Thus doiuble buffering is also required.
+
+Segmentation----------------------------------------------------------------
+Segmentation of memory is a scheme that intends to marry the programmer's
+view of memory with the physical hardware.
+
+In this paradigm memory is viewed as a space where separate segments exist.
+In the physical space we then split our memory into segments.
+
+The logical address consists of <segment-number, offset>
+The sgement table maps this two dimensional logical address to
+a two dimensional physical address. It contains the base (where
+the segment resides in memory) and the limit which specifies the
+length of the segment.
+
+Additional tools for this setup include:
+Segment-table base register (STBR) points to the segment table's location
+in memory
+Segment-table length register (STLR) indicates the number of segments
+used by a program (segment s is legal if s < STLR)
+[8.32 of the book gives a great diagram]
+
+Segmenting the memory offers protection from invalid and illegal read, write
+and execute privileges.
+
+Paging----------------------------------------------------------------------
+Previously we have required the processes are maintained in a single contiguous
+space in memory. Instead we allow for noncontiguous memory. This helps
+with fragmentation and avoid problems with varying size memory chunks.
+
+We divide our physical memory into fixed size blocks called frames and
+divide our logical memory into blocks of the same size called pages.
+Internal fragmentation is still a problem however as we'll see.
+
+Internal fragmentation is on average 1/2 frame size. Thus it makes sense
+to reduce the frame size. This is a tradeoff since the number of frames
+we need to keep a track of increases.
+
+This process requires that we keep a track of all free frames as to know
+where we may map new pages. A page table is used to keep track of the mappings.
+
+Every access requires two access operations; one for the page table and the other
+for the frame. We can solve this issue with a special fast-lookup hardware
+cache called associative memory or translation look-aside buffers (TLBs).
+The TLB works by acting like a dictionary with keys and value pairs.
+The hardware is made in such a way that the key gets checked in constant time.
+The value in the TLB is the cached value of the memory so that gets returned
+without checking the memory.
+Some TLBs store address space identifiers (ASIDs) in each TLB entry. This
+uniquely identifies each process to provide address space protection for that
+process.
+On a TLB miss, the value is loaded into the TLB for faster access next time.
+But TLBs are typically small only around 64 to 1024 entries so there must
+be a policy for removal and replacement.
+[8.43 shows a diagram using TLB]
+
+The page table itself is stored in memory and is defined by two registers.
+Page-table base register (PTBR) points to the page table
+Page-table length register (PTLR) indicates size of the page
+
+Effective access time (EAT) is the calculation to find the average memory access
+considering we have a TLB. The calculation requires the hit ratio for
+the TLB, the access time for the TLB and the access time for the memory.
+
+Each frame has a corresponding bit for read or read-write. Maybe even an
+execute only if we'd want to implement that. We can also add a valid-invalid
+bit attached to the page table to check if the process is allowed to access
+those parts of memory. Another option is to use a page-table length register
+(PTLR) which defines the size of the page table, any page table entries beyond
+this register are illegal.
+
+Shared pages-------------------------------------------------------------
+Another option is shared code. This is where we have a single copy of read only
+(reentrant) code which multiple processes can share. (text editor, compilers,
+window systems).
+This is the same idea as shared resources with multiple threads.
+[8.48 for a diagram of this shared resource]
+
+In this form we need to reorganise our pages such that each process has their
+own page table.
+
+Structure of page table---------------------------------------------------
+There are a few options for structures. These options help to reduce the
+size of the page table in memory.
+
+Hierarchical page tables
+This is the two level page table we've seen in CSSE2310. [See 8.51 for
+a visual]
+
+The address requires to logical address offsets. One for the outer page table
+then another for the second page table.
+
+This structure may not be the most ideal. Instead try a hashed page table.
+We hash the logical address (with the possibility of collisions). To handle
+the collisions each hash table is attached to a linked list which we trudge
+for the correct mapping.
+
+The third structure is called inverted page tables. This is very much like
+the original page table except the PID is part of the address. This PID along
+with the page number is then searched in the page table
+(this is different to providing the offset in the standard address).
+A hash table can be combined with this structure to reduce space even
+further.
+
+Oracle SPARC solaris intends to be very efficient with low overhead. It
+makes use of hashing but in a more complex way.
+It uses two hash tables. One for the kernel and one for the user processes.
+It uses contiguous areas of memory which is more efficient than mapping
+individual pages.
+[Other insane things I don't understand. Look at 8.61 for information
+and other examples]
+
+[ZZZ finished ch 8]

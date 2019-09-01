@@ -1,0 +1,13 @@
+1. is done
+
+2. is done
+
+3. is not done
+    f) What is this question even asking us to do. Are we meant to merge the even and odd limiting distributuions? Then what?
+    h) This is pretty simple actually (refer to lecture examples)
+    i) This is also simple
+
+4. is not done
+    b) Is it as simple as setting p_x to p_x and q to anything we want since we should be moving towards the desired distribution?
+    c) Needs (b)
+    d) Needs (c)
