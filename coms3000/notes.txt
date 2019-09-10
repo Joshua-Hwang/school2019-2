@@ -1,3 +1,15 @@
+Prereq maths------------------------------------------------------------
+For discrete logarithms to exist and be unique (with respect to equivalence
+classes)
+
+log_a c mod n
+
+n needs to be prime
+a needs to be a generator
+
+I hope you remember the extended euler's algorithm
+
+Information security------------------------------------------------------
 There are three things we can do with risk,
 Accept it,
 Transfer it (insurance),
@@ -6,7 +18,6 @@ Reduce it
 Residual risk is the amount of risk that remains after security measures
 have been applied.
 
-Information security------------------------------------------------------
 Information security is all about protective measures.
 
 Some types of protective measures:
@@ -290,7 +301,7 @@ The US Government
 AES-128 is used for SECRET classification
 AES-192 or AES-256 for TOP SECRET
 
-AES modes-----------------------------------------------------------------------
+AES and block cipher modes-----------------------------------------------------
 ECB (electronic book mode)
 This involves generating a single key and XORing this key to each block of
 input. This is obviously weak since we're using the same key for mutliple
@@ -298,18 +309,60 @@ plaintext and there is not dependency between the blocks.
 
 The ECB mode is simple, implementation, parallelisable,
 errors only affect that single block (blocks aren't dependent) but it is weak.
+Replay attacks are possible. If the block sizes are small enough we could
+potentially build a table of dictionary attacks for a block cipher.
 
 CBC, CFB and OFB build off of ECB by embedding dependency and feedback.
 
-CBC uses a single key but now the encrypted block is XORed with the next message
+CBC (cipher block chaining mode)  uses a single key but now the encrypted block is XORed with the next message
 block before being XORed with the key. The first block is XORed with an
 initialisation vector (IV). Decryption involves XORing the key then XORing the
-IV (in that order).
+IV (in that order). CBC cannot be parallelised since dependency.
 
 Turns out IV does not need to be secret but it should be changed frequently.
 
-CBC can actually self-recover from bit errors.
-CBC is the most commonly used cipher mode.
+CBC can actually self-recover from bit errors. [ZZZ I have no idea how or why]
+This property could be used to determine the
+differences caused by changes in bits.
+CBC is the most commonly used cipher mode but may soon be overtaken by Counter
+Mode.
+
+CFB (cipher feedback mode) is very similar to CBC. We start with an initial
+vector and encrypt it. We take this encrypted vector and XOR the message onto
+it; this is our first cipher block. We take this cipher block and use this as
+our new initial vector which we encrypt and XOR the message onto.
+
+We can extend the CFB by introducing an arbitrary k bit shift after getting the
+new intial vector. We introduce this k shift so we can get rid of error bits.
+By shifting k bits in an n sized block we can get rid of the error after n/k + 1
+repeats (n/k block and the initial block that started it).
+
+CFB can actually recover from a whole block of the cipher getting deleted.
+[ZZZ no idea how again]
+
+OFB (output feedback mode) provides a slight modification of CFB. In OFB we take
+our intial vector and encrypt it. We then take this encrypted block and use it
+as the next initial vector. After this we take the same encrypted vector and XOR
+it to the message. Note in this model each following message is not
+dependent on the previous one. Only the number of times the initial key was
+encrypted.
+
+Obviously if an error occurs in the setup then it won't propogate to the other
+messages because the messages are independent of previous message blocks.
+
+This method also allows us to optimise via precomputing the key and encryptions.
+This method cannot recover from the loss of an entire ciphertext block however.
+
+CTR (counter mode) we use a completely different approach. We generate a nonce
+and a counter. After every round we will bump up the counter and either XOR,
+concatenate or add it to the nonce (if the nonce isn't random then we must only
+use concatenation). We pass these nonce+counters into our encryptor and then
+XOR or message onto the encrypted part.
+
+Much like in the OFB the ciphers aren't dependent on each other but simply
+dependent on the counter size. This means that errors aren't propogated.
+
+[00:00 week 6 see video for something]
 
 Side Channel Attacks------------------------------------------------------------
 are attacks against the implementation rather than the
@@ -418,6 +471,54 @@ AES Galois Counter Mode
 Elliptic Curve Algorithm
 SHA-2 Data Integrity Verification
 
+Asymmetric encryption-------------------------------------------------------
+From the example solutions below we need more bits and more computing power to
+ensure an asymmetric system is secure compared to a symmetric one. A solution
+might be to intiate a conversation with an asymmetric system then exchance
+symmetric keys to continue in a more efficient symmetric system.
+
+Diffie-Hellman---------------------------------------------
+In the Diffie-Hellman key agreement protocol we make use of the fact that
+discrete logarithms are hard.
+Alice and Bob wish to communicate.
+1. Alice and Bob initially agree on large prime p and large generator g.
+2. Both Alice and Bob choose random x and y and send g^x mod p and g^y mod p
+to the other party respectively.
+3. Alice and Bob generate the key both by taking g^{xy}. Doing this requires
+knowing g^x and y and g^y and x which both Alice and Bob have but no
+eavesdropper could.
+
+Of course this all breaks down if the eavesdropper can actually intercept and
+communicate as well. This is a Man in the middle (MITM) attack. We need some way
+authenticate Alice and Bob.
+
+This is not a trapdoor one-way function however since this is a public key
+sharing protocol and not a workable cipher.
+
+RSA------------------------------------------------------------------
+Name after the last names of Ron Rivest, Adi Shamir and Leonard Adleman.
+We take two primes p and q.
+n = p*q
+choose two values e and d such that
+e*d = 1 mod (p-1)(q-1)
+Now encrypt the message m into cipher c as such
+c = m^e mod n
+m = c^d mod n
+
+Here d is the secret key that allows decryption.
+
+According to RSA Security (2003) 1024 bit RSA key is equivalent to 80 bit key of
+a symmetric cipher. This is because you need to factor 1024 bits rather than
+brute force it like in symmetric keys.
+
+2048 bit RSA ~ 112 bit symmetric key
+3072 bit RSA ~ 128 bit symmetric key
+
+Elliptic Curve Cryptography-------------------------------------------
+Encryption systems like El Gamal are based on discrete logarithm problems.
+Elliptic curce space is preferred since best known algorithms known for
+computing discrete logarithms or factoring become much slower in ECC.
+
 Multi-factor authentication------------------------------------------------
 Two-factor authentication involves using one of the two methods:
 Something you know and something you are (password and fingerprint)
@@ -439,7 +540,7 @@ Performance (must be fast to recognise)
 Acceptability (are people okay using this body part for identification)
 Circumvention (how easy to trick the system and perform replay attacks)
 
-Tiny fingerprint features calle Minutiae are stored instead of an image.
+Tiny fingerprint features called Minutiae are stored instead of an image.
 
 Verification mode is a one-to-one match with a single template in the database.
 Identification mode is a one-to-many match.
@@ -458,4 +559,122 @@ input.
 I'm trusting that you can actually calculate the false match and false non-match
 [take a look at slide 30 of week 5 biometrics]
 
-[ZZZ Stopped at 26 Aug Week 5]
+Authentication-----------------------------------------------------------------
+All this fancy asymmetric key cryptography doesn't hold up to MITM attacks.
+RSA offers a solution. Since encryption and decryption are the same thing in RSA
+we can actually "decrypt" first then "encrypt". The only person that can decrypt
+is the one who possesses the secret key thus it makes a good digital signature.
+
+To prove you identity you decrypt whatever they send your way and then echo it
+back to them.
+
+RSA can also be used to verify a file. All we have to do is send the file but
+"decrypted". The problem is that RSA is slow and a simple file would be a pain
+to encrypt and decrypt. Instead we take the file and hash it so we have a small
+fingerprint of the file. We then "decrypt" the hash and send the original file.
+This way the customer can take the hash of the received file themselves and
+verify accordingly.
+
+There still remains a problem. The initial step of mapping an identity to a key.
+We can solve this using a trusted third party that will vouch for an
+identity-key binding. The document created from the third party vouching for
+identity is called a digital signature.
+
+Much like in MATH3302 we create a pyramid of trust. At the top we have a trusted
+authority (Root CA Certificate) then we have bunch of untrusted authorities
+below it (and some having certificates from other untrusted authorities which
+eventually lead to a certificate for the root authority. This is called to
+certificate chain. Trust is bootstrapped via other means (use your imagination).
+
+An example of a certificate is the X.509. The version 3 certificate is
+Certificate
+- version
+- serial number
+- algorithm id
+- issuer
+- validity (valid thru)
+- subject
+- subject's public key info
+  - public key algorithm
+  - subject's public key
+- issuer unique identifier (optional)
+- subject unique identifier (optional)
+- extensions (optional)
+...
+- certificate signature algorithm
+- certificate signature
+
+When the private key is compromised/leaked we need to do a few things.
+Stop using the key entirely, revoke the certificate, ensure programs and
+browsers are constantly checking validity of certificates.
+The CA adds the certificate to a Certificate Revocation List (CRL) which the CRL
+publishes.
+
+"A Public Key Infrastructure (PKI) is a set of hardware, software, people,
+policies and procedures needed to create, manage, distribute, use, store and
+revoke digital certificates."
+
+Message Authentication Codes----------------------------------------------------
+Asymmetric cryptography isn't the only way to authenticate. We now explore a
+symmetric key authentication system.
+Suppose Alice and Bob both know the secret key K. Alice sends a message m and a
+signature MAC created by MAC = h(K || m) where h is some one way hash.
+
+Certain hash functions are not secure like SHA-1, SHA-2 and md5 which are
+vulnerable from the Merkle–Damgård construction. They are susceptible to
+length extension attacks [never explained].
+Instead we use HMAC which solves this issue.
+HMAC(K,m) = H((K XOR opad) || H((K XOR ipad) || m))
+where opad is the inner padding, constant
+ipad is the outer padding also constant
+HMAC is the most widely used MAC currently.
+
+Should be noted that HMAC isn't the only solution. Using SHA-3 for the MAC is
+also possible and is still immune to length extension attacks.
+
+TLS/SSL------------------------------------------------------------------------
+Secure Socket Layer (SSL) also known as Transport Layer Security (TLS)
+sits between the application layer and a reliable transport layer.
+
+TLS has the following main features.
+Handshake protocol which establishes a shared secret key and negotiates which
+cipher to use.
+Cipher Change protocol escalates connection to use the cipher.
+Alert protocol reports errors
+Record protocol provides the security and is the main part.
+With these features SSL provides; key establishment, authentication,
+confidentiality and integrity.
+
+The record protocol works as such.
+First fragment the message into parts. Each part is compressed then a MAC is
+added to each part. The entire segment is then encrypted and then the transport
+layer header is added.
+
+HTTPS (HTTP over SSL) uses port 443 compared to standard HTTP which uses 80.
+
+The cipher suite we decide from is represented as such.
+TLS_RSA_WITH_DES_CBC_SHA
+TLS_DH_anon_WITH_RC4_128_MD5
+
+where the RSA or DH_anon is the key establishment
+DES_CBC or RC4_128 is the cipher and
+SHA or MD5 is the HMAC used.
+
+In SSL the server MUST authenticate itself during the handshake. The client and
+authenticate themselves optionally.
+
+Though the standard of SSL is sound and cannot be attacked (yet),
+implementations have vulnerabilities.
+Heartbleed was an implementation bug in OpenSSL.
+You could also ask servers and browsers to downgrade SSL version in a
+version rollback attack.
+
+[59:00 week 7 video]
+
+Complete aside----------------------------------------------------------------
+The idea of using rwsr-xrwx (where s is the SUID or set user id feature) is
+called the access control list. An access control list has users (subjects)
+and groups which have permissions to do certain operations (access operations)
+on certain objects.
+
+[ZZZ FINISHED WEEK 7]

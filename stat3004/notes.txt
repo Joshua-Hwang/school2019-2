@@ -483,7 +483,7 @@ If x \to y AND y \to x then we say the x and y communicate.
 The relation \to is transitive since give x \to y and y \to z then
 x \to z. [Proof of this at 32:00 13 Aug]
 
-If x is recurrent and x \to y then y is also recurrent.
+If x is recurrent and x \to y then y is also recurrent and y \to x.
 [Proof at 47:00 13 Aug]
 
 A set of states in a Markov system is called a communicating class
@@ -546,8 +546,6 @@ This is just the balanced flux equation from STAT2004.
 We solve an example with our local balancing equations with doubly stochastic
 systems. [14:00 20 Aug]
 
-[ZZZ 20 Aug recording cuts out]
-
 [0:00 21 Aug random walker example with single boundary]
 [14:00 21 Aug explains how a branching process IS a markov DTMC]
 
@@ -599,7 +597,6 @@ distribution. Also all disjoint intervals must be independent.
 [43:14 26 Aug shows some kind of proof/derivation to produce a
 Poisson counting process]
 
-[ZZZ Finished 26 Aug]
 For a Poisson process we have various intervals before each jump in count.
 i.e. from t=0 to t=A_1 called interval A_1, from t=A_1 to t=A_1+A_2 called
 interval A_2. We consider each interval a random process and in fact
@@ -657,6 +654,9 @@ Generate N Unif(0,t) into list U[]
 Sort U[]
 Return T[k] = U[k]
 
+Adding two Poisson processes \lambda_1 and \lambda_2 will give another with
+\lambda_3 = \lambda_1 + \lambda_2. This is called the superposition of PP.
+
 Non-homogeneous Poisson process-----------------------------------------------
 Previously our Poisson process depended on a constant lambda for all time.
 Instead we consider lambda a function in time. [It's possible to use the
@@ -670,3 +670,39 @@ Should be noted some of our previous properties we've found for homogeneous
 Poisson processes are no longer true. The interval times are no longer
 exponentially distributed (so no longer memoryless) and they are no longer
 independent.
+
+Should be noted that dijoint areas are still independent.
+
+[00:00 2 Sep has an example of calculation]
+
+Superposition of nonhomogeneous Poisson processes will actually give another
+Poisson process.
+
+Spatial Poisson Process---------------------------------------------------
+AKA Poisson Random Measure and the Law of Small numbers
+[see 35:00 2 Sep for why]
+We have previously used Poisson processes
+over a single dimension (time for example).
+We extend this model for multiple dimensions.
+
+We rebuild the model and derive new but natural extensions of the original
+assumptions.
+
+Previously we have that the count should start at 0 at time 0.
+Now we have that the empty set (no space) should have 0 count.
+
+The count in area A is determined by N(A) ~ Poi(\lambda |A|) where is the
+area/volume measured to a single number naturally (probably integrate).
+(This is for homogeneous, for nonhomogeneous expect integration with weighting).
+
+Disjoint areas are still independent.
+
+[ZZZ Doing 2 Sep]
+
+Thinning Nonhomogeneous Poisson Process------------------------------------
+This is a subset of the nonhomogeneous poisson processes which are easy
+to calculate on a computer. [see 00:00 Sep 3 for more information]
+
+Essentially we have an upper bound \lambda and we make it variable by
+applying a probability that the point gets accepted p. This p is variable with
+time so it might increase/decrease over time. Now \lambda(t) = p \times \lambda.

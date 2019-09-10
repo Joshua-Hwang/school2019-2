@@ -1422,4 +1422,136 @@ individual pages.
 [Other insane things I don't understand. Look at 8.61 for information
 and other examples]
 
-[ZZZ finished ch 8]
+Optimisations with virtual memory----------------------------------------------
+Using a virtual memory mapping we can do some nice optimisations. For one we
+can map different parts of virtual memory to the same page/frame. This allows
+us to use shared libraries which are sometimes stored in between the heap and
+the stack. Keep in mind the stack grows from higher addresses downward while
+the heap grows upward.
+
+Deamnd paging---------------------------------------------------------------
+Another neat trick is to partially bring a process into memory that had been
+swapped out. We simply bring in the pages of memory that are needed instead of
+bringing the entire process. This is called demand paging.
+
+To figure out whether a virtual address is mapped to an actual location in
+memory, the page table is given a valid or invalid bit. When it's set to
+invalid we know we need to retrieve from storage otherwise it's the same
+paging as before.
+
+If there's a reference to a page but the page table
+has the invalid bit set then the operating system will handle it.
+It will first look at the other tables, if it finds the address is invalid
+in any way then it aborts otherwise we assume it's in storage.
+We find some free space in memory and schedule a disk operation to retrieve our
+desired page. We then indicate in the table that our validation bit is set.
+
+This demand paging requires hardware support since we need to add and modify a
+bit in each entry to notify ourselves of valid and invalid.
+
+There are three major activities for deamnd paging; servicing the interrupt
+(aka the page fault), read the page from storage (this takes the
+longest), restart the process.
+
+Obviously this entire process takes a long time. To measure the Effective
+Access Time (EAT) we need to know the page fault rate which is the chance
+we hit a page fault. From there the equation should be simple.
+
+In the real world we find that 1/1000 page fault rate incurs a slowdown by a
+factor of 40.
+
+There are certain optimisations that can be made to this process. We can
+attempt to make the swap space I/O faster than the file system even if its
+own the same device. We can do this by letting creating larger chunks for swaps
+but also requiring less storage management than a long-term organised file
+system.
+
+We could also a make a copy of the process at load time making the move
+faster [ZZZ don't know how]. This system is used in older BSD Unix.
+Of the same ilk we could drop the page frames we know aren't important. This
+method is used in Solaris and current BSD.
+
+We use the same idea as swap spaces. We create a modify (dirty) bit to denote
+if the page has been modified.
+
+We optimise even further by introducing another bit into the page table called
+the modify (aka dirty) bit. This bit tells us if it was modified since
+conception. If not then we can freely destory it and retrieve from the
+file system. Otherwise we must hold onto the entry and save it on disk.
+
+A naive approach to page replacement is as such.
+Find the frame on disk we want to bring to memory. Find a free frame. If there
+isn't one then we find a victim frame. We check if the victim frame is dirty
+then we must write it to the swap space. This algorithm has worst case two
+frame transfers.
+
+There are numerous other algorithms for handling page replacements.
+We should expect a tradeoff [see 9.31] between the number of page faults
+and the number of frames. This is not always the case however, Belady's anomaly
+means that have more frames might even make things worse in some cases.
+
+The optimal strategy is to see into the future and know which pages will
+be retrieved. Of course this isn't possible but is the most useable upper
+bound to measure from. This can suffer from Belady's Anomaly.
+
+First-in-first-out (FIFO) algorithm. We consider memory as a queue where we
+enqueue and dequeue frames. This doesn't suffer from Belady's Anomaly.
+
+Least Recently Used (LRU) self explanatory. In general slightly better than
+FIFO. We could measure usage in many ways. Using a counter for each page
+entry, or use a stack that's ordered by recently used.
+This doesn't suffer from Belady's Anomaly.
+
+LRU still needs special hardware and yet is still slow. We could employ
+LRU approximation algorithms intead.
+We could use a reference bit that splits our pages into those that are
+"recent" and those that aren't. Whenever a replacement needs to happen, we
+only replace those that don't have the "recent" bit set and reset all
+"recent" bits to 0. Another option is to build on this idea and augment it by
+using the FIFO method this is called the second-chance algorithm.
+
+We further enhance the second-chance algorithm by creating ordered pairs with
+the modify bit (reference, modify). We now have 4 cases;
+(0,0) not modified or used recently. Good choice for replacing.
+(0,1) not recently used by modified. Second best choice. Still need to write
+changes to swap.
+(1,0) recently used but clean. In this case it's likely we'll have to use again.
+(1,1) worst choice for replacement.
+
+Based on the same idea as counting frequency we now offer
+Most Frequently Used (MFU) as contradiction of LFU. The argument for MFU is that
+a process that has not been used is likely to be used very soon.
+
+Another algorithm is to have a pool of free frames. When we "replace" a frame
+we're actually storing this frame in the pool for a little while much like a
+buffer. This is helpful if we evict the wrong victim frame since we can
+quickly revert our choice much more quickly. When it's convenient for us we
+actually write the frame to disk.
+
+Copy on write-----------------------------------------------------------------
+Copy On Write (aka COW) allows a fork to initially share the same pages in
+memory. Only the pages that are modified are copied.
+
+When a page needs to be copied we allocate from a pool of zero-fill-on-demand
+pages. [ZZZ I think this is like a promise of available pages] [ZZZ also don't
+know why they have to be santised via zeroed]
+vfork() is a variation of fork the does this COW optimisation. This is commonly
+used for children that will call exec.
+
+The issue comes if the pool of pages has dried up. In this case we swap out
+some other process.
+
+Allocating frames-------------------------------------------------------------
+How do we figure out how many frames each process needs? There are two major
+schools of thought; fixed allocation and priority allocation.
+In fixed allocation we give every process an equal number of frames. e.g.
+100 frames would share between 5 processes so that each process got 20 frames.
+
+In proportional allocation we make use of the initial size of each process to
+determine which frames to allocate. The equation is simple [9.45]. This isn't
+the only measure for proportions though.
+
+Priority allocation uses the same proportional allocation method but instead
+is based on priority rather than size.
+
+[stopped at 9.47]
