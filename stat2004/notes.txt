@@ -405,4 +405,85 @@ covariance = 0.
 Also, the sample mean (treated as a random variable) and the sample variance
 (also treated as a random variable) are independent.
 
-[ZZZ Week 5 Lecture 3]
+Maximum likelihood (ML)---------------------------------------------------------
+Suppose we're testing a biased coin multiple times. Suppose we get 3 heads for
+data. The probability of this occurring (with unknown parameter p) is,
+\prob_p (X=3) = {}^{10}C_3 p^3 (1-p)^7
+The maximum likelihood method attempts to find the value \hat{p} that maximises
+this equation.
+
+If we have a vector of iid random variables then we could get the join PMF/PDF
+by multiplying all the single-variable PMF/PDFs. Of course this could turn
+really ugly if we're trying to optimise the function.
+\prod_{i=1}^n g_\theta (x_i)
+
+Instead we transform it by taking the logarithm of the pdf/pmf. We can do this
+since logarithms are strictly increasing functions.
+
+From there the product becomes a summation of logarithms.
+\log \prod_{i=1}^n g_\theta (x_i)
+\sum_{i=1}^n \log g_\theta (x_i)
+
+When we differentiate the logged version of our equation, our resulting maximum
+point is valid (in the x axis).
+
+Should be noted that the pdf/pmf with unknown \theta wihch gives the probability
+of obtaining the datapoints we've retrieved is known as the likelihood function,
+L(\theta;x). Note that the log transformed version of the
+function is called the log-likelihood function.
+We denote T(x) as a pmf/pdf that is a guess for \theta that maximises the
+function for the given datapoints.
+
+[lecture 16 week 6 provides examples of using likelihood functions. These
+include Bernoulli, normal distribution and uniform]
+
+[lecture 17 week 6 provides a recap of all stat2004]
+
+Pivot variables----------------------------------------------------------------
+A pivot variable (aka pivot qunatity or just pivot) is a theoretical
+(and generally non-computable) transformation
+of a random variable (i.e. data) that no longer depends on any unknown
+parameters.
+For example taking a normal distribution and doing the following transformation
+will give you
+(\bar{X}-\mu)/(\sigma/\sqrt{n}) ~ N(0,1)
+Note that this transformation is relying on \sigma actually being known
+[ZZZ but I don't know how though]
+
+We now try and repeat this without knowing \sigma instead we have the sample
+variance of S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar{X})^2 which has a
+chi-squared distribution; \frac{n-1}{\sigma^2}S^2 ~ \chi_{n-1}^2
+Also note that \bar{X} is independent of S^2 which I guess makes sense.
+[ZZZ don't know why this is important though]
+
+Now we set our ML to
+T = \frac{\bar{X} - \mu}{S/\sqrt{n}}
+&= \frac{\frac{\bar{X} - \mu}{\sigma/\sqrt{n}}}{S/\sigma}
+&= \frac{N(0,1)}{\sqrt{\chi_{n-1}^2/(n-1)}}
+&= T_{n-1}
+Since this is the definition of the t distribution.
+By repeating the distribution process that was previously done for standard
+error margins we get the following [see page 3 lecture 19 week 7].
+(\bar{X} \pm t^{(1-\alpha/2)}S/\sqrt{n})
+please remember that degrees of freedom is n-1.
+
+We repeat this process for sample variance. Since sample variance is being taken
+from a chi-squared distribution, we have to build our confidence interval from
+this chi-squared distribution. [see page 1 lecture 20 week 7]
+
+Unfortunately we cannot do pivot transforms of discrete distributions because
+"""reasons"""
+The shifting and or scaling will change the support of the distribution to
+something weird and something that always still depends on the unknown
+parameter.
+
+To get around this we can construct asymptotic pivots. We make use of the
+Central Limit Theorem. So instead of directly calculating the ML of a binomial
+directly instead we take \hat{p} = X/n where \hat{p} is the sample probability.
+We also need to use se(\hat{p})=\sqrt{\hat{p}(1-\hat{p})}
+Now from here we can use the asymptotic pivot transformation.
+Of course the quetion now becomes when does the approximation hold? A good rule
+of thumb is there must be 10 successes and 10 failures (whatever the definition
+of success and failure are).
+
+[ZZZ finished week 7]
