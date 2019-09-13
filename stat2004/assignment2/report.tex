@@ -25,9 +25,103 @@
 \DeclarePairedDelimiter\norm{\lVert}{\rVert}
 \DeclarePairedDelimiter\p{\lparan}{\rparan}
 
-\title{Boilerplate}
+\title{Assignment 2}
 \author{Joshua Hwang (44302650)}
 
 \begin{document}
+\section{Exercise 1}
+\subsection{a}
+Since all are independent (not identical) we can make use of the fact that the
+PDF of the vector $Z$ is a product of normal distributions.
+\begin{align*}
+    f(z) &= \prod_{i=1}^{n+m} g_i (z_i) \\
+    &= \prod_{i=1}^m g_x (x_i) \times \prod_{i=1}^n g_y (y_i) \\
+\end{align*}
+
+Since the first $m$ elements are iid based on $X$ and the remaining $n$ elements
+are iid taken from $Y$ we can cleanly split up our PDF\@. The $g_x$ and $g_y$
+respectively are,
+\begin{align*}
+    g_x(x) &= \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{{(x-\mu_1)}^2}{2\sigma^2}} \\
+    g_y (x) &= \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{{(x-\mu_2)}^2}{2\sigma^2}} \\
+\end{align*}
+
+We sub these into the previous equation.
+\begin{align*}
+    f(z) &= \prod_{i=1}^m g_x (x_i) \times \prod_{i=1}^n g_y (y_i) \\
+    &= \prod_{i=1}^m \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{{(x_i-\mu_1)}^2}{2\sigma^2}}
+    \times \prod_{i=1}^n \frac{1}{\sqrt{2\pi\sigma^2}} e^{-\frac{{(y_i-\mu_2)}^2}{2\sigma^2}} \\
+    &= {\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)}^{m+n}
+    \prod_{i=1}^m e^{-\frac{{(x_i-\mu_1)}^2}{2\sigma^2}}
+    \times \prod_{i=1}^n e^{-\frac{{(y_i-\mu_2)}^2}{2\sigma^2}} \\
+    &= {\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)}^{m+n}
+    e^{-\left(\sum_{i=1}^m \frac{{(x_i-\mu_1)}^2}{2\sigma^2}\right)}
+    \times e^{-\left(\sum_{i=1}^n \frac{{(y_i-\mu_2)}^2}{2\sigma^2}\right)} \\
+    &= {\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)}^{m+n}
+    e^{-\left(\sum_{i=1}^m \frac{{(x_i-\mu_1)}^2}{2\sigma^2}
+    + \sum_{i=1}^n \frac{{(y_i-\mu_2)}^2}{2\sigma^2}\right)} \\
+    &= {\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)}^{m+n}
+    e^{-\left(\frac{{\sum_{i=1}^m (x_i-\mu_1)}^2 + {\sum_{i=1}^n (y_i-\mu_2)}^2}
+    {2\sigma^2}\right)} \\
+\end{align*}
+
+The log likelihood is $\ln f(z)$.
+\begin{align*}
+    \ln f(z) &= \ln \left({{\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)}^{m+n}
+    e^{-\left(\frac{{\sum_{i=1}^m (x_i-\mu_1)}^2 + {\sum_{i=1}^n (y_i-\mu_2)}^2}
+    {2\sigma^2}\right)}}\right) \\
+    &= -\left(\frac{m+n}{2}\right) \ln\left(2\pi\sigma^2\right)
+    -\left(\frac{{\sum_{i=1}^m (x_i-\mu_1)}^2 + {\sum_{i=1}^n (y_i-\mu_2)}^2}
+    {2\sigma^2}\right) \\
+\end{align*}
+
+\subsection{b}
+
+\subsection{c}
+
+\subsection{d}
+
+\section{Exercise 2}
+\subsection{a}
+
+\subsection{b}
+
+\subsection{c}
+
+\subsection{d}
+
+\subsection{e}
+
+\subsection{f}
+
+\subsection{g}
+
+\subsection{h}
+
+\section{Exercise 3}
+\subsection{a}
+
+\subsection{b}
+
+\subsection{c}
+
+\subsection{d}
+
+\subsection{e}
+
+\section{Exercise 4}
+\subsection{a}
+
+\subsection{b}
+
+\subsection{c}
+
+\subsection{d}
+
+\subsection{e}
+
+\subsection{f}
+
+\subsection{g}
 
 \end{document}
