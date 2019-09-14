@@ -154,7 +154,7 @@ granting or denying access.
 Most access control is determined by identity. Which has a second benefit of
 accountability (we can track who did what when in the system).
 
-\section{Authentication}
+\section{Passwords}
 Passwords have been the goto for years. It is based on `something you know'.
 There are many of problems incluing; forgetting the password, same password for
 multiple places, weak passwords, passwords not kept in secret and not changing
@@ -167,6 +167,92 @@ devices through Telnet mostly embedded systems in 2012.
 Passwords can be guessed via bruteforce, socially engineered and tricked out of
 humans, eavesdropped and keylogged. Many also store passwords in various places
 like password managers which increases risk.
+
+Dictionary attacks and brute-force attacks are known as off-line attacks. This
+is where the attacker has access to the hashed passwords (and plenty of time
+with them). This is kinda like a ciphertext only attack.
+
+An on-line password attack involves the attacker talking to a live system. This
+is obviously much harder since the system might give you timeouts. A clear
+example of this is ATMs. Though the password is only 4 digits the ATM `eats' the
+card if there are three failed attempts.
+
+Consider the /etc/passwd
+which contain the hashed passwords of all users.
+What if two users happen to choose the same password?  If a user shares the same
+password with another user then they will know the other user's password.
+
+This is solved via SALTing. Unix uses 12 random bits in a modified DES algorithm
+to fix this.
+
+\subsection{Authentication with passwords}
+How on earth do you send your password over the internet to verify?
+You COULD send the hashed password over the network but an eavesdropper can
+perform a replay attack.
+
+Instead we choose a Challenge-Response Protocol.
+The server gives a client a `challenge', $c$
+(often called the nonce, number-used-once)
+
+Client calculates a response which is a cryptographic hash of $c$
+and the password
+either as $r = h(c||p)$ (concatenation) or $r = h(c XOR p)$.
+
+Note manually choosing the challenge does not affect the strength. The only
+requirement is that the challenge only happens once.
+
+\section{Mutli-factor authentication}
+Two-factor authentication involves using one of the two methods:
+\begin{itemize}
+    \item something you know and something you are (password and fingerprint)
+    \item something you know and something you have (password and physical key)
+    \item something you are and something you have
+        (fingerprint and physical key)
+\end{itemize}
+
+For example using an ATM requires a card and knowing the PIN\@.
+
+SecureID is a way to have a `physical key' for internet usage. This makes use of
+a piece of hardware that generates pseudorandom numbers which are synced with an
+authentication server.
+
+\section{Complete Aside}
+The idea of using rwsr-xrwx (where s is the SUID or set user id feature) is
+called the access control list. An access control list has users (subjects)
+and groups which have permissions to do certain operations (access operations)
+on certain objects.
+
+\section{Biometrics}
+Criteria for good biometrics involve:
+\begin{itemize}
+    \item Universality (everyone must have one)
+    \item Distinctiveness (should be unique for each person)
+    \item Permanence (must not change)
+    \item Performance (must be fast to recognise)
+    \item Acceptability (are people okay using this body part for identification)
+    \item Circumvention (how easy to trick the system and perform replay attacks)
+\end{itemize}
+
+Tiny fingerprint features called Minutiae are stored instead of an image.
+
+Verification mode is a one-to-one match with a single template in the database.
+Identification mode is a one-to-many match.
+
+Intuitively the identification mode is more likely to pop up a false accept.
+
+There are two main types of errors:
+
+False accept (False Match) which allows non-users access thinking they are the
+template.
+
+False reject (False Non-Match) which prevents true users from accessing their
+own template.
+
+In addition:
+Failure to Enrol (FTE) failure to create a valid template from a new user's
+input.
+
+I'm trusting that you can actually calculate the false match and false non-match.
 
 \chapter{Cryptography}
 \begin{description}
@@ -476,6 +562,245 @@ Now the server \textit{decrements} $n$ by one.
 This way that if eavesdropping occurs
 that the entire sequence doesn't get destroyed.
 
-% Stopped at line 403
+\section{Asymmetric ciphers}
+From the example solutions below we need more bits and more computing power to
+ensure an asymmetric system is secure compared to a symmetric one. A solution
+might be to intiate a conversation with an asymmetric system then exchange
+symmetric keys to continue in a more efficient symmetric system.
+
+\subsection{Diffie-Hellman}
+In the Diffie-Hellman key agreement protocol we make use of the fact that
+discrete logarithms are hard.
+
+Alice and Bob wish to communicate.
+\begin{enumerate}
+    \item Alice and Bob initially agree on large prime $p$ and
+        large generator $g$.
+    \item Both Alice and Bob choose random $x$ and $y$ and send
+        $g^x \mod p$ and $g^y \mod p$
+        to the other party respectively.
+    \item Alice and Bob generate the key both by taking $g^{xy}$.
+        Doing this requires
+        knowing $g^x$ and $y$ and $g^y$ and $x$ which both Alice and Bob have
+        but no
+        eavesdropper could.
+\end{enumerate}
+
+Of course this all breaks down if the eavesdropper can actually intercept and
+communicate as well. This is a Man in the middle (MITM) attack. We need some way
+authenticate Alice and Bob.
+
+This is not a trapdoor one-way function however since this is a public key
+sharing protocol and not a workable cipher.
+
+\subsection{RSA}
+Name after the last names of Ron Rivest, Adi Shamir and Leonard Adleman.
+
+We take two primes $p$ and $q$.
+\begin{align*}
+    n &= p \times q \\
+\end{align*}
+
+Choose two values $e$ and $d$ such that
+\begin{align*}
+    e \times d &= 1 \mod (p-1)(q-1) \\
+\end{align*}
+
+Now encrypt the message $m$ into cipher $c$ as such
+\begin{align*}
+    c &= m^e \mod n \\
+    m &= c^d \mod n
+\end{align*}
+
+Here $d$ is the secret key that allows decryption.
+
+According to RSA Security (2003) 1024 bit RSA key is equivalent to 80 bit key of
+a symmetric cipher. This is because you need to factor 1024 bits rather than
+brute force it like in symmetric keys.
+
+2048 bit RSA $\approx$ 112 bit symmetric key.
+
+3072 bit RSA $\approx$ 128 bit symmetric key.
+
+\subsection{Elliptic Curve Cryptography}
+Encryption systems like El Gamal are based on discrete logarithm problems.
+Elliptic curve space is preferred since best known algorithms known for
+computing discrete logarithms or factoring become much slower in ECC\@.
+
+\chapter{Protocols}
+\section{HTTP}
+HTTP has two modes, Basic and Digest.
+
+In basic:
+\begin{enumerate}
+    \item Browser sends a GET request to a web server.
+    \item Server says that the user is not authorised
+        and requires basic authentication
+    \item User sends another GET request with authentication detail
+\end{enumerate}
+
+The issue here is that the password is in cleartext
+
+In digest:
+\begin{enumerate}
+    \item Browser sends a GET request to a web server.
+    \item Server says that the user is not authorised and requires digest
+        authentication. A nonce is provided as a digit.
+    \item The browser then computes a hash with
+        (username, password, realm (folder you want to access), nonce, URL)
+\end{enumerate}
+
+The problem with this new system is that the main password must be stored
+in the server. It is also still vulnerable to man in the middle attacks.
+
+\section{SSH}
+SSH-1 can be authenticated via multiple methods; password, public key etc.
+The password authentication is still vulnerable to man in the middle attacks.
+
+The public key authentication is actually better since it isn't vulnerable
+to man in the middle attacks.
+
+SSH-2 uses stronger key exchanges including:
+Diffie-Hellman
+RSA
+Generic Security Service Application Program Interface (GSS-API)
+AES Galois Counter Mode
+Elliptic Curve Algorithm
+SHA-2 Data Integrity Verification
+
+\chapter{Authentication}
+All this fancy asymmetric key cryptography doesn't hold up to MITM attacks.
+RSA offers a solution. Since encryption and decryption are the same thing in RSA
+we can actually `decrypt' first then `encrypt'. The only person that can decrypt
+is the one who possesses the secret key thus it makes a good digital signature.
+
+To prove you identity you decrypt whatever they send your way and then echo it
+back to them.
+
+RSA can also be used to verify a file. All we have to do is send the file but
+`decrypted'. The problem is that RSA is slow and a simple file would be a pain
+to encrypt and decrypt. Instead we take the file and hash it so we have a small
+fingerprint of the file. We then `decrypt' the hash and send the original file.
+This way the customer can take the hash of the received file themselves and
+verify accordingly.
+
+There still remains a problem. The initial step of mapping an identity to a key.
+We can solve this using a trusted third party that will vouch for an
+identity-key binding. The document created from the third party vouching for
+identity is called a digital signature.
+
+Much like in MATH3302 we create a pyramid of trust. At the top we have a trusted
+authority (Root CA Certificate) then we have bunch of untrusted authorities
+below it (and some having certificates from other untrusted authorities which
+eventually lead to a certificate for the root authority). This is called to
+certificate chain. Trust is bootstrapped via other means (use your imagination).
+
+An example of a certificate is the X.509. The version 3 certificate is formatted
+as follows.
+\begin{itemize}
+    \item version
+    \item serial number
+    \item algorithm id
+    \item issuer
+    \item validity (valid thru)
+    \item subject
+    \item subject's public key info
+        \begin{itemize}
+            \item public key algorithm
+            \item subject's public key
+        \end{itemize}
+    \item issuer unique identifier (optional)
+    \item subject unique identifier (optional)
+    \item extensions (optional)
+    \item other stuff
+    \item certificate signature algorithm
+    \item certificate signature
+\end{itemize}
+
+When the private key is compromised/leaked we need to do a few things.
+Stop using the key entirely, revoke the certificate, ensure programs and
+browsers are constantly checking validity of certificates.
+The CA adds the certificate to a Certificate Revocation List (CRL) which the CRL
+publishes.
+
+A public key infrastructure as defined by someone important,
+`A Public Key Infrastructure (PKI) is a set of hardware, software, people,
+policies and procedures needed to create, manage, distribute, use, store and
+revoke digital certificates.'
+
+\section{Message Authentication Codes}
+Asymmetric cryptography isn't the only way to authenticate. We now explore a
+symmetric key authentication system.
+Suppose Alice and Bob both know the secret key $K$.
+Alice sends a message $m$ and $a$
+signature MAC created by
+\begin{align*}
+    MAC &= h(K || m) \\
+\end{align*}
+
+where $h$ is some one way hash.
+
+Certain hash functions are not secure like SHA-1, SHA-2 and md5 which are
+vulnerable from the Merkle–Damgård construction. They are susceptible to
+length extension attacks [never explained].
+Instead we use HMAC which solves this issue.
+\begin{align*}
+    HMAC(K,m) &= H\left((K XOR opad) || H((K XOR ipad) || m)\right) \\
+\end{align*}
+
+where $opad$ is the inner padding and is constant,
+$ipad$ is the outer padding also constant.
+
+HMAC is the most widely used MAC at present.
+
+Should be noted that HMAC isn't the only solution. Using SHA-3 for the MAC is
+also possible and is still immune to length extension attacks.
+
+\section{TLS/SSL}
+Secure Socket Layer (SSL) also known as Transport Layer Security (TLS)
+sits between the application layer and a reliable transport layer.
+
+TLS has the following main features.
+\begin{itemize}
+    \item Handshake protocol which establishes
+        a shared secret key and negotiates which
+        cipher to use.
+    \item Cipher Change protocol escalates connection to use the cipher.
+    \item Alert protocol reports errors
+    \item Record protocol provides the security and is the main part.
+\end{itemize}
+
+With these features SSL provides; key establishment, authentication,
+confidentiality and integrity.
+
+The record protocol works as such.
+\begin{enumerate}
+    \item First fragment the message into parts.
+    \item Each part is compressed then a MAC is added to each part.
+    \item The entire segment is then encrypted and then the transport
+        layer header is added.
+\end{enumerate}
+
+HTTPS (HTTP over SSL) uses port 443 compared to standard HTTP which uses 80.
+
+The cipher suite we decide from is represented as such.
+\begin{verbatim}
+TLS_RSA_WITH_DES_CBC_SHA
+TLS_DH_anon_WITH_RC4_128_MD5
+\end{verbatim}
+
+where the \texttt{RSA} or \texttt{DH\_anon} is the key establishment
+\texttt{DES\_CBC} or \texttt{RC4\_128} is the cipher and
+\texttt{SHA} or \texttt{MD5} is the HMAC used.
+
+In SSL the server MUST authenticate itself during the handshake. The client and
+authenticate themselves optionally.
+
+Though the standard of SSL is sound and cannot be attacked (yet),
+implementations have vulnerabilities.
+
+Heartbleed was an implementation bug in OpenSSL\@.
+You could also ask servers and browsers to downgrade SSL version in a
+version rollback attack.
 
 \end{document}
