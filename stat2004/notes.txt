@@ -412,7 +412,7 @@ data. The probability of this occurring (with unknown parameter p) is,
 The maximum likelihood method attempts to find the value \hat{p} that maximises
 this equation.
 
-If we have a vector of iid random variables then we could get the join PMF/PDF
+If we have a vector of iid random variables then we could get the joint PMF/PDF
 by multiplying all the single-variable PMF/PDFs. Of course this could turn
 really ugly if we're trying to optimise the function.
 \prod_{i=1}^n g_\theta (x_i)
@@ -427,7 +427,7 @@ From there the product becomes a summation of logarithms.
 When we differentiate the logged version of our equation, our resulting maximum
 point is valid (in the x axis).
 
-Should be noted that the pdf/pmf with unknown \theta wihch gives the probability
+Should be noted that the pdf/pmf with unknown \theta which gives the probability
 of obtaining the datapoints we've retrieved is known as the likelihood function,
 L(\theta;x). Note that the log transformed version of the
 function is called the log-likelihood function.
