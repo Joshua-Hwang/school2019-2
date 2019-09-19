@@ -509,28 +509,29 @@ equivalent to $\{X \geq c\}$ with some cutoff $c$.
 \begin{align*}
     \alpha &= \prob_{H_0}(X \geq c) \\
     0.01 &= \prob_{H_0}(X \geq c) \\
-    0.01 &= \sum_{i=c}^{50} {}^{50}C_i 0.4^i 0.6^{50-i} \\
+    0.01 &= 1 - \prob_{H_0}(X < c) \\
+    0.01 &= 1 - \prob_{H_0}(X \leq c-1) \\
 \end{align*}
 We solve this expression using software.
 \begin{verbatim}
 ----In R----
 qbinom(0.01,50,0.4,lower.tail=FALSE)
 \end{verbatim}
-This gives us 28 as the cutoff $c$.
+This gives us $c-1=28$ thus $c=29$.
 
 \subsection{f}
 Recall from part b of this question.
 \begin{align*}
-    \beta &= \prob(X < 28) \\
-    &= \prob(X \leq 27) \\
+    \beta &= \prob(X < 29) \\
+    &= \prob(X \leq 28) \\
 \end{align*}
 
 But now we're using $p=0.5$ as the alternative.
 \begin{align*}
-    \beta &= \prob(X \leq 27) \\
-    &= \sum_{i=0}^{27} {}^{50}C_i 0.5^i 0.5^{50-i} \\
-    &= \sum_{i=0}^{27} {}^{50}C_i 0.5^{50} \\
-    &= 0.5^{50} \sum_{i=0}^{27} {}^{50}C_i \\
+    \beta &= \prob(X \leq 28) \\
+    &= \sum_{i=0}^{28} {}^{50}C_i 0.5^i 0.5^{50-i} \\
+    &= \sum_{i=0}^{28} {}^{50}C_i 0.5^{50} \\
+    &= 0.5^{50} \sum_{i=0}^{28} {}^{50}C_i \\
 \end{align*}
 
 Once again, this was summed up using software,
@@ -543,17 +544,17 @@ or
 pbinom(27, 50, 0.5)
 \end{verbatim}
 
-Thus $\beta = 0.760$. Now the power is $1-0.76=0.24$ 
+Thus $\beta = 0.839$. Now the power is $1-0.839=0.161$ 
 is the power with the alternative model.
 
 \subsection{g}
 We run the following R code to figure this out
 \begin{verbatim}
 p = 250:350
-p[1-pbinom(qbinom(0.01,p,0.4,FALSE)-1,p,0.5) >= 0.9]
+p[1-pbinom(qbinom(0.01,p,0.4,FALSE),p,0.5) >= 0.9]
 \end{verbatim}
 
-Thus we find that a sample size of 306 is the first time we have a power over
+Thus we find that a sample size of 322 is the first time we have a power over
 90\%.
 
 \end{document}
