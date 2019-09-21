@@ -605,7 +605,7 @@ are all iid Exponentials with lambda as the parameter.
 We claim if we let (N_t, t \geq 0) be a Poisson process with rate \lambda > 0.
 Then for any fixed time s > 0, any time from 0 to s (N_r, 0 \leq r \leq s)
 and any time in the interval (N(t+s) - N(s), t \geq 0)
-[note that N(t+s) - N(s) is equivalent to N(s,t+s]]. Are independent poisson
+[note that N(t+s) - N(s) is equivalent to N(s,t+s]] are independent poisson
 processes AND independent of each other. This is very like the memoryless
 property we see in exponential distributions and the like.
 

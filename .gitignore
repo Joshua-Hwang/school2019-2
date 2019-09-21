@@ -16,6 +16,7 @@
 *.cb
 *.cb2
 .*.lb
+*.fdb_latexmk
 *.pdf
 
 # Binary C files
