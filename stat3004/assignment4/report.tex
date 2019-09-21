@@ -1,0 +1,557 @@
+\documentclass{article}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{verbatim}
+
+\linespread{1.3}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\setcounter{secnumdepth}{0}
+\setcounter{MaxMatrixCols}{20}
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ts}{\textsuperscript}
+\newcommand{\diff}{\mathop{}\!\mathrm{d}}
+\newcommand{\prob}{\mathbb{P}}
+\newcommand{\expect}{\mathbb{E}}
+\newcommand{\var}{\text{Var}}
+
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\DeclarePairedDelimiter\p{\lparan}{\rparan}
+
+\title{STAT3004 Assignment}
+\author{Joshua Hwang (44302650)}
+\begin{document}
+\maketitle
+\section{1}
+Let $(N_t, t \geq 0)$ be a Poisson counting process with rate
+$\lambda = 2$, and define 
+$t_1 = 2 \times 4 = 8$, 
+$t_2 = 8 + (1 + 0) \times 1 = 9$,
+$n_1 = 4 + 1 = 5$, and 
+$n_2 = 5 + 5 + 1 = 11$.
+
+\subsection{a}
+Determine $\prob(N_8 = 5, N_9 = 11)$.
+
+\begin{align*}
+    &\prob(N_8 = 5, N_9 = 11) \\
+    &= \sum_n \prob(N_8 = 5, N_9 = 11 \;|\; N_8 = n) \prob(N_8 = n) \\
+    &\text{All other $n \neq 5$ drop to 0 probability} \\
+    &= \prob(N_8 = 5, N_9 = 11 \;|\; N_8 = 5) \prob(N_8 = 5) \\
+    &= \prob(N_9 = 11 \;|\; N_8 = 5) \prob(N_8 = 5) \\
+\end{align*}
+
+In other words in an interval of 1 we have jumped by 6 counts. Since we're
+dealing with a Poisson process,
+\begin{align*}
+    N_{(8, 9]} &\sim Poi\left(\int_8^9 2 \diff s\right) \\
+    &= Poi((9-8)2) \\
+    &= Poi(2) \\
+    \text{Thus} \\
+    \prob\left(N_{(8, 9]} = 6\right) &= \prob(Poi(2) = 6) \\
+\end{align*}
+
+We now use the PMF of the Poisson distributuion.
+\begin{align*}
+    \frac{\lambda^k e^{-\lambda}}{k!}
+    &= \frac{2^6 e^{-2}}{6!}
+    &= 0.0121
+\end{align*}
+
+Now we repeat this process for $\prob(N_8 = 5)$. Hopefully it's clear that the
+Poisson distribution for the interval $(0,8]$ is $2 \times 8$.
+\begin{align*}
+    \frac{\lambda^k e^{-\lambda}}{k!}
+    &= \frac{16^5 e^{-16}}{5!}
+    &= 0.0010
+\end{align*}
+
+We now multiply the two to give the proper probability.
+\begin{align*}
+    \prob(N_9 = 11 \;|\; N_8 = 5) \prob(N_8 = 5)
+    &= 1.190 \times 10^{-5}
+\end{align*}
+
+\subsection{b}
+Determine $\prob\left(N(1, 8] = 5, N(8 - 1, 9] = 11\right)$.
+
+Unfortunately the two intervals are not disjoint so we'll have to handle the
+inbetween case. We make use of the fact that
+$\prob(A \cup B) = \prob(A)\prob(B) - \prob(A \cap B)$.
+\begin{align*}
+    &\prob\left(N(1, 8] = 5, N(7, 9] = 11\right) \\
+    &= \sum_x \prob\left(N(1, 8] = 5, N(7, 9] = 11 \;\middle|\; N(7, 8] = n\right) \prob\left(N(7, 8] = n\right) \\
+    &= \sum_x \prob\left(N(1, 7] = 5 - n, N(8, 9] = 11 - n\right) \prob\left(N(7, 8] = n\right) \\
+    &= \sum_x \prob\left(N(1, 7] = 5 - n\right)
+    \prob\left(N(8, 9] = 11 - n\right) \prob\left(N(7, 8] = n\right) \\
+    &= \sum_x \prob\left(Poi(6 \times 2) = 5 - n\right)
+    \prob\left(Poi(1 \times 2) = 11 - n\right) \prob\left(Poi(1 \times 2) = n\right) \\
+\end{align*}
+Note that each Poi(2) is independent.
+
+Observe that $\prob(Poi(\lambda) \leq 0) = 0$. Thus we can bound our 
+$n \in [0,5]$. From here we use the R language to calculate these,
+\begin{verbatim}
+n = 0:5
+sum(dpois(x = 5-n,lambda=12)*
+dpois(x=11-n,lambda=2)*
+dpois(x=n,lambda=2))
+\end{verbatim}
+
+This gives us $2.5243 \times 10^{-7}$.
+
+\subsection{c}
+Determine $\prob\left(N(1, 8] = 5 \;\middle|\; N(8 - 1, 9] = 11\right)$.
+
+\begin{align*}
+    &\sum_n \prob\left(N(1, 8] = 5 \;\middle|\; N(8 - 1, 9] = 11, N(7, 8] = n\right)
+    \prob(N(7, 8] = n) \\
+    &= \sum_n \prob\left(N(1, 7] = 5-n \;\middle|\; N(8, 9] = 11-n, N(7, 8] = n\right)
+    \prob(N(7, 8] = n) \\
+    &= \sum_n \prob\left(N(1, 7] = 5-n \;\middle|\; N(7, 9] = 11\right)
+    \prob(N(7, 8] = n) \\
+    &= \sum_n \prob\left(N(1, 7] = 5-n\right)\prob(N(7, 8] = n) \\
+    &\text{We note that $n \in [0,5]$} \\
+    &= \sum_n \prob\left(Poi(6 \times 2) = 5-n\right)\prob(Poi(1 \time 2) = n) \\
+\end{align*}
+
+Once again we don't bother calcuating this by hand but instead use R.
+\begin{verbatim}
+n = 0:5
+sum(dpois(5-n,12)*dpois(n,2))
+\end{verbatim}
+
+This gives us 0.0037 as the result.
+
+\subsection{d}
+Determine $\expect[N(1, 8]]$.
+
+Since we're dealing with a Poisson process, each interval is equivalent to a
+Poisson distribution.
+\begin{align*}
+    N(1,8] &\sim Poi(7\times2)
+\end{align*}
+
+A Poisson distribution has an expectation of $\lambda$. Thus the expectation for
+our interval is $14$.
+
+\subsection{e}
+Determine $\expect[N(1, 8] \;|\; N(8 - 1, 9] = 11]$.
+
+We note that $N(1, 8] = N(1, 7] + N(7, 8]$.
+\begin{align*}
+    \expect[N(1, 8] \;|\; N(7, 9] = 11] 
+    &= \expect[N(1, 7] + N(7, 8] \;|\; N(7, 9] = 11] \\
+    &= \expect[N(1, 7] \;|\; N(7, 9] = 11]
+    + \expect[N(7, 8] \;|\; N(7, 9] = 11] \\
+    &= \expect[N(1, 7]]
+    + \expect[N(7, 8] \;|\; N(7, 9] = 11] \\
+    &= \expect[Poi(6\times2)]
+    + \expect[N(7, 8] \;|\; N(7, 9] = 11] \\
+    &= 12 + \expect[N(7, 8] \;|\; N(7, 9] = 11] \\
+    &\text{Since we have a constant $\lambda$} \\
+    &= 12 + \expect[N(0, 1] \;|\; N(0, 2] = 11] \\
+    \text{Is proven in part g} \\
+    &= 12 + \expect[Bin(11,1/2)] \\
+    &= 12 + 5.5 \\
+    &= 17.5 \\
+\end{align*}
+
+\subsection{f}
+Determine $\expect[N(8 - 1, 9] \;|\; N(1, 8] = 5]$.
+
+\begin{align*}
+    \expect[N(7, 9] \;|\; N(1, 8] = 5]
+    &= \expect[N(7, 8] + N(8, 9] \;|\; N(1, 8] = 5] \\
+    &= \expect[N(7, 8] \;|\; N(1, 8] = 5] + \expect[N(8, 9] \;|\; N(1, 8] = 5] \\
+    &= \expect[N(7, 8] \;|\; N(1, 8] = 5] + \expect[N(8, 9]] \\
+    &= \expect[N(7, 8] \;|\; N(1, 8] = 5] + 2 \\
+    \text{Since we have a constant $\lambda$} \\
+    &= \expect[N(0, 1] \;|\; N(0, 7] = 5] + 2 \\
+    \text{Is proven in part g} \\
+    &= \expect[Bin(5,1/7)] + 2 \\
+    &= 0.7143 + 2 \\
+    &= 2.7143 \\
+\end{align*}
+
+\subsection{g}
+Show that, for $0 \leq s \leq t$ and $n > 0$,
+$(N_s \;|\; N_t = n) \sim Bin(n, s/t)$.
+
+We do this by showing that the PMFs match up.
+\begin{align*}
+    \prob(N_s = x \;|\; N_t = n)
+    &= \frac{\prob(N_s = x, N_t = n)}{\prob(N_t = n)} \\
+    &= \frac{\prob(N_s = x, N_{t-s} = n-x)}{\prob(N_t = n)} \\
+    &= \frac{\prob(N_s = x) \prob(N_{t-s} = n-x)}{\prob(N_t = n)} \\
+    &= \frac{\prob(Poi(s\lambda) = x) \prob(Poi((t-s)\lambda) = n-x)}{\prob(Poi(t\lambda) = n)} \\
+    &= \frac{\frac{(\lambda s)^xe^{-\lambda}}{x!}
+    \frac{(\lambda(t-s))^{n-x}e^{-\lambda(t-s)}}{(n-x)!}}
+    {\frac{(\lambda t)^ne^{-t}}{n!}} \\
+    &= \frac{n!}{x!(n-x)!} \frac{(\lambda s)^xe^{-\lambda s}(\lambda(t-s))^{n-x}e^{-\lambda(t-s)}}
+    {(\lambda t)^ne^{-\lambda t}} \\
+    &= {}^nC_x \frac{(\lambda s)^x(\lambda(t-s))^{n-x}}{(\lambda t)^n} \\
+    &= {}^nC_x \frac{s^x(t-s)^{n-x}}{t^n} \\
+    &= {}^nC_x \frac{s^x(t-s)^{n-x}}{t^x t^{n-x}} \\
+    &= {}^nC_x (s/t)^x(1-s/t)^{n-x} \\
+    &= \prob(Bin(n, s/t) = x) \\
+\end{align*}
+
+Since our PMFs match up they are equivalent.
+
+\subsection{h}
+Denote by $T_k$ the time of the $k$-th event. Show that, given $N_1 = 1$, $T_1$
+is uniformly distributed on $[0, 1]$.
+
+Recall that a uniform distribution has a constant PDF.
+
+Also keep in mind that we know the interevent times are exponentially
+distributed. Thus the interevent time of $0 \to 1$
+We now explore the PDF of $T_1$. The PDF is given as 
+\begin{align*}
+    \prob(T_1 = x \;|\; N_1 = 1) &= \frac{\prob(T_1 = x \cap N_1 = 1)}{\prob(N_1 = 1)} \\
+    &= \frac{\lambda e^{-\lambda t_1}
+    \prob(\text{The } t_{n+1} \text{ is beyond 1})}
+    {\frac{\lambda^1 e^{-\lambda}}{1!}} \\
+    &= \frac{\lambda e^{-\lambda t_1} e^{-\lambda (1-t_1)}}
+    {\frac{\lambda^1 e^{-\lambda}}{1!}} \\
+    &= \frac{e^{-\lambda}}{e^{-\lambda}} \\
+    &= 1 \\
+\end{align*}
+
+Or probability is constant for $x \in [0,1)$ thus it is uniform.
+
+\subsection{i}
+Determine the pdf of $T_1$ given $N_1 = 2$.
+
+We repeat the process from above.
+\begin{align*}
+    \prob(T_1 = t_1, T_2 = t_2 \;|\; N_1 = 2)
+    &= \frac{\lambda e^{-\lambda t_1} \lambda e^{-\lambda (t_2 - t_1)}
+    \prob(\text{The } t_{n+1} \text{ is beyond 1})}
+    {\frac{\lambda^2 e^{-\lambda}}{2!}} \\
+    &= \frac{\lambda e^{-\lambda t_1} \lambda e^{-\lambda (t_2 - t_1)}
+    e^{-\lambda (1-t_2)}}
+    {\frac{\lambda^2 e^{-\lambda}}{2!}} \\
+    &= \frac{2! e^{-\lambda t_1} e^{-\lambda (t_2 - t_1)} e^{-\lambda (1-t_2)}}
+    {e^{-\lambda}} \\
+    &= \frac{2! e^{-\lambda}}
+    {e^{-\lambda}} \\
+    &=
+    \begin{cases}
+        2 &\text{But only when $t_1 < t_2$} \\
+        0 &\text{Otherwise}
+    \end{cases}
+\end{align*}
+
+We now attempt to find the marginal PDF to only get $T_1$.
+\begin{align*}
+    \int_{t_1}^1 \prob(T_1 = t_1, T_2 = t_2 \;|\; N_1 = 2) \diff t_2
+    &= \int_{t_1}^1 2 \diff t_2 \\
+    &= 2 [t_2]_{t_1}^1 \\
+    &= 2 (1 - t_1) \\
+    &= 2 - 2t_1 \\
+\end{align*}
+
+\subsection{* j}
+Calculate $\expect[T_1 \;|\; N_1 = n]$ for $n = 0, 1, 2, \ldots$.
+
+All $T_i$ are uniformly distributed thus $T_1$ is the minimum of all $n$ random
+variables.
+\begin{align*}
+    \prob(T_1 \leq x)
+    &= 1 - \prob(T_1 > x) \\
+    &= 1 - (1-x)^n \\
+\end{align*}
+
+We now differentiate to get the pdf.
+\begin{align*}
+    F(x) &= 1 - (1-x)^n \\
+    f(x) &= n(1-x)^{n-1} \\
+\end{align*}
+
+We now use this to get our expectation.
+\begin{align*}
+    &\int_{-\infty}^\infty x f(x) \diff x \\
+    &= \int_{0}^1 x n(1-x)^{n-1} \diff x \\
+    &= n \int_{0}^1 x (1-x)^{n-1} \diff x \\
+    &= n \left[-\frac{(1-x)^n(nx+1)}{n(n+1)}\right]_0^1 \\
+    &= \frac{1}{n+1} \left[-(1-x)^n(nx+1)\right]_0^1 \\
+    &= \frac{1}{n+1} \left[-(1-1)^n(1n+1)+(1-0)^n(0n+1)\right] \\
+    &= \frac{1}{n+1} \\
+\end{align*}
+
+\subsection{\# k}
+Calculate $\expect[T_2 | N_1 = n]$ for $n = 0, 1, 2, \ldots$.
+
+Skipping...
+
+\subsection{* l}
+Suppose now that $(N_t, t > 0)$ is a non-homogeneous Poisson counting process
+with rate function $\lambda(t) = 2 + 1 + (-1)^0 \times 
+\sin\left(5 \times \pi \times t + 1 \times \frac{\pi}{2}\right)
+= 3 + \sin\left(5\pi t + \frac{\pi}{2}\right)$. Repeat (a)-(f).
+
+\subsubsection{a}
+Determine $\prob(N_8 = 5, N_9 = 11)$.
+
+\subsubsection{b}
+Determine $\prob(N(1, 8] = 5$, $N(8 - 1, 9] = 11)$.
+
+\subsubsection{c}
+Determine $P(N(1, 8] = 5 | N(8 - 1, 9] = 11)$.
+
+\subsubsection{d}
+Determine $\expect[N (1, 8]]$.
+
+\subsubsection{e}
+Determine $\expect[N(1, 8] | N(8 - 1, 9] = 11]$.
+
+\subsubsection{f}
+Determine $\expect[N(8 - 1, 9] | N(1, 8] = 5]$.
+
+\subsection{\# m}
+In the context of (l), determine the pdf of $T_1$ given $N_1 = 2$.
+
+
+\subsection{\# n}
+In the context of (l), determine the distribution of $(N_s | N_t = n)$
+for $0 \leq s \leq t$ and $n = 0, 1, 2, \ldots$.
+
+
+\section{2}
+The Poisson caf\'e is well-known for its apple pie and blueberry muffins and
+trades
+between 10 am and 4 pm. When the caf\'e is open for custom, patrons arrive
+according to a Poisson process with constant rate $\lambda = 10 \times 6 = 60$
+per hour.
+
+Suppose that each arriving patron's food order is: an apple pie with probability
+$p_1 = 3/24 = 1/8$, or a blueberry muffin with probability $p_2 = 6/24 = 1/4$,
+or an apple pie \textit{and} a blueberry muffin with time-dependent probability
+$p_3(t) = 3 \times e^{10 - (1 + 1) \times t}/24
+= e^{10 - 2t}/8$, for $t \in [10,16]$ (i.e. hours), or neither an apple pie nor
+a blueberry muffin with probability $p_4(t) = 1 - p_1 - p_2 - p_3(t)
+= 1 - 1/8 - 1/4 - e^{10 - 2t}/8$.
+
+\subsection{a}
+On a given trading day, what is the probability that there are
+$(2+1) \times 6 = 18$ food orders for \textit{only} an apple pie between 
+$10 + 0 = 10$ am and $1 + 2 \times 1 = 3$ pm?
+
+This is a Poisson counting process. 
+The $\lambda$ of only apple pies is given by,
+\begin{align*}
+    \lambda_{\text{total}} &= (3pm - 10am) 60 \\
+    &= 5 \times 60 \\
+    &= 300 \\
+    \lambda_{\text{only apple pies}} &= 300 \times p_1 \\
+    &= 300 \times 1/8 \\
+    &= 37.5 \\
+\end{align*}
+
+We're allowed to split up our $\lambda_{\text{total}}$ due to the superposition
+property of Poisson processes.
+
+\begin{align*}
+    \prob(N = 18) &= \prob(Poi(37.5) = 18) \\
+    &= 0.0002 \\
+\end{align*}
+
+\subsection{b}
+Repeat (a) but now for any food order with an apple pie.
+
+\begin{align*}
+    \lambda_{\text{apple pies}}
+    &= \int_{10am}^{3pm} 60 (p_1 + p_3(t)) \diff t \\
+    &= \int_{10am}^{3pm} 60 (1/8 + e^{10 - 2t}/8) \diff t \\
+    &= \int_{10am}^{3pm} 7.5 + 60 e^{10 - 2t}/8 \diff t \\
+    &= \int_{10am}^{3pm} 7.5 \diff t
+    + \int_{10am}^{3pm} 60 e^{10 - 2t}/8 \diff t \\
+    &= 37.5 + 7.5 \int_{10am}^{3pm} e^{10 - 2t} \diff t \\
+    &= 37.5 + 7.5 e^{10} \int_{10am}^{3pm} e^{-2t} \diff t \\
+    &= 37.5 - 3.75 e^{10} \left[e^{-2t}\right]_{10}^{15} \\
+    &= 37.5 - 3.75 e^{10} \left[e^{-30} - e^{-20}\right] \\
+    &= 37.5 + 0.0002 \\
+    &\approx 37.5 \\
+\end{align*}
+
+\begin{align*}
+    \prob(N = 18) &= \prob(Poi(37.5) = 18) \\
+    &= 0.0002 \\
+\end{align*}
+
+The addition of those eating blueberry pies and apple pies doesn't add much.
+
+\subsection{c}
+On a given trading day, what is the probability that there are $3 \times 4 = 12$
+food orders for \textit{only} a blueberry muffin between $10 + 0 = 10$ am and
+$1 + 3 \times 0 = 1$ pm, $2 \times 6 = 12$ food orders for both an apple pie and
+a blueberry muffin between $10 + 0 = 10$ am and $1 + 0 = 1$ pm, and $4$ patrons
+who order neither an apple pie nor a blueberry muffin between $10 + 0 = 10$ am
+an $1 + 2 \times 0 = 1$ pm?
+
+Since each order is an independent Poisson counting process we can just mutliply
+our final results.
+
+\begin{align*}
+    \lambda_{\text{blueberry}} &= \int_{10}^{13} \lambda p_2 \diff t = 45 \\
+    \lambda_{\text{blueberry and apple}} &= \int_{10}^{13} \lambda p_3 \diff t \\
+    &= 60 \int_{10}^{13} e^{10 - 2t}/8 \diff t \\
+    &= 60 \frac{1}{8}e^{10} \int_{10}^{13} e^{-2t} \diff t \\
+    &= -60 \frac{1}{16}e^{10} \left[e^{-2t}\right]_{10}^{13} \\
+    &= -60 \frac{1}{16}e^{10} \left[e^{-26} - e^{-20}\right] \\
+    &= 0.0002 \\
+    \lambda_{\text{neither}}
+    &= \int_{10}^{13} \lambda (1 - p_1 - p_2 - p_3) \diff t \\
+    &= 60 \int_{10}^{13} (1 - 1/8 - 1/4 - e^{10 - 2t}/8) \diff t \\
+    &= 60 \int_{10}^{13} (0.625 - e^{10 - 2t}/8) \diff t \\
+    &= 60 \int_{10}^{13} 0.625 \diff t
+    - \frac{60}{8} \int_{10}^{13} e^{10 - 2t} \diff t \\
+    &= 112.5 - 0.0002 \\
+    &\approx 112.5
+\end{align*}
+
+\begin{align*}
+    &\prob(N_{\text{blueberry}} = 12) \times \prob(N_{\text{both}} = 12)
+    \times \prob(N_{\text{neither}} = 4) \\
+    &= \prob(Poi(45) = 12) \times \prob(Poi(0.0002) = 12)
+    \times \prob(Poi(112.5) = 4) \\
+    &= 4.12 \times 10^{-9} \times 1.24 \times 10^{-54}
+    \times 9.25 \times 10^{-43} \\
+    &= 4.72 \times 10^{-105} \\
+\end{align*}
+
+\subsection{* d}
+Given that there are $2 \times 3 = 6$ patrons who order neither an apple pie nor
+a blueberry muffin on a particular day, what is the expected number of apple 
+pies \textit{and} blueberry muffins that were ordered on that day?
+
+\subsection{\# e}
+Adapting the procedure outlined in the class, simulate the food orders of
+patrons to the Poisson caf\'e on a given trading day, making sure to provide a
+plot which clearly identifies each of the four types. Including your plot and
+your code.
+
+\section{3}
+The Sturt Stony Desert is a "gibber" desert partly located in south-western
+Queensland (Australia) with an estimated area of 29750 km\textsuperscript{2}.
+Suppose that you happen to be camping with friends and want to take a picture of
+the fat-tailed dunnart (\textit{Sminthopsis crassicaudata}). One of your friends
+claims that its appearance in this area follows a spatial Poisson process with
+constant rate $5 \times 0 + 0.4 = 0.4$ per km\textsuperscript{2}.
+You'd really like to capture a spectacular photo of this unusual desert
+creature but before setting out you want ot make sure you have a reasonable
+chance of success if your friend's claim is correct. You and your friend can
+carry enough water and food as well as your photographic gear to scour a 0.25 km
+\textsuperscript{2} area before you have to return to camp.
+
+\subsection{a}
+If your friend is correct, what is the probability that you would see at least
+one fat-tailed dunnart on a single trip?
+
+We model this with a spatial Poisson process. We first calculate the lambda
+we'll be using for a single trip.
+\begin{align*}
+    \lambda &= |A| \times \text{rate} \\
+    &= 0.25 \times 0.4 \\
+    &= 0.1 \\
+\end{align*}
+
+We now ask the question as follows,
+\begin{align*}
+    \prob(N \geq 1) &= 1 - \prob(N = 0) \\
+    &= 1 - \prob(Poi(0.1) = 0) \\
+    &= 0.0952 \\
+\end{align*}
+
+\subsection{b}
+How many trips (visiting distinct areas) should you expect to take before you
+have $(2 + 0) \times 4 = 8$ sightings of the fat-tailed dunnart?
+
+Poisson distributions have an expectation of $\lambda$ thus we have to find a
+$\lambda = 8$.
+\begin{align*}
+    \lambda &= |A| \times \text{rate} \\
+    8 &= |A| \times 0.4 \\
+    |A| &= 20 \\
+\end{align*}
+
+In terms of trips this must be $20/0.25 = 80$ trips.
+
+\subsection{c}
+Suppose a recent survey put the total population of the fat-tailed dunnart in
+the Sturt Stony Desert at $6 \times 10^5$. Given this information, what is the
+conditional probability that you would see at least one fat-tailed dunnart on a
+single trip?
+
+\begin{align*}
+    \prob(N \geq 1 \;|\; N \leq 6 \times 10^5)
+    &= \frac{\prob(N \geq 1 \cap N \leq 6 \times 10^5)}
+    {\prob(N \leq 6 \times 10^5)} \\
+    &= \frac{\prob(N \leq 6 \times 10^5) - \prob(N < 1)}
+    {\prob(N \leq 6 \times 10^5)} \\
+    &= \frac{\prob(N \leq 6 \times 10^5) - \prob(N = 0)}
+    {\prob(N \leq 6 \times 10^5)} \\
+    &\text{Summing this up manually would be insane} \\
+\end{align*}
+
+\begin{verbatim}
+(ppois(6*10^5, 0.1) - ppois(0, 0.1))/ppois(6*10^5, 0.1)
+\end{verbatim}
+
+Since $0.1$ is so small compared to $6 \times 10^5$ it's essentially the same
+answer as the previous question, $0.0952$.
+
+\subsection{* d}
+Suppose now that your friend also claims that if you see a fat-tailed dunnart,
+you're more likely to see another one nearby. Is this consistent with your
+friend's earlier claim? Argue why or why not.
+
+The answer is maybe.
+A Poisson spatial does not have the memoryless property that
+is required to make the probabilities the same. Thus we compare the following
+two cases.
+\begin{align*}
+    &\prob(N \geq 2 \;|\; N \geq 1) \\
+    &\text{and} \\
+    &\prob(N \geq 1 \;|\; N \geq 0) \\
+\end{align*}
+
+\begin{align*}
+    \prob(N \geq 2 \;|\; N \geq 1)
+    &= \prob(N = 2 \;|\; N \geq 1) + \prob(N = 1 \;|\; N \geq 1) \\
+    &= \prob(N = 2) + \prob(N = 1) \\
+    &= \prob(Poi(\lambda) = 2) + \prob(Poi(\lambda) = 1) \\
+\end{align*}
+
+\begin{align*}
+    \prob(N \geq 1 \;|\; N \geq 0)
+    &= \prob(N = 1 \;|\; N \geq 0) + \prob(N = 0 \;|\; N \geq 0) \\
+    &= \prob(N = 1) + \prob(N = 0) \\
+    &= \prob(Poi(\lambda) = 1) + \prob(Poi(\lambda) = 0) \\
+\end{align*}
+
+\section{\# 4}
+Let $(N_t, t \geq 0)$ be a Poisson process with constant rate $\lambda > 0$,
+$X_1, X_2, \ldots \overset{iid}{\sim} N(\mu, \sigma^2)$, and 
+$S_t = X_1 + \ldots + X_{N_t}$ with $S_0 = 0$. The stochastic process
+$(S_t, t \geq 0)$ is an example of a \textit{compound Poisson process}, which is
+Poisson process whose unit jumps at event-times are replaced by a jump drawn
+from some distribution.
+
+\subsection{a}
+Determine $\expect[S_t]$ and $\var(S_t)$ for all $t \geq 0$.
+
+\subsection{b}
+Determine $\prob(S_t > \lambda(\mu + \sigma)t)$ for all $t \geq 0$.
+
+\end{document}
+
