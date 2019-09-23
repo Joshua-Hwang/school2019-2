@@ -288,44 +288,6 @@ We now use this to get our expectation.
     &= \frac{1}{n+1} \\
 \end{align*}
 
-\subsection{\# k}
-Calculate $\expect[T_2 | N_1 = n]$ for $n = 0, 1, 2, \ldots$.
-
-Skipping...
-
-\subsection{* l}
-Suppose now that $(N_t, t > 0)$ is a non-homogeneous Poisson counting process
-with rate function $\lambda(t) = 2 + 1 + (-1)^0 \times 
-\sin\left(5 \times \pi \times t + 1 \times \frac{\pi}{2}\right)
-= 3 + \sin\left(5\pi t + \frac{\pi}{2}\right)$. Repeat (a)-(f).
-
-\subsubsection{a}
-Determine $\prob(N_8 = 5, N_9 = 11)$.
-
-\subsubsection{b}
-Determine $\prob(N(1, 8] = 5$, $N(8 - 1, 9] = 11)$.
-
-\subsubsection{c}
-Determine $P(N(1, 8] = 5 | N(8 - 1, 9] = 11)$.
-
-\subsubsection{d}
-Determine $\expect[N (1, 8]]$.
-
-\subsubsection{e}
-Determine $\expect[N(1, 8] | N(8 - 1, 9] = 11]$.
-
-\subsubsection{f}
-Determine $\expect[N(8 - 1, 9] | N(1, 8] = 5]$.
-
-\subsection{\# m}
-In the context of (l), determine the pdf of $T_1$ given $N_1 = 2$.
-
-
-\subsection{\# n}
-In the context of (l), determine the distribution of $(N_s | N_t = n)$
-for $0 \leq s \leq t$ and $n = 0, 1, 2, \ldots$.
-
-
 \section{2}
 The Poisson caf\'e is well-known for its apple pie and blueberry muffins and
 trades
@@ -429,17 +391,6 @@ our final results.
     &= 4.72 \times 10^{-105} \\
 \end{align*}
 
-\subsection{* d}
-Given that there are $2 \times 3 = 6$ patrons who order neither an apple pie nor
-a blueberry muffin on a particular day, what is the expected number of apple 
-pies \textit{and} blueberry muffins that were ordered on that day?
-
-\subsection{\# e}
-Adapting the procedure outlined in the class, simulate the food orders of
-patrons to the Poisson caf\'e on a given trading day, making sure to provide a
-plot which clearly identifies each of the four types. Including your plot and
-your code.
-
 \section{3}
 The Sturt Stony Desert is a "gibber" desert partly located in south-western
 Queensland (Australia) with an estimated area of 29750 km\textsuperscript{2}.
@@ -539,19 +490,15 @@ two cases.
     &= \prob(Poi(\lambda) = 1) + \prob(Poi(\lambda) = 0) \\
 \end{align*}
 
-\section{\# 4}
-Let $(N_t, t \geq 0)$ be a Poisson process with constant rate $\lambda > 0$,
-$X_1, X_2, \ldots \overset{iid}{\sim} N(\mu, \sigma^2)$, and 
-$S_t = X_1 + \ldots + X_{N_t}$ with $S_0 = 0$. The stochastic process
-$(S_t, t \geq 0)$ is an example of a \textit{compound Poisson process}, which is
-Poisson process whose unit jumps at event-times are replaced by a jump drawn
-from some distribution.
-
-\subsection{a}
-Determine $\expect[S_t]$ and $\var(S_t)$ for all $t \geq 0$.
-
-\subsection{b}
-Determine $\prob(S_t > \lambda(\mu + \sigma)t)$ for all $t \geq 0$.
+In our case $\lambda = 0.1$. Using this we calculate that it's actually less
+likely to see a second.
+\begin{align*}
+    \prob(N \geq 2 \;|\; N \geq 1) &< \prob(N \geq 1 \;|\; N \geq 0) \\
+    \prob(Poi(\lambda) = 2) + \prob(Poi(\lambda) = 1)
+    &< \prob(Poi(\lambda) = 1) + \prob(Poi(\lambda) = 0) \\
+    \prob(Poi(\lambda) = 2) &< \prob(Poi(\lambda) = 0) \\
+    0.0045 &< 0.9048 \\
+\end{align*}
 
 \end{document}
 
