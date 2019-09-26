@@ -1554,4 +1554,37 @@ the only measure for proportions though.
 Priority allocation uses the same proportional allocation method but instead
 is based on priority rather than size.
 
-[stopped at 9.47]
+Global replacement, if a process needs additional frames and our initial
+allocation was incorrect then we take from the set of all frame or even steal
+frames from another process.
+This can cause problems since now you've just pushed the problem to another
+process; execution times can vary greatly. There is more throughput now though
+[Don't know what throughput means in this context] This has lead to global
+replacement being the commonly used method.
+
+In local a process cannot steal from different processes nor can it steal from
+the global set of frames. In comparison to global, we have more consistent
+per-process performance but that does mean some proesses will be using more
+frames than necessary.
+
+Many systems are Non-Uniform Memory Access (NUMA) which means the different
+memory devices have different speeds. Thus we now have a new factor to consider
+when allocating memory. Processes of high priority would preferably be put into
+high speed memory.
+Solaris solved this issue by creating lgroups.
+Lgroups are structures that keep track of CPU/Memory low latency groups.
+The scheduler makes us of the information in lgroups and aims to schedule the
+threads and allocate the memory of a single process to a single lgroup.
+
+If there not enough pages then the computer is *thrashing*.
+Thrashing is where the we repeatedly get page faults when looking for pages.
+Thus we find ourselves constantly replacing frames and then replacing the ones
+we replaced continuously.
+Thrashing leads to low CPU utilization, which makes the operating system think
+that it needs to increase the degree of multiprogramming which causes more
+processes to come up and make things worse.
+
+As multiprogramming gets larger and larger the CPU utilization rises then falls
+after some maximal point.
+
+[stopped at 9.51]

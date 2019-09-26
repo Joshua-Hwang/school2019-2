@@ -448,13 +448,14 @@ For example taking a normal distribution and doing the following transformation
 will give you
 (\bar{X}-\mu)/(\sigma/\sqrt{n}) ~ N(0,1)
 Note that this transformation is relying on \sigma actually being known
-[ZZZ but I don't know how though]
+This is made apparent when using this pivot transformation to determine a
+confidence interval.
 
 We now try and repeat this without knowing \sigma instead we have the sample
 variance of S^2 = \frac{1}{n-1} \sum_{i=1}^n (X_i - \bar{X})^2 which has a
 chi-squared distribution; \frac{n-1}{\sigma^2}S^2 ~ \chi_{n-1}^2
 Also note that \bar{X} is independent of S^2 which I guess makes sense.
-[ZZZ don't know why this is important though]
+We will make use of this fact to do the division below.
 
 Now we set our ML to
 T = \frac{\bar{X} - \mu}{S/\sqrt{n}}
@@ -486,4 +487,95 @@ Of course the quetion now becomes when does the approximation hold? A good rule
 of thumb is there must be 10 successes and 10 failures (whatever the definition
 of success and failure are).
 
-[ZZZ finished week 7]
+Hypothesis testing and decision making---------------------------------------
+A hypothesis testing procedure (a test) is a decision rule that specifies when
+to reject some H_0 (null hypothesis) in favor of H_1.
+
+Hopefully this should all be familiar to you from SCIE1000 and STAT1201.
+
+We define a decision rule before we run our test (it would be unethical to
+determine our rule after the fact).
+Perhaps something like if our sample mean meets some
+cutoff, maybe if the smaple median meets a cutoff or maybe even if the minimum
+data points meets some cutoff. There is no unique decision rule in general. We
+have to inuitively feel that some rules will be better than other rules
+depending on scenario and context.
+
+The null hypothesis is the "boring" or "status quo" hypothesis that esesntially
+claims that nothing is happening in this random experiment. The alternative is
+typically the interesting hypothesis that claims that something is indeed
+happening.
+
+Mathematically speaking, the null and alternative hypothesis can be considered
+symmetric. But there is generally a good and historical reason to treat the null
+and alternative hypothesis differently. The reason is the impact of
+a false decision in one way can have brutal consequences, in the other we have
+very little consequences.
+
+In this course we will only consider the *single point* null hypothesis of the
+form H_0: \theta = \theta_0 for some hypothetical \theta_0.
+
+The alternative is typically a *composite* hypothesis. Composite hypothesis
+means that our hypothesis lands our parameter in some domain; \theta > cutoff.
+
+Please note that it's by convention that we should always include our endpoints.
+
+A test statistic is a function T()
+that transforms the data. This is usually done in
+context of whatever you're working on.
+
+It should be noted that the test statistic transformation is different to the
+decision rule. The decision rule is the cutoff we choose and if it's one-sided
+or two-sided.
+
+An even more general approach for constructing test statistics is the likelihood
+ratio principle.
+
+Likelihood ratio test-----------------------------------
+Suppose both the alternative and null hypothesis H_0 and H_1 are single point
+hypothesis. Now consider the ratio
+\frac{L(\theta_0, \bar{X})}{L(\theta_1, \bar{X})} < c
+
+The numerator is the null hypothesis and c is the cutoff value.
+
+Observe, if the ratio was small then the data would have been more likely to be
+observed under \theta_1 than \theta_0. Thus there would be evidence against H_0
+if favor of H_1.
+
+This LRT is the most powerful test possible as proven by
+Neyman-Pearson. It is also the most uniformly most powerful test for testing
+a composite alternative hypothesis.
+[An example of doing LRT is done in 30:00 16 Sept]
+
+Two types of errors----------------------------------------------------------
+[see in imgs/errors.png]
+
+Type I error is the significance level,
+\alpha = P(T(X)\in C | H_0)
+
+Type II error related to power by $1 - \beta$
+\beta = 1 - P(T(X) \in C | H_1)
+
+This is harder to calculate since the H_1 is a composite hypothesis we actually
+need to sum all of them to get the proper result. Another way to see is the
+power for each possible realisation of the unknown parameter. This is called a
+power curve.
+
+In the justice system, we let the null hypothesis be innocence and the alternate
+hypothesis be guilty. Having zero Type I error means we let everyone (including
+criminals) go and
+always choose the null hypothesis.
+Having zero Type II error means we jail
+everyone and always choose the alternative hypothesis.
+
+Neyman-Pearson---------------------------------------
+Neyman-Pearson proposed a maximisation for reducing both Type I and Type II
+errors. The idea is that we aim to construct a test that
+1. restricts the Type I error to an appropriately small level \alpha
+2. Now we do everything we can to attempt to maximise power given our
+predetermined \alpha
+
+Once both conditions/actions are met the resulting test is called a
+"most powerful test at level \alpha".
+
+[starting 18 September]
