@@ -578,4 +578,25 @@ predetermined \alpha
 Once both conditions/actions are met the resulting test is called a
 "most powerful test at level \alpha".
 
-[starting 18 September]
+Should be noted that the student t test is "the best" with the obstacle of not
+knowing variance. If variance is known then the standard normal confidence
+interval is a better test.
+
+The t test can actually be asymptotically most powerful even for non-normal
+data.
+
+[10:00 18 September has an excellent example of developing a confidence interval
+for Poisson then comparing it to t test]
+
+The results of this example tell us that knowing the model gives us very tight
+and accurate bounds for our test but the t test still performs well even with
+small sample sizes.
+
+Before any kind of numerical data gathering takes place we should have:
+identified the parameter(s) of interest,
+formulated null and alternative hypothesis about the parameter(s),
+choose a test statistic and the rejection region (the cutoff),
+setting the Type I error,
+analyse the power of the decision rule,
+
+[finished 18 September]

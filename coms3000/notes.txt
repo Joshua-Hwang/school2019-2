@@ -671,10 +671,130 @@ version rollback attack.
 
 [59:00 week 7 video]
 
-Complete aside----------------------------------------------------------------
+Permission systesm-------------------------------------------------------------
 The idea of using rwsr-xrwx (where s is the SUID or set user id feature) is
 called the access control list. An access control list has users (subjects)
 and groups which have permissions to do certain operations (access operations)
-on certain objects.
+on certain objects. The passwd command has to change the /etc/passwd file so how
+does it do it safely? By using the set uid.
 
-[ZZZ FINISHED WEEK 7]
+Doing this ACL for each individual user is tedious and prone with large problems
+as we scale up. Instead we implement groups (or roles). Some policies allow
+membership to multiple groups but only some (Linux does).
+
+An alternative model for managing access rights is capabilities. A capability is
+an object-rights pair. Think of it like tickets are licenses. If you hold the
+ticket then you're allowed to write/read that object.
+The system then stores all these capabilities in a table where the rows are the
+users/subjects.
+This method makes it easy to see the permissions of individuals and easier to
+control those capabilities but is much harder to see who has access to an
+object; one to many vs many to one.
+This system is rarely used anywhere except niche systems.
+
+Who determines the access privileges of the file? In UNIX and Windows the owner
+determines these things. This is called Discretionary Access Control (DAC). It's
+called such because it's at the discretion of the owner.
+The only exception to this is restricting the root user which is not (and should
+not be) possible.
+
+One of the problems with DAC is that the power of the file is given purely to
+the owner. If the owner messes up or is tricked then this new person has power
+over the file. One such trick is a trojan horse (which is a form of malware).
+By running the (apparently benign) program the attacker is able to execute
+commands through the owner.
+
+An alternative method is Mandatory Access Control (MAC)
+which forces objects to adhere
+to system-wide policies rather than the whim of the object's owner. This
+alternative is often used in military and other high security contexts.
+
+In MAC each object has a classification indicating its sensitivity.
+Each user has a clearance indicating what level of sensitivity they can access.
+When a user has access we say the clearance "dominates" the classification.
+
+Of course this method fails the need-to-know principle. Thus at each
+classification level we also have compartments.
+Users only have access to their level of classification within their assigned
+compartments.
+
+We go a step further and develop an ordering for sensitivity level
+and compartment. For example
+{top secret} \geq {secret}
+{top secret, nuclear} \geq {secret, nuclear}
+{top secret, crypto} ?? {secret, nuclear}
+Where the ?? is for a relation that isn't defined
+
+Basic ordering properties must be met.
+A \geq B and B \geq C imples A \geq C (transitivity)
+A \geq A (reflexive)
+A \geq B and B \geq A implies A = B (antisymmetry)
+Note that not all elemnts need to be comparable.
+
+An older model for access control is the Bell-LaPadula (BLP) model.
+It follows the same clearance and classification as before. It implements two
+unique rules.
+Simple Security Property which prevents reading of a higher classification.
+(No Read Up)
+
+*(star)-property which prevents users of certain level to writing lower level
+stuff. Subjects in the Secret classification are allowed to write Top-Secret
+objects. (No Write Down)
+
+The star-property is designed to prevent trojan horses which could create an
+unclassified copy of a file.
+Of course you see the problem with this method. The security levels of files
+will go up as more people read and change a document. This effect is known as
+a High Water Mark.
+
+Information theory--------------------------------------------------------------
+Claude Shannon (1916 - 2001)
+Was one of the first people to publish a paper on information.
+Shannon defined "Information is reduction of uncertainty"
+We represent information in the units of bits.
+
+I(X) is the average amount of information gained from observing the outcome of
+random variable X.
+
+Equivalently, I(X) is the minimum average number of bits needed to encode all
+possible outcomes of X.
+
+In other contexts Shannon"s definition of information is commonly called
+entropy.
+"My greatest concern was what to call it. I thought of calling it 'information',
+but the word was overly used, so I decided to call it 'uncertainty'. When I
+discussed it with John von Neumann, he had a better idea. Von Neumann told me,
+'You should call it entropy, for two reasons. In the first place your
+uncertainty function has been used in statistical mechanics under that name, so
+it already has a name. In the second place, and more important, nobody knows
+what entropy really is, so in a debate you will always have the advantage.'"
+
+We begin with Ralph Hartely's attempt at quantifying information 20 years before
+Shannon did.
+We calculate the amount of information we need by taking how many bits are
+required to hold all possible outcomes.
+e.g.
+Tossing a coin takes 1 bit
+Rolling a 4 sided dice requires 2 bits.
+Rolling an 8 sided dice requires 3 bits.
+Rolling an N sided dice requires log_2 N bits.
+
+Note, when all the outcomes share the same probability then we can rewrite our N
+in terms of the probability instead.
+p = 1/N
+N = 1/p thus
+I(X) = log_2 N = log_2(1/p) = - log_2(p)
+
+Of course the next question is how we deal with different probabilities?
+Enter Shannon's attempt.
+We now consider information as the level of surprise. e.g. Not winning the
+Gold Lotto gives less information than winning the Gold Lotto.
+With this new definition we use the same - log_2(p) formula and we're now
+allowed to use different p for different outcomes.
+We then take the weighted average of all sizes of information to get the total
+information.
+Instead of I(X) which was used to denote Hartley's information we instead use
+H(X) to denote Shannon's.
+
+Understanding entropy will allow us to measure the effectiveness of some
+passwords.
