@@ -599,4 +599,54 @@ choose a test statistic and the rejection region (the cutoff),
 setting the Type I error,
 analyse the power of the decision rule,
 
-[finished 18 September]
+General thresholds and terminology used for p-values--------------------
+A p-value can only reside within 1 and 0.
+Between 0 and 0.01 then "very strong evidence"
+Between 0.01 and 0.05 then "moderately strong"
+Between 0.05 and 0.1 then "marginal strength"
+Anything else "little to no evidence"
+
+Duality of pvalues and confidence intervals---------------------
+By writing a confidence interval (a, b) you're telling us the range of
+values that would not be rejected if were the null hypothesis.
+
+Generalised likelihood ratio tests----------------------------------------
+The original issue with the likelihood ratio test was that it required
+single point hypothesis. With this new method we can fix this and also
+make use of multidimensional parameters.
+
+We now consider H_0 \in \Theta_0 where \Theta_0 is a given subset.
+Likewise H_1 \in \Theta_1 where \Theta_0 and \Theta_1 are disjoint subsets.
+
+With this new, generalised definition the idea of "two-sided" no longer
+makes sense. Instead consider a "out-sided".
+
+[see outsided.png]
+
+Now the actual formula,
+\frac{sup L(\theta | X)}{sup L(\theta | X)}
+
+Where the numerator is the best possible likelihood of the data under the
+null hypothesis and the denominator is the same for the alternative
+hypothesis.
+
+In this same way the previous model concluded. If this fraction is "small"
+then it's more likely that the alternative hypothesis was right. If the
+fraction is not "small" then it's more likely that the null hypothesis was
+right.
+
+[45:00 24 Sep to the lecture after is a good example of a use case for this]
+
+Multinomial distribution----------------------------------------------------
+Multinomial distribution is an extension of the binomial distribution.
+Much like how in the bionmial distribution you actually only have 1 free
+parameter in the multinomial situation we have k-1 parameters for
+p_1 ... p_k.
+
+The PMF for the multinomial is
+P(X_1 = x_1, X_2 = x_2, X_3 = x_3, X_4 = x_4 ...)
+= (n x) p_1^{x_1} p_2^{x_2} p_3^{x_3} p_4^{x_4} ...
+Where the brackets at the start are the multinomial coefficient.
+\frac{n!}{x_1! x_2! x_3! x_3! x_4! ...}
+
+[Finished up to midsem break]

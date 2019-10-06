@@ -50,6 +50,7 @@ This is done through: risk assessment, cost benefit analysis, selection,
 implementation and evaluation of security features and countermeasures and
 an overall security review.
 
+[Examples of these are in the notes.tex or notes.pdf]
 The definition of risk as determined by ISO/IEC 27000:2018 is,
 "effect of uncertainty of objectives". Where an objective is a result to
 be achieved.
@@ -798,3 +799,5 @@ H(X) to denote Shannon's.
 
 Understanding entropy will allow us to measure the effectiveness of some
 passwords.
+
+[Week 8 done]
