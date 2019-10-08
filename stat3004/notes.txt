@@ -752,7 +752,7 @@ our matrix becomes the identity matrix.
 
 We introduce a new variable W_t which measures how long we remain in the current
 state at time t.
-p(W_t > w | X_t = i) 
+p(W_t > w | X_t = i)
 If our markov chain is in state i now what is the probability we spend w time units
 (or more) at this state i. In time homogeneous we equivalently have
 p(W_0 > w | X_0 = i)
@@ -781,7 +781,13 @@ Another case we won't explore is if our waiting time has q_x = +\infty.
 In this case we are guaranteed to jump instantaneously; zero wait time.
 On the other hand q_x = 0 means we won't leave the state in finite time.
 
-Consider K_{xy} is the probability we jump from state x to state y.
+Consider K_{x,y} is the probability we jump from state x to state y.
+We also define q_{x,y} to be q_x K_{x,y}. So the parameter times the probability
+of jumping to state y.
+Since the \sum_y K_{x,y} = 1 then \sum_y q_{x,y} = q_x
+
+We prefer this q_{x,y} notation so we'll redefine
+K_{x,y} = \frac{q_{x,y}}{q_x} + I\{x=y\}.
 
 [See 25:00 9 Sep for interesting example of markov chain explosion]
 Also note that given q_x = \lambda and
@@ -793,3 +799,21 @@ then we say that this is an explosion. The infinite jump has occurred in finite 
 
 p(\lim_{n\to\infty} T_n = \infty) = 1
 then we say the markov chain is regular.
+
+Echoing the same ideas as the pmatrix for transitions we have a qmatrix for the
+exponential parameter q_{x,y}. The only problem is that q_{x,x} doesn't exist
+so we'll define it as q_{x,x} = -q_{x}
+
+Thus if we were to construct the qmatrix all our rows will sum to zero.
+By choosing q_{x,x} = -q_x, we have constructed a singular matrix.
+A singular matrix is not invertible and an eigenvalue for this matrix is 0.
+
+Now we can use a bunch of insane reasoning and equations from 10 Sep,
+P'_t = Q P_t
+Which creates a system of differential equations given the probability matrix
+at time t, P_t. This is known as the Kolmorgorov Bachard Equations.
+
+Also under the finite and "standard" assumptions this equation is commutative.
+P'_t = P_t Q.
+
+[starting 11 Sep]
