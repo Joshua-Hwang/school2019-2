@@ -507,6 +507,11 @@ will be a diagonal of recurrence families. [Better example at 19 Aug 22:00]
 If C is a finite, closed, communicating class then all states in this family
 are recurrrent.
 
+As an aside if our system is irreducible, positively recurrent
+and aperiodic then we have a unique
+stationary distribution. i.e. no matter what initial starting we always land
+back to the unique stationary distribution.
+
 We construct an identifier
 I_x = \{ n \geq 1 : p^n_{xx} > 0}
 This means that I is the set such that the probability of ending back
@@ -671,11 +676,11 @@ Poisson processes are no longer true. The interval times are no longer
 exponentially distributed (so no longer memoryless) and they are no longer
 independent.
 
-Should be noted that dijoint areas are still independent.
+Should be noted that disjoint areas are still independent.
 
 [00:00 2 Sep has an example of calculation]
 
-Superposition of nonhomogeneous Poisson processes will actually give another
+Superposition of non-homogeneous Poisson processes will actually give another
 Poisson process.
 
 Spatial Poisson Process---------------------------------------------------
@@ -697,12 +702,94 @@ area/volume measured to a single number naturally (probably integrate).
 
 Disjoint areas are still independent.
 
-[ZZZ Doing 2 Sep]
-
-Thinning Nonhomogeneous Poisson Process------------------------------------
-This is a subset of the nonhomogeneous poisson processes which are easy
+Thinning Non-homogeneous Poisson Process------------------------------------
+This is a subset of the non-homogeneous poisson processes which are easy
 to calculate on a computer. [see 00:00 Sep 3 for more information]
 
-Essentially we have an upper bound \lambda and we make it variable by
+Essentially we have an upper bound and constant \lambda and we make it variable by
 applying a probability that the point gets accepted p. This p is variable with
-time so it might increase/decrease over time. Now \lambda(t) = p \times \lambda.
+time so it might increase/decrease over time. Now \lambda(t) = p \times \bar{\lambda}.
+
+Should be obvious but the \bar{\lambda} we choose must be an strict upper bound to
+ensure we can actually and properly map \lambda(t) \to \bar{\lambda} p(t).
+
+We can be sneaky (especially if \lambda has no maximum). Simply cut off our computation
+at some time. Once we have finite time we have a guaranteed maximum.
+
+[The lecturer describes the algorithm explicitly at 30:00 3 Sep]
+
+Continuous time markov chains------------------------------------------
+We now take our attention back to markov chains and more specifically
+continuous time markov chains.
+
+A CTMC must hold the markov property (history doesn't matter only the latest
+state does)
+
+We denote transition probabilities which are defined as such:
+p_t (i,j) = p(X_t = j | X_0 = i)
+Which means "what is the probability that we go from state i to state j in time t".
+(Note that we're starting at time 0. In the homogeneous time case this is fine
+and equivalent for any time interval. For non-homogeneous this is untrue)
+
+Not necessarily true but we can make use of a "standard property" of transition
+probabilities. As the time interval approaches 0 our probability becomes 0 for all
+other states except its own. In other words when no time has passed there is a 100%
+chance we stay in the same state. In this course we only deal with "standard".
+
+We note that we can split out time interval into two parts such that
+p_{t+s} (i,j) = p(X_{t+s} = j | X_0 = i)
+= \sum_{k \in E} p_s(i,k) p_t(k,j)
+Where k is the intermediate step.
+This is called the Chapman-Kolmogorov equations.
+
+From this we can see that we can actually write our transition probabilities into
+a matrix as we've done with our DTMCs.
+P_{t+s} = P_s P_t
+Where we calculate the transitions for each specific time.
+
+Also note that with our standard property that as the time interval goes to 0
+our matrix becomes the identity matrix.
+
+We introduce a new variable W_t which measures how long we remain in the current
+state at time t.
+p(W_t > w | X_t = i) 
+If our markov chain is in state i now what is the probability we spend w time units
+(or more) at this state i. In time homogeneous we equivalently have
+p(W_0 > w | X_0 = i)
+We create a new function h(w) = p(W_0 > w | X_0 = i).
+
+With the reasoning at [38:00 4 Sep] (mainly just using the Markov property)
+we prove that h(u+v) = h(u) h(v) when u,v > 0
+
+From this we get given,
+h(u) = e^{-cu}
+for some constant c.
+This is the only solution for h(u).
+
+Thus for a homogeneous time CTMC
+p(W_0 > w | X_0 = i)
+follows an exponential distribution. We shall call the parameter for this
+distribution q_x. For state x.
+
+Thus to completely specify the finite dimension distributions of a standard
+time-homogeneous CTMC, we need only specify two ingredients.
+The collection of exponential "holding time" parameters and the one-step transition
+probabilities. Note that when we jump we ensure we can't jump back to the same
+state, it should be a genuine jump.
+
+Another case we won't explore is if our waiting time has q_x = +\infty.
+In this case we are guaranteed to jump instantaneously; zero wait time.
+On the other hand q_x = 0 means we won't leave the state in finite time.
+
+Consider K_{xy} is the probability we jump from state x to state y.
+
+[See 25:00 9 Sep for interesting example of markov chain explosion]
+Also note that given q_x = \lambda and
+K_{x, x+1} = 1 (so guaranteed to jump to the next state)
+is precisely a Poisson Process
+
+p(\lim_{n\to\infty} T_n = \infty) = 0
+then we say that this is an explosion. The infinite jump has occurred in finite time.
+
+p(\lim_{n\to\infty} T_n = \infty) = 1
+then we say the markov chain is regular.
