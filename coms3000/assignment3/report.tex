@@ -43,8 +43,8 @@
     and other equipment used specifically in OTs have not been designed with
     cyber security in mind.
     This report aims to analyse the Auric Enterprises operations.
-    We explore four of the most relevant threats to both Auric and OTs in
-    general; malware, human error, remote code execution and data theft.
+    We explore three of the most relevant threats to both Auric and OTs in
+    general; malware, remote code execution and data theft.
     We find
     legacy devices and poor network security as well as many other
     vulnerabilities within the Auric work site could manifest into
@@ -56,7 +56,7 @@
 \begin{multicols}{2}
     \section{Introduction}
     This report aims to analyse the Auric Enterprises operations.
-    The four threats that will be analysed will be malware, human error or sabotage, 
+    The three threats that will be analysed will be malware, 
     remote code execution and data theft. This report will provide a brief
     description of each threat followed by the vulnerabilities in Auric's operations
     that can be exploited to allow a breach. We then provide potential
@@ -73,8 +73,9 @@
     horses.
     For ICS computers specifically they determined that the most common form of
     malware was worms via a removable device.
-    They also found that the main source for these attacks was mainly from internet
-    roughly 25\% and removable devices (i.e. USB) with roughly 8\% \cite{kapersky}.
+    They also found that the main sources for these attacks were from
+    the internet (roughly 25\%) and removable devices (i.e. USB) with roughly 8\%
+    \cite{kapersky}.
 
     Malware, once inside a machine,
     can spread itself throughout a system. The malware can then
@@ -90,20 +91,18 @@
     system, Siemens Step7 SCADA devices and S7 PLCs \cite{stuxnet}.
 
     \subsection{Vulnerabilities}
-    Windows XP has not been supported by Microsoft since 2014 \cite{windowsxp}.
-    Microsoft will no longer provide security updates for this version of their
-    operating system. This leaves machines running Windows XP permanently 
-    vulnerable to exploits that have not been patched.
-
-    Malware commonly infiltrates a system via removable devices but it's possible
-    to inject malware through a network. In Auric's case, this is very possible.
+    In Auric's network configuration, it is very possible for malware to spread
+    throughout the system once inside.
     Since the network is flat it only takes one compromised device to gain access to
     all devices on the system \cite{forbes}.
-    In this case a worm could be uploaded to a single,
-    poorly secured device and make its way throughout the entire network.
+
+    Additionally, 
+    Windows XP has not been supported by Microsoft since 2014 \cite{windowsxp}.
+    Thus Microsoft will no longer provide security updates for this version of their
+    operating system. 
 
     \subsection{Realised threat}
-    One such attack is
+    One potential attack is
     the Stuxnet worm which was mentioned previously. The devices in the Auric
     operations site are exactly the same ones exploited by Stuxnet; Siemens
     Step7 SCADA devices. Though such exploits have been patched in the latest
@@ -111,13 +110,19 @@
     version of Windows XP it's possible that exploits discovered after 2014 
     could be used to replace the Windows part of Stuxnet.
 
+    Consider this other potential attack.
+    An interested attacker may make use of a zero day exploit.
+    Since it is a zero day exploit no security patch has been released to
+    counter the exploit. that gains some
+    kind of entry into the system.
     Due to the flat network,
     it's now very easy for the malware to travel
     through the network. Deploying ransomware on the finance data or even disrupting
     the SCADA systems.
 
     \subsection{Controls}
-    We recommend updating the engineering workstations to ensure
+    We recommend updating the operating system of the
+    engineering workstations to ensure
     the Stuxnet worm and other possible exploits have a lower chance of gaining
     access into our system.
 
@@ -125,8 +130,9 @@
     from being compromised thus reducing the impact of successful attacks.
 
     In the case that Auric's databases get compromised via ransomware.
-    It's recommended we store backups of our data securely external to any
-    network.
+    It's recommended that Auric stores backups of their
+    data secure and external to any
+    network removing any chance of an attack via a network.
 
     %\section{Human error or sabotage}
     %IBM found that 48\% of all breaches in 2018 were
@@ -189,7 +195,8 @@
     system and is able to run arbitrary code or commands on a machine inside the
     system.
 
-    In an industrial control system context this is extremely dangerous due to many
+    In an industrial control system context this is extremely dangerous due to
+    amount of
     powerful machinery and vital safety equipment present on site. 
     If such equipment
     was to become compromised the health and safety of workers on site could
@@ -329,8 +336,8 @@
     all traffic on site, merely a small subset of it.
 
     \section{Conclusions}
-    This paper has explored four of the most relevant threats to both Auric
-    and OTs in general; malware, human error, remote code execution and
+    This paper has explored three of the most relevant threats to both Auric
+    and OTs in general; malware, remote code execution and
     data theft. Through our analysis of Auric we found
     legacy devices and poor network security as well as many other
     vulnerabilities within the Auric work site could manifest into

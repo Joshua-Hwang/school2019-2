@@ -610,6 +610,15 @@ Duality of pvalues and confidence intervals---------------------
 By writing a confidence interval (a, b) you're telling us the range of
 values that would not be rejected if were the null hypothesis.
 
+Nuance with pvalues-------------------------------------
+A pvalue will never provide evidence FOR the null hypothesis.
+All that can be done is provide evidence against or show that the evidence
+is consistent with the null hypothesis.
+
+This is because the truth is very very close to the null hypothesis but
+not exactly the null hypothesis. As a matter of fact there is no way
+to provide evidence for a null hypothesis.
+
 Generalised likelihood ratio tests----------------------------------------
 The original issue with the likelihood ratio test was that it required
 single point hypothesis. With this new method we can fix this and also
@@ -630,6 +639,10 @@ Where the numerator is the best possible likelihood of the data under the
 null hypothesis and the denominator is the same for the alternative
 hypothesis.
 
+Usually we have a single point null hypothesis so the numerator is easy.
+The denominator will be the sample proportion since intuitively this is the
+best guess.
+
 In this same way the previous model concluded. If this fraction is "small"
 then it's more likely that the alternative hypothesis was right. If the
 fraction is not "small" then it's more likely that the null hypothesis was
@@ -637,9 +650,19 @@ right.
 
 [45:00 24 Sep to the lecture after is a good example of a use case for this]
 
+This GLRT can be converted asymptotically
+into the Pearson's Chi^2 test statistic.
+-2 log \Lambda = Pearson's Chi^2
+
+The GLRT is actually more exact that Pearson's Chi^2 but the Pearson statistic
+is commonly used because legacy reasons (pre-computer calculations are easy).
+
+Once you have a Pearson Chi^2 value (with appropriate degrees of freedom)
+use a calculator to determine the pvalue from this.
+
 Multinomial distribution----------------------------------------------------
 Multinomial distribution is an extension of the binomial distribution.
-Much like how in the bionmial distribution you actually only have 1 free
+Much like how in the binomial distribution you actually only have 1 free
 parameter in the multinomial situation we have k-1 parameters for
 p_1 ... p_k.
 

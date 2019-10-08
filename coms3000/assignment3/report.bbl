@@ -31,17 +31,17 @@ D.~Kushner, ``The real story of stuxnet,'' February 2013. [Online]. Available:
   \url{https://spectrum.ieee.org/telecom/security/the-real-story-of-stuxnet}
 \BIBentrySTDinterwordspacing
 
-\bibitem{windowsxp}
-\BIBentryALTinterwordspacing
-``Support for windows xp ended.'' [Online]. Available:
-  \url{https://www.microsoft.com/en-us/microsoft-365/windows/end-of-windows-xp-support}
-\BIBentrySTDinterwordspacing
-
 \bibitem{forbes}
 \BIBentryALTinterwordspacing
 P.~Kirner, ``An attacker's paradise: How to mitigate risk in a flat network,''
   March 2019. [Online]. Available:
   \url{https://www.forbes.com/sites/forbestechcouncil/2019/03/28/an-attackers-paradise-how-to-mitigate-risk-in-a-flat-network}
+\BIBentrySTDinterwordspacing
+
+\bibitem{windowsxp}
+\BIBentryALTinterwordspacing
+``Support for windows xp ended.'' [Online]. Available:
+  \url{https://www.microsoft.com/en-us/microsoft-365/windows/end-of-windows-xp-support}
 \BIBentrySTDinterwordspacing
 
 \bibitem{telnet}
