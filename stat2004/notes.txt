@@ -540,7 +540,10 @@ The numerator is the null hypothesis and c is the cutoff value.
 
 Observe, if the ratio was small then the data would have been more likely to be
 observed under \theta_1 than \theta_0. Thus there would be evidence against H_0
-if favor of H_1.
+in favor of H_1.
+
+A uniformly most powerful test is a test that is the gives the greatest power
+compared to all other tests on the given dataset \alpha.
 
 This LRT is the most powerful test possible as proven by
 Neyman-Pearson. It is also the most uniformly most powerful test for testing

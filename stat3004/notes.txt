@@ -815,5 +815,22 @@ at time t, P_t. This is known as the Kolmorgorov Bachard Equations.
 
 Also under the finite and "standard" assumptions this equation is commutative.
 P'_t = P_t Q.
+Additionally, P_t = e^{tQ} is the unique solution.
+To find the e^A where A is a matrix you make use of the Taylor expansion.
+So in reality e^{tQ} = \sum_{k=0}^\infty \frac{(tQ)^k}{k!}
 
-[starting 11 Sep]
+Limiting distribution------------------------------------------------
+Previously we had powers of our matrix to perform what we wanted.
+But now our P_t = e^{tQ}. Luckily we can perform
+a spectral decomposition which leads us to
+= e^{\lambda_1 t} R_1 + e^{\lambda_2 t} R_2 + e^{\lambda_3 t} R_3 ...
++ e^{\lambda_1 p} R_p
+We know that one of the eigenvalues is 0
+= R_1 + \sum_{k=2}^p e^{\alpha_k t} (cos(\beta_k t) + i sin(\beta_k t))
+
+Note that this looks very familiar to the softened spring we used to work with
+in MATH1051.
+As you remember in special circumstances we can achieve
+lim_{t\to\infty} P_t = R_1
+
+[Finished 11 Sep]

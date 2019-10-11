@@ -1,0 +1,453 @@
+\documentclass{article}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{verbatim}
+\usepackage{bm}
+
+\linespread{1.3}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\setcounter{secnumdepth}{0}
+\setcounter{MaxMatrixCols}{20}
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ts}{\textsuperscript}
+\newcommand{\diff}{\mathop{}\!\mathrm{d}}
+\newcommand{\prob}{\mathbb{P}}
+\newcommand{\expect}{\mathbb{E}}
+\newcommand{\var}{\text{Var}}
+
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\DeclarePairedDelimiter\p{\lparan}{\rparan}
+
+\title{STAT2004 Assignment 3}
+\author{Joshua Hwang (44302650)}
+
+\begin{document}
+All work in this assignment, unless otherwise specified, is set to 4 significant
+figures.
+
+\section{Exercise 1}
+\subsection{a}
+Using R we determined some summary statistics.
+
+\begin{verbatim}
+    db <- read.csv("likes.csv")
+    db$user <- as.factor(db$user)
+    summary(db)
+    summary(db[db$user == "influencer",])
+    summary(db[db$user == "regular",])
+\end{verbatim}
+
+Which gave the following summaries
+\begin{verbatim}
+> summary(db)
+         user         rating     
+ influencer: 98   Min.   :1.000  
+ regular   :100   1st Qu.:2.000  
+                  Median :3.000  
+                  Mean   :3.096  
+                  3rd Qu.:5.000  
+                  Max.   :5.000  
+> summary(db[db$user == "influencer",])
+         user        rating     
+ influencer:98   Min.   :1.000  
+ regular   : 0   1st Qu.:1.000  
+                 Median :4.000  
+                 Mean   :3.133  
+                 3rd Qu.:5.000  
+                 Max.   :5.000  
+> summary(db[db$user == "regular",])
+         user         rating    
+ influencer:  0   Min.   :1.00  
+ regular   :100   1st Qu.:2.00  
+                  Median :3.00  
+                  Mean   :3.06  
+                  3rd Qu.:4.00  
+                  Max.   :5.00  
+> 
+\end{verbatim}
+
+\subsection{b}
+The null hypothesis is that both the influencers and the regular users hold the
+same opinions on the removal of likes.
+
+The alternate is that influencers and regular users have differing opinions.
+Note that the alternate hypothesis is two sided.
+
+Before running any analysis we shall determine our decision rule.
+Since this is a social science experiment we will take a $p < 0.1$ as evidence
+against the null hypothesis.
+
+Consider two vectors,
+\begin{align*}
+    (X_1, X_2, \ldots, X_n) \\
+    (Y_1, Y_2, \ldots, Y_m) \\
+\end{align*}
+
+Where all $X_i$ are taken from the regular users distribution and $Y_i$ is taken
+from the influencers distribution.
+
+We don't know the underlying distribution of each $X$ and $Y$
+so we shall approximate them with t-distributions. We have $n + m - 2$ degrees
+of freedom. We choose the t-statistic because it's asymptotically most powerful
+even for non-normal distributions.
+
+Under the null hypothesis $X$ and $Y$ share the same distribution thus,
+\begin{align*}
+    0.05 &= \prob(t_{n+m-2} > c)
+    &&\text{Where $c$ the value satisfying this equation} \\
+    &= \prob\left(\frac{\bar{X} - \bar{Y} - \Delta_0}{S_p\sqrt{1/n + 1/m}} > c\right)
+    &&\text{Where $\Delta_0$ is the difference in means} \\
+    &= \prob\left(\frac{\bar{X} - \bar{Y}}{S_p\sqrt{1/n + 1/m}} > c\right) \\
+    &= \prob\left(\bar{X} - \bar{Y} > c S_p\sqrt{1/n + 1/m}\right)
+\end{align*}
+
+Using R we determine that $c=1.653$ for $p=0.1$ double sided.
+Since it is double sided (and luckily t distribution is symmetric)
+we actually have $c=\pm1.653$.
+
+Now we look at the data and determine the p-value for it.
+We work this process backwards to determine the $c$ value to calculate $p$.
+\begin{align*}
+    c &= \frac{\bar{X} - \bar{Y}}{S_p\sqrt{1/n + 1/m}} \\
+    &= \frac{\bar{X} - \bar{Y}}{S_p\sqrt{1/n + 1/m}} \\
+    c &= -0.2174 \\
+\end{align*}
+
+Using the $t_{n+m-2}$ and R we get $p = 0.4141$.
+\begin{verbatim}
+    avg <- mean(db[db$user=="regular",]$rating)
+    avg <- avg - mean(db[db$user == "influencer",]$rating)
+    pt(avg/(var(db$rating)*sqrt(1/100+1/98)), 198-2)
+\end{verbatim}
+
+The p-value shows that assuming the null hypothesis is true, that we have a $0.4141$ 
+chance of achieving this result or larger.
+
+The p-value on its own does not provide a strong enough conclusion. Instead
+consider the previous cutoff we established with $p=0.1$, $c=1.653$.
+Since we're in the context of social science we determined a p-value of
+$0.1$ was sufficient to consider this data against the null hypothesis.
+
+Using this $c$ we determine a cutoff for $\bar{X} - \bar{Y}$;
+$\pm0.5523$. If we 
+compare this with our \texttt{avg} which was $-0.07265$. We see that our data
+does not meet the cutoffs on either side. Thus we conclude that our data is
+consistent with the null hypothesis.
+
+\subsection{c}
+The first assumption was that each data point was independent of one another.
+Given this is a form of social media it is likely that those unhappy with the
+change were more vocal which might have waived previously neutral people.
+
+Since we did not know the distribution our data came from we had assumed that
+our data would asymptotically approximate a t-distribution. The underlying data
+is not only \textbf{not} continuous but it is also bounded.
+
+\section{Exercise 2}
+\subsection{a}
+The null hypothesis is that the blood type has no impact on tuberculosis 
+incidence. We should expect to see evenly distributed tuberculosis incidence
+for each blood type.
+
+The alternative hypothesis is that blood type has some kind of effect on
+tuberculosis incidence.
+
+\subsection{b}
+The data fits a multinomial distribution thus the likelihood function we get is,
+\begin{align*}
+    n! \prod_{i} \prod_{j} \frac{1}{x_{ij}!} p_{ij}^{x_{ij}}
+\end{align*}
+
+\subsection{c NOT DONE YET}
+We will make use of the fact that under the null hypothesis
+$p_{ij} = p_{i.} \times p_{.j}$
+
+\begin{align*}
+    L(p|x) &= n! \prod_{i} \prod_{j} \frac{1}{x_{ij}!} p_{ij}^{x_{ij}} \\
+    &= n! \prod_{i} \prod_{j} \frac{1}{x_{ij}!} (p_{i.} \times p_{.j})^{x_{ij}} \\
+    &= n! \left(\prod_i p_{i.}^{\sum_j x_{ij}} \times \prod_j p_{.j}^{\sum_i x_{ij}}\right)
+    \prod_{i} \prod_{j} \frac{1}{x_{ij}!} \\
+    &= n! \left(\prod_i p_{i.}^{x_{i.}} \times \prod_j p_{.j}^{x_{.j}}\right)
+    \prod_{i,j} \frac{1}{x_{ij}!} 
+\end{align*}
+
+We now take the logarithm of our likelihood,
+\begin{align*}
+    &= \left(\sum_i x_{i.} \log (p_{i.}) + \sum_j x_{.j} \log (p_{.j})\right)
+    + \log (n!) - \sum_{i,j} \log (x_{ij}!)
+\end{align*}
+
+Luckily logarithms are monotone increasing so the maximum of this function will
+give the maximum for the non-logged equation. Now we differentiate by $\log(p_{i.})$
+\begin{align*}
+    &= \left(\sum_i x_{i.} \log (p_{i.}) + \sum_j x_{.j} \log (p_{.j})\right)
+    + \log (n!) - \sum_{i,j} \log (x_{ij}!) \\
+    \frac{\partial L}{\partial\log(p_{i.})} &= x_{i.}
+\end{align*}
+
+ZZZ - possible without the lagrange multiplier don't know how yet
+
+\subsection{d}
+The null hypothesis allows that $p_{ij} = p_{i.} \times p_{.j}$ since blood type
+tuberculosis should be independent.
+We also found that $\hat{p}_{i.} = x_{i.}/n$ thus,
+\begin{align*}
+    \hat{p}_{ij} &= x_{i.}/n \times x_{.j}/n \\
+    &= \frac{x_{i.}\times x_{.j}}{n^2} \\
+\end{align*}
+
+Using Matlab to do the grunt work we then determine each cell of the matrix.
+\begin{verbatim}
+A = [7 5 3 13; 27 32 8 18; 55 50 7 24]
+B = zeros(3,4)
+
+for row = 1:3
+    for col = 1:4
+        B(row,col)=sum(A(row,:))*sum(A(:,col))/249^2
+    end
+end
+
+B
+\end{verbatim}
+
+\begin{align*}
+    \begin{matrix}
+        0.0401929 & 0.0392897 & 0.0081289 & 0.0248383 \\
+        0.1220142 & 0.1192723 & 0.0246770 & 0.0754020 \\
+        0.1952227 & 0.1908356 & 0.0394832 & 0.1206432 \\
+    \end{matrix}
+\end{align*}
+
+To get the expected count from this we take $p_{ij} \times n$. Which is taken
+from the binomial (and by extension the multinomial) distribution.
+\begin{align*}
+    \begin{matrix}
+        10.0080 &  9.7831 &  2.0241 &  6.1847 \\
+        30.3815 & 29.6988 &  6.1446 & 18.7751 \\
+        48.6104 & 47.5181 &  9.8313 & 30.0402 \\
+    \end{matrix}
+\end{align*}
+
+\subsection{e}
+Without proof the most likely estimate for each $\hat{p}_{ij}$, under the
+alternative hypothesis, is, $x_{ij}/n$.
+
+\subsection{f}
+Using our previous results we can now evaluate the generalised likelihood ratio
+test statistic.
+
+For the null hypothesis we have
+$\hat{p}_{ij} = \frac{x_{i.}\times x_{.j}}{n^2}$.
+So our likelihood for the null hypothesis is,
+\begin{align*}
+    &n! \prod_{i} \prod_{j} \frac{1}{x_{ij}!} p_{ij}^{x_{ij}} \\
+    &= n! \prod_{i} \prod_{j}
+    \frac{1}{x_{ij}!}
+    \left(\frac{x_{i.}\times x_{.j}}{n^2}\right)^{x_{ij}} \\
+\end{align*}
+
+For the alternate hypothesis we get,
+\begin{align*}
+    &n! \prod_{i} \prod_{j} \frac{1}{x_{ij}!} p_{ij}^{x_{ij}} \\
+    &= n! \prod_{i} \prod_{j}
+    \frac{1}{x_{ij}!}
+    \left(x_{ij}/n\right)^{x_{ij}} \\
+\end{align*}
+
+Using both of these we get,
+\begin{align*}
+    \Lambda &= \frac{\sup_{H_0} L(p|x)}{\sup_{H_1} L(p|x)} \\
+    &= \frac{n! \prod_{i} \prod_{j}
+    \frac{1}{x_{ij}!}
+    \left(\frac{x_{i.}\times x_{.j}}{n^2}\right)^{x_{ij}}}
+    {n! \prod_{i} \prod_{j}
+    \frac{1}{x_{ij}!}
+    \left(x_{ij}/n\right)^{x_{ij}}} \\
+    &= \prod_{i} \prod_{j}
+    \frac{\left(\frac{x_{i.}\times x_{.j}}{n^2}\right)^{x_{ij}}}
+    {\left(x_{ij}/n\right)^{x_{ij}}} \\
+    &= \prod_{i} \prod_{j}
+    \left(\frac{\frac{x_{i.}\times x_{.j}}{n^2}}
+    {x_{ij}/n}\right)^{x_{ij}} \\
+    &= \prod_{i} \prod_{j}
+    \left(\frac{x_{i.}\times x_{.j}}
+    {x_{ij}n}\right)^{x_{ij}}
+\end{align*}
+
+We put this into R to get,
+\begin{verbatim}
+tb <-  matrix(c(7,5,3,13,27,32,8,18,55,50,7,24),nrow=3,byrow=TRUE)
+res <- {}
+for (row in 1:3){
+    for (col in 1:4){
+        res <- c(res, (sum(tb[row,])*sum(tb[,col])/(tb[row,col]*sum(tb)))^tb[row,col])
+    }
+}
+lambda <- prod(res)
+-2*log(lambda)
+\end{verbatim}
+
+The result we get for $\Lambda = 0.0008200$ and $-2\log\Lambda = 14.21$.
+
+\subsection{g}
+We now use R again to compute the Pearson's $\chi^2$ statistic.
+\begin{verbatim}
+tbnull <- matrix(c(10.0080, 9.7831, 2.0241, 6.1847, 30.3815,
+29.6988, 6.1446, 18.7751, 48.6104, 47.5181, 9.8313, 30.0402),
+nrow=3, byrow=TRUE)
+sum((tb - tbnull)^2/tbnull)
+\end{verbatim}
+
+The code gives us $\chi^2 = 15.37$. From observation alone it appears that
+Pearson's $\chi^2$ is a good approximation for our $-2\log\Lambda$.
+
+\subsection{h}
+Using our Pearson's $\chi^2$ and R we can calculate our p-value.
+The degrees of freedom is based on the null hypothesis which gives us $5$ since
+we can only make choices about each row or column and the final row/column must
+allow us to sum to 1.
+\begin{verbatim}
+pchisq(sum((tb-tbnull)^2/tbnull),5,lower.tail=FALSE)
+\end{verbatim}
+
+Which gives us a p-value of $0.008894$.
+
+The p-value does not mean anything without a proper decision cutoff
+(that should have been determined prior the calculations). Since we're
+dealing with population health which may inform the treatment of humans a
+p-value of 0.05 seems like a reasonable choice.
+
+Since the p-value we've found is far lower we decide that our data is evidence
+against the null hypothesis. There exists a relationship between
+blood type and tuberculosis.
+
+\subsection{i}
+We repeat the process but remove the advanced severity and AB blood type in the
+hope that the $\chi^2$ may become more accurate.
+
+We repeat the R code but with an alternative matrix.
+\begin{verbatim}
+xtb <- tb[c(2,3),c(1,2,4)]
+xtbnull <- {}
+for (row in 1:2){
+    for (col in 1:3){
+        xtbnull <- c(xtbnull, sum(xtb[row,])*sum(xtb[,col])/sum(xtb))
+    }
+}
+xtbnull <- matrix(xtbnull, nrow=2, ncol=3, byrow=TRUE)
+sum((xtb - xtbnull)^2/xtbnull)
+\end{verbatim}
+
+This gives us a Pearson's $\chi^2$ of 58.60. The degrees of freedom are 3
+since we only have 1 option for the rows and two options for the columns.
+
+The p-value we get from this is, 0.7226. Our p-value has radically changed after
+removing that row and column. Our conclusion has now. We now find the data 
+is consistent with the null hypothesis.
+
+\section{Exercise 3}
+\subsection{a}
+Before doing any data crunching it is important we define an appropriate
+decision. Since we're taking from a group of 100 students and we're doing a
+study on human behaviour we shall choose a p-value less than 0.1 means our data
+is evidence against the null hypothesis.
+
+We define the null hypothesis to be there is no difference in symbol frequency
+for incorrect and correct solutions. The alternative hypothesis is that there is
+some sort of difference between the frequency of symbols.
+
+We model our data in a multinomial distribution.
+The parameters we will look at are $p_{\mu i}$ where we define the probability
+of the symbol for the incorrect solutions and $p_{\bar{X} c}$ for the $\bar{X}$
+symbol for the correct solution and so on.
+
+Our model and hypotheses mirror the types of question posed in the previous
+question. We will make use of the results we got from there.
+
+Under the null model expected result is,
+\begin{align*}
+    \hat{p}_{ij} &= \frac{x_{i.} \times x_{.j}}{n^2} \\
+\end{align*}
+
+The observed is,
+\begin{align*}
+    \hat{p}_{ij} &= \frac{x_{ij}}{n^2} \\
+\end{align*}
+
+We now use R on this data to get our p-value.
+\begin{verbatim}
+sym <- c(298, 165, 146, 264, 119, 16, 106, 328, 29, 203, 133, 165, 29, 30)
+sym <- matrix(sym, ncol=2, byrow=TRUE)
+symnull <- matrix(0, dim(sym)[1], dim(sym)[2])
+for (row in 1:7){
+    for (col in 1:2){
+        symnull[row,col] <- sum(sym[row,])*sum(sym[,col])/sum(sym)
+    }
+}
+
+sum((sym - symnull)^2/symnull)
+\end{verbatim}
+
+This gives us a Pearson $\chi^2$ of 0.1768. The degrees of freedom for our
+statistic will be $14-1 = 12$ since the only constraint on our model is that
+the sum of all cells must give 1.
+The corresponding p-value is, $1.718 \times 10^{-69}$ which provides strong
+evidence against the null hypothesis.
+
+From this we can conclude that there exists a difference between the frequency
+of certain symbols in incorrect student answers and correct student answers.
+
+\subsection{b}
+Since we're taking only 8 human responses we should expect a lot of variance.
+Because of this we shall determine a p-value of 0.1 or less as our cutoff.
+
+Our null hypothesis is that there is no difference in the inherent distribution
+where these 8 incorrect solutions arise from. Our alternative hypothesis is that
+there is a difference between each of the 8 incorrect answers.
+
+We repeat the process from the previous question.
+\begin{verbatim}
+sols <- matrix(c(
+        12,11,12,13,14,11,13,12,
+        06,06,07,06,05,08,07,05,
+        05,05,05,04,05,03,04,04,
+        04,04,06,02,04,02,06,06,
+        02,00,00,00,02,00,02,02,
+        05,06,04,05,04,04,06,05,
+        02,00,02,02,00,00,00,02),
+        ncol=8, byrow=TRUE)
+solsnull <- matrix(0,7,8)
+for (row in 1:7){
+    for (col in 1:8){
+        solsnull[row,col] <- sum(sols[row,])*sum(sols[,col])/sum(sols)
+    }
+}
+chi <- sum((sols - solsnull)^2/solsnull)
+\end{verbatim}
+
+We determine we have $7 + 8 - 2$ degrees of freedom since we have 7 rows but a 
+constraint among them and 8 columns with a constraint between them.
+
+With this information we compute our p-value is 0.04790.
+Based on the decision cutoff we declared earlier we accept this data as evidence
+against the null hypothesis. There is evidence that the 8 incorrect solutions
+have different frequencies.
+
+\subsection{c NOT DONE YET}
+There's apparently something weird with this p-value. Ask.
+I'm pretty sure it's either because the null and alternative should be flipped.
+
+\subsection{d NOT DONE YET}
+
+\section{Exercise 4 NOT DONE YET}
+Requires ANOVA
+
+\end{document}
