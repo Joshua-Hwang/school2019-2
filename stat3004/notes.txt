@@ -844,7 +844,7 @@ Suppose we can split our Q matrix into D(K - I) where K is the jump chain matrix
 I is the identity and D is the diagonal matrix with the exponential holding times.
 Using only the jump chain matrix (which is essentially a discrete version without
 holding times) we can sometimes get the limiting distribution of the CTMC
-just from K.
+just from \nu which are the rows of K.
 \pi_x \prop \nu_x/q_x
 \pi_x = \frac{\nu_x/q_x}{\sum_y \nu_y/q_y}
 Just ensure the the denominator doesn't go to infinity. If it is infinity then
