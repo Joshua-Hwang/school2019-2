@@ -815,7 +815,8 @@ at time t, P_t. This is known as the Kolmorgorov Bachard Equations.
 
 Also under the finite and "standard" assumptions this equation is commutative.
 P'_t = P_t Q.
-Additionally, P_t = e^{tQ} is the unique solution.
+Additionally, P_t = e^{tQ} is the unique solution if we have a finite
+state space.
 To find the e^A where A is a matrix you make use of the Taylor expansion.
 So in reality e^{tQ} = \sum_{k=0}^\infty \frac{(tQ)^k}{k!}
 
@@ -833,4 +834,47 @@ in MATH1051.
 As you remember in special circumstances we can achieve
 lim_{t\to\infty} P_t = R_1
 
-[Finished 11 Sep]
+We can get the limiting distribution without even getting our P matrix.
+Just using the Q matrix if we find a distribution that satisfies
+\pi Q = 0 then \pi P_t = \pi
+Should be noted that we can only do this for the left eigenvector and only
+works if P_t = e^{tQ}. Also observe this only works one way.
+
+Suppose we can split our Q matrix into D(K - I) where K is the jump chain matrix
+I is the identity and D is the diagonal matrix with the exponential holding times.
+Using only the jump chain matrix (which is essentially a discrete version without
+holding times) we can sometimes get the limiting distribution of the CTMC
+just from K.
+\pi_x \prop \nu_x/q_x
+\pi_x = \frac{\nu_x/q_x}{\sum_y \nu_y/q_y}
+Just ensure the the denominator doesn't go to infinity. If it is infinity then
+then correct solution is 0 for all \pi_i.
+
+Kolmogorov Cycle Condition-----------------------------------
+Consider a cycle chain where all states are connected to the two neighbours
+and the ends of our chain are connected. The probabilities don't need to be
+the same they just need to be non-zero.
+
+Kolmogorov Cycle Condition states that if
+\prod_{i=1}^n q(x_{i-1}, x_i) = \prod_{i=1}^n q(x_{i}, x_{i-1})
+
+Then there exists solution to detailed/local balance equations.
+Detailed balance equations should be familiar as,
+\pi_x q_{xy} = \pi_y q_{yx}
+
+Without even doing any calculations there are a few cases where the KCC holds.
+Tree-like transition graphs. Where each edge is undirected and no cycles exist
+(the cycle exists by taking the same set of states forwards and backwards).
+
+Categorising states in CTMC----------------------------------
+Much like in discrete models we have r_{xy} the only two differences
+is that r_{xx} is chance or return and no longer includes chance of staying.
+The other is the definition of periodic/aperiodic breaks down since we have
+variable holding times.
+
+If the CTMC is irreducible and recurrent then no matter what starting position
+we have,
+\lim_{t\to\infty} P_x(X_t = y) = \pi_y
+
+The probability that by infinite time we end up in state y has equivalent probability
+as the limiting distribution at y. \pi_y > 0 if state y is positive recurrent.
