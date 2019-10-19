@@ -801,3 +801,116 @@ Understanding entropy will allow us to measure the effectiveness of some
 passwords.
 
 [Week 8 done]
+
+IPsec----------------------------------------------------------------------
+TCP/IP was designed in the late 70s and early 80s.
+TCP/IP did not have any data integrity or confidentiality.
+You could fake the source IP address if desired.
+Replay attacks were possible since no dates or nonces.
+
+Because of this we must decide to put security on some level.
+Application level: SSH and PGP
+Above transport layer: SSL/TLS
+Above IP layer: IPsec
+
+The IPsec architectures contains three key areas,
+ESP (Encapsulating Security Payload)
+AH (Authentication Header)
+IKE (Internet Key Exchange)
+
+There are two modes of IPsec:
+Transport mode (aka host mode) only encrypts the TCP header and no anything
+below it. In transport mode both client and host have knowledge of
+IPsec. This is used in end-to-end scenarios.
+
+IKE-----------------------------
+An established connection is called a Security Association (SA)
+We first setup *ISAKMP* (Internet Security Association and Key Management)
+which uses X.509 certification for authentication and
+Diffie-Hellman to exchange keys.
+
+Once we have these parts we can generate the IPsec SA
+
+In tunnel mode the whole packet including the original IP address
+headers are encoded and packaged in another IP header. The routers
+that send and receive packets are the routers much like what we did
+in COMP3301 with the tunnels. This is used in end-to-intermediate.
+The Maximum Segment Size is less than advertised in this scenario.
+
+AH----------------------------------
+The Authentication Header not only provides authentication but also
+ensures data integrity as it contains a 96-bit hash. It also protects
+against replay attacks since it has a 32-bit monotonically increasing counter.
+
+Should be noted that it does not provide confidentiality.
+
+The AH is placed just before the TCP header in transport mode and
+just before the old IP header in tunnel mode.
+
+There is one octet contains the type of next header
+(IP:4, TCP:6, UDP:17, ESP:50, AH:51)
+
+There is one octet also contains the length of the AH header.
+
+There are two octets unused (reserved).
+
+There are four octets for the SPI (Security Parameter Index)
+
+There are four octets for the sequence number.
+
+There is a variable number of octets for authentication data.
+This takes the HMAC of the immutable fields in the IP header.
+
+The idea of immutable fields refers to the values in the header that
+cannot change. These include the SPI, the sequence number, etc.
+
+You may notice that there is no explicit definition of mode in this header.
+The mode is determined by the first parameter which was the type of the
+next header.
+
+ESP-------------------------------------
+The Encapsulating Security Payload provides source authentication and
+data integrity. It makes use of the same 32-bit counter as AH.
+
+But it provides data confidentiality using symmetric keys.
+
+The ESP header is placed in the same place as the AH header.
+But now there is also an ESP trailer and ESP Authentication.
+These are both placed at the end of the packet in the respective order.
+
+The ESP trailer is there to ensure the symmetric cipher has enough
+padding to work.
+
+[See images/esppacket.png for header details]
+
+Note that in tunnel mode the new IP address is not authenticated.
+
+ESP is often used to implement VPNs
+
+SA---------------------------------------
+Security Associations are asymmetric (uni-directional)
+Thus you need an SA for inbound traffic and an SA for outbound.
+For bidirectional you will need to SAs one for the inbound of A (which
+is also the outbound of B) and one for the outbound of B (vice versa).
+
+All this information is stored in a Security Association Database (SAD)
+This along with a Security Policy Database (SPD) allows the computer to
+correctly handle IPsec packets.
+
+The SPD is two steps removed from the actual processing.
+Imagine we're using the SPD for
+outgoing packets (though inbound is also possible),
+to decide what SAD entries should be used, and the SAD
+entries in turn describe the actual processing (SAD contains the SPI).
+
+You will notice that the SPD contains a lot of information from the SAD entry
+this is okay in the case that there is no suitable entry in the SAD.
+In this case we use the SPD to create an SAD entry.
+
+[See inboundprocess.png and outboundprocess.png for clearer explanation]
+
+AH and ESP are used in tandem to implement proper security. The only problem is
+that there is a huge processing overhead.
+
+End-to-end AH in transport mode
+Gateway-to-gateway ESP in tunnel mode

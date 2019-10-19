@@ -878,3 +878,107 @@ we have,
 
 The probability that by infinite time we end up in state y has equivalent probability
 as the limiting distribution at y. \pi_y > 0 if state y is positive recurrent.
+
+Probability Measure Theory------------------------------------------------------
+Much like what we've had at the start of STAT2004.
+
+An event is a subset of \Omega.
+An event set is a set of various events. Events are questions of the form
+"did one of these outcomes occur".
+The empty set is an event.
+
+The most natural event set is the powerset of \Omega
+
+For an event set to make sense we must have the following,
+the empty event,
+the complement exists for all events,
+closed under unions.
+This is also sometimes called an algebra.
+
+We call a set of subsets a monotone class if either there is some ordering
+of the subsets and each consecutive set is a subset of the next. Or the other
+way where each consecutive set is a superset of the next.
+
+We define a \sigma-algebra if \Omega \in event set, the complement exists
+and the infinite union of elements set is closed.
+
+Note that a \sigma-algebra then it is also an algebra but not the other way
+around.
+
+A set is a \sigma-algebra if and only if it is an algebra and is a monotone
+class.
+
+[Working through at 25 Sep]
+The intercept of two \sigma-algebras is also a \sigma-algebra. This is not
+always true for the union however.
+
+Borel \sigma-algebra is a special type of \sigma-algebra that attempts to
+work for the uncountably infinite for example the real numbers.
+Within the \mathscr{B} contains all possible intervals (both closed and open
+on both ends independently). This is due to the requirements of a \sigma-algebra
+
+The Kolmogorov axioms of probability are,
+P(\Omega) = 1
+P(A) \geq 0 \forall A \in event set
+If A_i are mutually dijoint evets then P(\cup^\infty A_n) = \sum^\infty P(A_n)
+
+From these axioms we have some consequences,
+Boole's inequality: P(\cup^\infty A_n) = \sum^\infty P(A_n) but A_i may not
+be disjoint
+
+Continuity from below: If A_1 \subset A_2 \subset A_3 ... then
+P(A_n) = P(\cup^\infty A_i)
+
+Continuity from above: If A_1 \superset A_2 \superset A_3 ... then
+P(A_n) = P(\cap^\infty A_i)
+
+Random variables--------------------------------------------------------------
+We call a sequence mutually independent if the probability of the intersection
+of events if equal to the product of probabilities.
+P(\bigcap A_i) = \prod P(A_i)
+This is more powerful than the pairwise version since mutual independence
+extends for any selection.
+
+We must explore two new concepts. Consider a countably infinite sequence of
+events. In normal sequences (involving numbers and not sets) we may have a nice
+sequence that approaches something in infinity or we might have a sequence
+that fluctuates between two points which means we have a limsup (limit for
+the upper bound) and liminf (for the lower bound).
+
+With sets we consider if an element exists in all sets in the sequence
+(infinitely often)
+or if they exist in a few but still countably infinite number of sets
+(all but finitely many).
+These create the limsup and liminf respectively.
+
+{A_n i.o.} = \bigcap_{n\geq 1} \bigcup_{n\geq m} A_n
+Which means we're taking the union of the tail sequence then
+checking that if we were to intersect all of the we would find elements
+which are infinitely often.
+
+{A_n, a.b.f.m.} = \bigcup_{m\geq 1} \bigcap_{n \geq m} A_n
+Consider all possible tails A_n. We take all tails that contain
+an element that remains in all A_n (n \geq m). (Hopefully makes sense)
+
+You may have noticed that these definitions contain intersects and unions
+which could be complemented,
+\liminf A_n = (\limsup A_n^c)^c
+
+Note that {A_n a.b.f.m.} \subset {A_n i.o.}
+
+Borel-Cantelli Lemma
+If the sum of P(A_n) is non-infinite then P(A_n i.o.) = 0.
+This means that there is not chance that something happens infinitely often.
+
+If the sum of P(A_n) is infinite and A_n are mutually independent then
+P(A_n i.o.) = 1.
+
+Now we define what a random variable is.
+A random variable is simply a function that maps \Omega \to the reals.
+
+We also introduce the idea of random vectors [which I'm guessing will
+be expanded on next lecture]
+This leads to the idea that two random variable (sharing the same
+input) can be dependent on each other.
+
+[stopped at 9 Oct]

@@ -179,21 +179,45 @@ $p_{ij} = p_{i.} \times p_{.j}$
     \prod_{i,j} \frac{1}{x_{ij}!} 
 \end{align*}
 
-We now take the logarithm of our likelihood,
+We note a secondary contraint on both $p_{i.}$ and $p_{.j}$.
 \begin{align*}
-    &= \left(\sum_i x_{i.} \log (p_{i.}) + \sum_j x_{.j} \log (p_{.j})\right)
-    + \log (n!) - \sum_{i,j} \log (x_{ij}!)
+    \sum_i^n p_{i.} &= 1 \\
+    \sum_j^m p_{.j} &= 1 \\
 \end{align*}
 
-Luckily logarithms are monotone increasing so the maximum of this function will
-give the maximum for the non-logged equation. Now we differentiate by $\log(p_{i.})$
+Thus,
 \begin{align*}
-    &= \left(\sum_i x_{i.} \log (p_{i.}) + \sum_j x_{.j} \log (p_{.j})\right)
-    + \log (n!) - \sum_{i,j} \log (x_{ij}!) \\
-    \frac{\partial L}{\partial\log(p_{i.})} &= x_{i.}
+    p_{n.} &= 1 - \sum_i^{n-1} p_{i.} \\
+    p_{.m} &= 1 - \sum_j^{m-1} p_{.j} \\
 \end{align*}
 
-ZZZ - possible without the lagrange multiplier don't know how yet
+We add this secondary contraint,
+\begin{align*}
+    &= n! \left(\prod_i^n p_{i.}^{x_{i.}} \times \prod_j^m p_{.j}^{x_{.j}}\right)
+    \prod_{i,j} \frac{1}{x_{ij}!}  \\
+    &= n! \left(\prod_i^{n-1} p_{i.}^{x_{i.}} \times \prod_j^{m-1} p_{.j}^{x_{.j}}\right)
+    \left(1 - \sum_i^{n-1} p_{i.}\right)^{x_{n.}}\left(1 - \sum_j^{m-1} p_{.j}\right)^{x_{.m}}
+    \prod_{i,j} \frac{1}{x_{ij}!} 
+\end{align*}
+
+We partially differentiate this with respect to $p_{k.}$.
+\begin{align*}
+    &= n! p_{k.}^{x_{i.}} \left(\prod_{i \neq k}^{n-1} p_{i.}^{x_{i.}} \times \prod_j^{m-1} p_{.j}^{x_{.j}}\right)
+    \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}}\left(1 - \sum_j^{m-1} p_{.j}\right)^{x_{.m}}
+    \prod_{i,j} \frac{1}{x_{ij}!} \\
+    &= p_{k.}^{x_{i.}} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}}
+    n!\left(\prod_{i \neq k}^{n-1} p_{i.}^{x_{i.}} \times \prod_j^{m-1} p_{.j}^{x_{.j}}\right)
+    \left(1 - \sum_j^{m-1} p_{.j}\right)^{x_{.m}}
+    \prod_{i,j} \frac{1}{x_{ij}!} \\
+    &= p_{k.}^{x_{i.}} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}} C \\
+    \frac{\partial L}{\partial p_{k.}}
+    &= x_{i.} p_{k.}^{x_{i.}-1} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}} C
+    - p_{k.}^{x_{i.}} x_{n.} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}-1} C \\
+    &= C p_{k.}^{x_{i.}-1} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}-1}
+    \left(x_{i.} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right) - p_{k.} x_{n.}\right) \\
+    &= C p_{k.}^{x_{i.}-1} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}-1}
+    \left(x_{i.} \left(1 - \sum_{i\neq k}^{n-1} p_{i.}\right) - (x_{i.} + x_{n.})p_{k.}\right) \\
+\end{align*}
 
 \subsection{d}
 The null hypothesis allows that $p_{ij} = p_{i.} \times p_{.j}$ since blood type
@@ -397,9 +421,8 @@ sum((sym - symnull)^2/symnull)
 \end{verbatim}
 
 This gives us a Pearson $\chi^2$ of 0.1768. The degrees of freedom for our
-statistic will be $14-1 = 12$ since the only constraint on our model is that
-the sum of all cells must give 1.
-The corresponding p-value is, $1.718 \times 10^{-69}$ which provides strong
+statistic will be $6 \times 1 = 6$ since the contraint is $(rows-1)(cols-1)$.
+The corresponding p-value is, $1.752 \times 10{-74}$ which provides strong
 evidence against the null hypothesis.
 
 From this we can conclude that there exists a difference between the frequency
@@ -433,19 +456,22 @@ for (row in 1:7){
 chi <- sum((sols - solsnull)^2/solsnull)
 \end{verbatim}
 
-We determine we have $7 + 8 - 2$ degrees of freedom since we have 7 rows but a 
+We determine we have $6 \times 7$ degrees of freedom since we have 7 rows but a 
 constraint among them and 8 columns with a constraint between them.
 
-With this information we compute our p-value is 0.04790.
+With this information we compute our p-value is 0.9940.
 Based on the decision cutoff we declared earlier we accept this data as evidence
 against the null hypothesis. There is evidence that the 8 incorrect solutions
 have different frequencies.
 
-\subsection{c NOT DONE YET}
-There's apparently something weird with this p-value. Ask.
-I'm pretty sure it's either because the null and alternative should be flipped.
+\subsection{c}
+The p-value is extremely high this suggests that the bad answers are all copying
+each other.
 
-\subsection{d NOT DONE YET}
+\subsection{d}
+Perhaps studying more data from each paper. The words used in the 8 worst
+solutions may also be equal.
+
 
 \section{Exercise 4 NOT DONE YET}
 Requires ANOVA

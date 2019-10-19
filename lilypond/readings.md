@@ -1,7 +1,10 @@
 # Physical Metallurgy Principles 4th ed.
 ## Chapter 1 structure of metals
+Doesn't seem to have anything important.
+Talks more about the atoms which is something I can't work with.
 
 ## Chapter 8 Annealing
+Seems to be more about cold working metal.
 
 ## Chapter 14 Solidification of metals
 
