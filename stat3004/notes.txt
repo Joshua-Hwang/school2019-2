@@ -981,4 +981,76 @@ be expanded on next lecture]
 This leads to the idea that two random variable (sharing the same
 input) can be dependent on each other.
 
-[stopped at 9 Oct]
+We define the pre image of a random variable X^{-1}(B) as the set of all
+elements in \Omega that maps to elements in B (which is a subset of the reals).
+
+Lebesgue's Decomposition Theorem------------------------
+States that all cdf F(x) can be decomposed as a weighted sum
+F(x) = \alpha F_d(x) + \beta F_{a.c.}(x) + (1 - \alpha - \beta)F_{s.c.}(x)
+Where F_d(x) is discrete and creates stepwise cdfs,
+F_{a.c.}(x) stands for absolutely continuous which is your standard continuous cdfs.
+F_{s.c.}(x) stands for singular continuous which is a weird form of continuous you
+haven't seen before.
+
+Convergence------------------------
+We recall the classic pointwise convergence
+lim_{n\to\infty} X_n(w) = X(w) \forall w \in \Omega
+
+But when dealing with random variables it does not make sense to do this.
+Instead we take a different approach,
+P(\lim_{n\to\infty} X_n = X) = 1
+Thus we call this X_n \to^{a.s.} X
+Where a.s. means almost surely.
+
+Convergence by Lp-norm is by taking the formula
+\lim_{n\to\infty} E(|X_n - X|^p) = 0
+For p \geq 1.
+We must also ensure that E(|X_n|^p) < \infty.
+The 'p' in Lp-norm is replaced by whatever exponent we chose
+so L1-norm or L2-norm etc.
+It should be clear that if we have convergence by p then p' > p also converges.
+This is stronger than the convergence of probability shown below.
+Lp-norm convergence implies convergence of probability but not the other way around.
+
+We make an even weaker claim
+\lim_{n\to\infty} P(|X_n - X| \geq \epsilon) = 0
+X_n \to^P X
+This is a different statement since the limit is on the outside.
+This statement is about the convergence of probabilities not the converge
+of random variables.
+
+An example of the difference between convergence by probability and convergence
+almost surely can be seen as such.
+X_n \sim Ber(1/n)
+Clearly X = 0 when we approach infinity.
+P(|X_n - X| \geq \epsilon) = P(|X_n| \geq \epsilon)
+= P(1/n \geq \epsilon) which checks out but for almost surely we find something else.
+
+We denote the set of all {X_n = 1} which are all independent.
+P(X_n = 1) = \sum 1/n [harmonic] = \infty
+Further we note
+P(\limsup_{n\to\infty} X_n = 1) = 1
+The probability that we flip a head at infinite time is almost certain but
+the probability that we flip a tail at infinite time is also certain.
+P(\liminf_{n\to\infty} X_n = 1) = 1
+Thus there is no definitive limit in the almost surely convergence.
+
+We go further to weaken convergence so we have the convergence of distributions.
+Simply if the cdf of our distribution approaches another for all continuous points
+(discrete cdfs get to ignore their discontinuities) then they are convergent.
+
+We demonstrate why this is weaker.
+X \sim N(0,1). Denote X_n = -X.
+Clearly X_n has the same distribution as X but do not converge in probability.
+P(|X_n - X| \geq \epsilon) = P(|-2X| \geq \epsilon) [fails]
+
+Levy's Continuity----------------------------------
+Should be noted a characteristic function is any function that transforms our
+cdf. The PGF, Fourier transform, etc.
+Let F_1, F_2 ... be a sequence of cdfs with corresponding characteristic functions
+\Phi_1, \Phi_2 ... Then,
+If F_n \to F for some cdf F with characteristic function \Phi then
+\Phi_n(t) \to \Phi(t) \forall t
+If \Phi(t) = \lim_{n\t\infty} \Phi_n(t) \forall t 
+AND \Phi(t) is continuous at t = 0 then \Phi is a characteristic function
+and if F is its corresponding cdf then F_n \to^{distribution} F
