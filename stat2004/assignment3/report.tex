@@ -151,6 +151,10 @@ Since we did not know the distribution our data came from we had assumed that
 our data would asymptotically approximate a t-distribution. The underlying data
 is not only \textbf{not} continuous but it is also bounded.
 
+Most importantly we are taking measurements of categorical data. Though there is
+an order the difference between a score of 1 and 2 is not necessarily equal to
+the difference between a score of 4 vs 5.
+
 \section{Exercise 2}
 \subsection{a}
 The null hypothesis is that the blood type has no impact on tuberculosis 
@@ -166,7 +170,7 @@ The data fits a multinomial distribution thus the likelihood function we get is,
     n! \prod_{i} \prod_{j} \frac{1}{x_{ij}!} p_{ij}^{x_{ij}}
 \end{align*}
 
-\subsection{c NOT DONE YET}
+\subsection{c}
 We will make use of the fact that under the null hypothesis
 $p_{ij} = p_{i.} \times p_{.j}$
 
@@ -200,23 +204,29 @@ We add this secondary contraint,
     \prod_{i,j} \frac{1}{x_{ij}!} 
 \end{align*}
 
+We take the log of this,
+\begin{align*}
+    L(p|x) &= n! \left(\prod_i^{n-1} p_{i.}^{x_{i.}} \times \prod_j^{m-1} p_{.j}^{x_{.j}}\right)
+    \left(1 - \sum_i^{n-1} p_{i.}\right)^{x_{n.}}\left(1 - \sum_j^{m-1} p_{.j}\right)^{x_{.m}}
+    \prod_{i,j} \frac{1}{x_{ij}!} \\
+    \ln(L(p|x)) &= \ln(n!) +  \ln\left(\prod_i^{n-1} p_{i.}^{x_{i.}} \times \prod_j^{m-1} p_{.j}^{x_{.j}}\right)
+    + {x_{n.}} \ln\left(1 - \sum_i^{n-1} p_{i.}\right) + {x_{.m}}\ln\left(1 - \sum_j^{m-1} p_{.j}\right)
+    - \sum_{i,j} \ln(x_{ij}!) \\
+    &= \ln(n!) + \sum_i^{n-1} {x_{i.}}\ln(p_{i.}) + \sum_j^{m-1} {x_{.j}}\ln(p_{.j})
+    + {x_{n.}} \ln\left(1 - \sum_i^{n-1} p_{i.}\right) + {x_{.m}}\ln\left(1 - \sum_j^{m-1} p_{.j}\right) \\
+    &- \sum_{i,j} \ln(x_{ij}!) \\
+\end{align*}
+
 We partially differentiate this with respect to $p_{k.}$.
 \begin{align*}
-    &= n! p_{k.}^{x_{i.}} \left(\prod_{i \neq k}^{n-1} p_{i.}^{x_{i.}} \times \prod_j^{m-1} p_{.j}^{x_{.j}}\right)
-    \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}}\left(1 - \sum_j^{m-1} p_{.j}\right)^{x_{.m}}
-    \prod_{i,j} \frac{1}{x_{ij}!} \\
-    &= p_{k.}^{x_{i.}} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}}
-    n!\left(\prod_{i \neq k}^{n-1} p_{i.}^{x_{i.}} \times \prod_j^{m-1} p_{.j}^{x_{.j}}\right)
-    \left(1 - \sum_j^{m-1} p_{.j}\right)^{x_{.m}}
-    \prod_{i,j} \frac{1}{x_{ij}!} \\
-    &= p_{k.}^{x_{i.}} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}} C \\
-    \frac{\partial L}{\partial p_{k.}}
-    &= x_{i.} p_{k.}^{x_{i.}-1} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}} C
-    - p_{k.}^{x_{i.}} x_{n.} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}-1} C \\
-    &= C p_{k.}^{x_{i.}-1} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}-1}
-    \left(x_{i.} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right) - p_{k.} x_{n.}\right) \\
-    &= C p_{k.}^{x_{i.}-1} \left(1 - \sum_{i\neq k}^{n-1} p_{i.} - p_{k.}\right)^{x_{n.}-1}
-    \left(x_{i.} \left(1 - \sum_{i\neq k}^{n-1} p_{i.}\right) - (x_{i.} + x_{n.})p_{k.}\right) \\
+    \ln(L(p|x)) &= \ln(n!) + \sum_i^{n-1} {x_{i.}}\ln(p_{i.}) + \sum_j^{m-1} {x_{.j}}\ln(p_{.j})
+    + {x_{n.}} \ln\left(1 - \sum_i^{n-1} p_{i.}\right) + {x_{.m}}\ln\left(1 - \sum_j^{m-1} p_{.j}\right) \\
+    &- \sum_{i,j} \ln(x_{ij}!) \\
+    \frac{\partial\ln(L(p|x))}{\partial p_{k.}}
+    &=
+    \frac{x_{k.}}{p_{k.}} - \frac{x_{n.}}{1 - \sum_i^{n-1} p_{i.}} \\
+    &=
+    \frac{x_{k.}}{p_{k.}} - \frac{x_{n.}}{p_{n.}} \\
 \end{align*}
 
 \subsection{d}
@@ -354,15 +364,15 @@ against the null hypothesis. There exists a relationship between
 blood type and tuberculosis.
 
 \subsection{i}
-We repeat the process but remove the advanced severity and AB blood type in the
+We repeat the process but remove the advanced severity in the
 hope that the $\chi^2$ may become more accurate.
 
 We repeat the R code but with an alternative matrix.
 \begin{verbatim}
-xtb <- tb[c(2,3),c(1,2,4)]
+xtb <- matrix(c(34,27,11,31,55,50,7,24),ncol=4,byrow=TRUE)
 xtbnull <- {}
 for (row in 1:2){
-    for (col in 1:3){
+    for (col in 1:4){
         xtbnull <- c(xtbnull, sum(xtb[row,])*sum(xtb[,col])/sum(xtb))
     }
 }
@@ -370,11 +380,12 @@ xtbnull <- matrix(xtbnull, nrow=2, ncol=3, byrow=TRUE)
 sum((xtb - xtbnull)^2/xtbnull)
 \end{verbatim}
 
-This gives us a Pearson's $\chi^2$ of 58.60. The degrees of freedom are 3
-since we only have 1 option for the rows and two options for the columns.
+This gives us a Pearson's $\chi^2$ of 9.224. The degrees of freedom are 4
+since we only have one option for the rows and three options for the columns.
 
-The p-value we get from this is, 0.7226. Our p-value has radically changed after
-removing that row and column. Our conclusion has now. We now find the data 
+The p-value we get from this is, 0.05573. Since our decision cutoff was 0.05
+We find that the study has radically changed its decision after
+collecting two rows. Our conclusion is now, we now find the data 
 is consistent with the null hypothesis.
 
 \section{Exercise 3}
@@ -408,7 +419,8 @@ The observed is,
 
 We now use R on this data to get our p-value.
 \begin{verbatim}
-sym <- c(298, 165, 146, 264, 119, 16, 106, 328, 29, 203, 133, 165, 29, 30)
+sym <- c(298/25, 165/15, 146/25, 264/15, 119/25, 16/15, 106/25, 328/15,
+29/25, 203/15, 133/25, 165/15, 29/25, 30/15)
 sym <- matrix(sym, ncol=2, byrow=TRUE)
 symnull <- matrix(0, dim(sym)[1], dim(sym)[2])
 for (row in 1:7){
@@ -420,9 +432,9 @@ for (row in 1:7){
 sum((sym - symnull)^2/symnull)
 \end{verbatim}
 
-This gives us a Pearson $\chi^2$ of 0.1768. The degrees of freedom for our
+This gives us a Pearson $\chi^2$ of 18.65745. The degrees of freedom for our
 statistic will be $6 \times 1 = 6$ since the contraint is $(rows-1)(cols-1)$.
-The corresponding p-value is, $1.752 \times 10{-74}$ which provides strong
+The corresponding p-value is, $4.783 \times 10^{-3}$ which provides strong
 evidence against the null hypothesis.
 
 From this we can conclude that there exists a difference between the frequency
@@ -473,7 +485,236 @@ Perhaps studying more data from each paper. The words used in the 8 worst
 solutions may also be equal.
 
 
-\section{Exercise 4 NOT DONE YET}
-Requires ANOVA
+\section{Exercise 4}
+\subsection{a}
+We take the product of all samples which gives us,
+\begin{align*}
+    L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)
+    &=
+    \left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)^{12}
+    e^{-\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    (Y_{jki} - \mu - \alpha_j - \beta_k - \delta_{jki})^2} \\
+    \ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)
+    &=
+    12 \ln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)
+    -\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    (Y_{jki} - \mu - \alpha_j - \beta_k - \delta_{jki})^2 \\
+    \frac{\partial\ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)}{\partial\mu}
+    = 0 &=
+    -\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    -2(Y_{jki} - \mu - \alpha_j - \beta_k - \delta_{jki}) \\
+    &=
+    \frac{1}{\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    (Y_{jki} - \mu - \alpha_j - \beta_k - \delta_{jki}) \\
+    &\text{Under sum constraint we have} \\
+    &=
+    \frac{-12\mu}{\sigma^2} + \frac{1}{\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    Y_{jki} \\
+    \frac{12\mu}{\sigma^2} &=
+    \frac{1}{\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    Y_{jki} \\
+    \mu &=
+    \frac{\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3 Y_{jki}}{12} \\
+    \mu &= \bar{Y}_{\bullet\bullet\bullet} \\
+\end{align*}
+
+We repeat this process but take the partial of $\alpha_1$.
+\begin{align*}
+    \ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)
+    &=
+    12 \ln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)
+    -\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    (Y_{jki} - \mu - \alpha_j - \beta_k - \delta_{jki})^2 \\
+    &=
+    12 \ln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)
+    -\frac{1}{2\sigma^2}
+    \sum_{k=1}^2\sum_{i=1}^3
+    (Y_{1ki} - \mu - \alpha_1 - \beta_k - \delta_{jki})^2 \\
+    &-\frac{1}{2\sigma^2}\sum_{k=1}^2\sum_{i=1}^3
+    (Y_{2ki} - \mu - \alpha_2 - \beta_k - \delta_{jki})^2 \\
+    \frac{\partial\ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)}{\partial \alpha_1}
+    = 0 &=
+    \frac{1}{\sigma^2}
+    \sum_{k=1}^2\sum_{i=1}^3
+    (Y_{1ki} - \mu - \alpha_1 - \beta_k - \delta_{jki}) \\
+    &\text{Under sum constraint we have} \\
+    &=
+    \frac{1}{\sigma^2}
+    \sum_{k=1}^2\sum_{i=1}^3
+    Y_{1ki}
+    - \sum_{k=1}^2\sum_{i=1}^3
+    \frac{\mu}{\sigma^2}
+    - \sum_{k=1}^2\sum_{i=1}^3
+    \frac{\alpha_1}{\sigma^2}
+    - \sum_{k=1}^2\sum_{i=1}^3
+    \frac{\beta_k}{\sigma^2}
+    - \sum_{k=1}^2\sum_{i=1}^3
+    \frac{\delta_{jki}}{\sigma^2} \\
+    &=
+    \frac{\sum_{k=1}^2\sum_{i=1}^3Y_{1ki}}{\sigma^2}
+    - \frac{6\mu}{\sigma^2}
+    - \frac{6\alpha_1}{\sigma^2} \\
+    \frac{6\alpha_1}{\sigma^2}
+    &= \frac{\sum_{k=1}^2\sum_{i=1}^3Y_{1ki}}{\sigma^2} - \frac{6\mu}{\sigma^2} \\
+    6\alpha_1 &= \sum_{k=1}^2\sum_{i=1}^3Y_{1ki} - 6\mu \\
+    \alpha_1 &= \frac{\sum_{k=1}^2\sum_{i=1}^3Y_{1ki}}{6} - \mu \\
+    \alpha_1 &= \bar{Y}_{1\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet} \\
+\end{align*}
+
+The same can be done for $j=2$.
+
+We repeat this process but take the partial of $\beta_1$.
+\begin{align*}
+    \ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)
+    &=
+    12 \ln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)
+    -\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    (Y_{jki} - \mu - \alpha_j - \beta_k - \delta_{jki})^2 \\
+    &=
+    12 \ln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)
+    -\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{i=1}^3
+    (Y_{j1i} - \mu - \alpha_j - \beta_1 - \delta_{j1i})^2 \\
+    &-\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{i=1}^3
+    (Y_{j2i} - \mu - \alpha_j - \beta_2 - \delta_{j2i})^2 \\
+    \frac{\partial\ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)}{\partial \beta_1}
+    = 0 &=
+    \frac{1}{\sigma^2}\sum_{j=1}^2\sum_{i=1}^3
+    (Y_{j1i} - \mu - \alpha_j - \beta_1 - \delta_{j1i}) \\
+    0 &=
+    \sum_{j=1}^2\sum_{i=1}^3
+    (Y_{j1i} - \mu - \alpha_j - \beta_1 - \delta_{j1i}) \\
+    &= \sum_{j=1}^2\sum_{i=1}^3Y_{j1i} - 6\mu - 6\beta_1 \\
+    \beta_1 &= \frac{\sum_{j=1}^2\sum_{i=1}^3Y_{j1i}}{6} - \mu \\
+    &= \bar{Y}_{\bullet 1 \bullet} - \bar{Y}_{\bullet\bullet\bullet} \\
+\end{align*}
+
+The same can be done for $k=2$.
+
+We repeat this process but take the partial of $\delta_{JK}$. Where $J$ and $K$
+and the anti-$J$ and anti-$K$ are $\bar{J}$ and $\bar{K}$ respectively.
+\begin{align*}
+    \ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)
+    &=
+    12 \ln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)
+    -\frac{1}{2\sigma^2}\sum_{j=1}^2\sum_{k=1}^2\sum_{i=1}^3
+    (Y_{jki} - \mu - \alpha_j - \beta_k - \delta_{jk})^2 \\
+    &=
+    12 \ln\left(\frac{1}{\sqrt{2\pi\sigma^2}}\right)
+    -\frac{1}{2\sigma^2}\sum_{i=1}^3
+    (Y_{JKi} - \mu - \alpha_J - \beta_K - \delta_{JK})^2 \\
+    &-\frac{1}{2\sigma^2}\sum_{i=1}^3
+    (Y_{J\bar{K}i} - \mu - \alpha_J - \beta_{\bar{K}} - \delta_{J\bar{K}})^2 \\
+    &-\frac{1}{2\sigma^2}\sum_{i=1}^3
+    (Y_{\bar{J}Ki} - \mu - \alpha_{\bar{J}} - \beta_K - \delta_{\bar{J}K})^2 \\
+    &-\frac{1}{2\sigma^2}\sum_{i=1}^3
+    (Y_{\bar{J}\bar{K}i} - \mu - \alpha_{\bar{J}} - \beta_{\bar{K}} - \delta_{\bar{J}\bar{K}})^2 \\
+    \frac{\partial\ln L(\mu, \alpha_j, \beta_k, \delta_{jk} | Y)}{\partial \delta_{JK}}
+    = 0 &=
+    \frac{1}{\sigma^2}\sum_{i=1}^3
+    (Y_{JKi} - \mu - \alpha_J - \beta_K - \delta_{JKi}) \\
+    0 &= \sum_{i=1}^3(Y_{JKi} - \mu - \alpha_J - \beta_K - \delta_{JK}) \\
+    0 &= \sum_{i=1}^3Y_{JKi} - 3\mu - 3\alpha_J - 3\beta_K - 3\delta_{JK} \\
+    \delta_{JK} &= \frac{\sum_{i=1}^3Y_{JKi}}{3} - \mu - \alpha_J - \beta_K \\
+    \delta_{JK} &= \bar{Y}_{JK\bullet} - \bar{Y}_{J\bullet\bullet} - \bar{Y}_{\bullet K \bullet} + \bar{Y}_{\bullet\bullet\bullet} \\
+\end{align*}
+
+\subsection{b}
+We first note that
+\begin{align*}
+    Y_{jki} - \bar{Y}_{\bullet\bullet\bullet}
+    &=
+    (Y_{jki} - \bar{Y}_{jk\bullet})
+    + (Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})
+    + (Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})
+    + (Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet}) \\
+\end{align*}
+
+Using this we turn to the $\text{SS}_{\text{total}}$.
+\begin{align*}
+    \sum_{jki}(Y_{jki} - \bar{Y}_{\bullet\bullet\bullet})^2
+    &=
+    \sum_{jki}((Y_{jki} - \bar{Y}_{jk\bullet})
+    + (Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})
+    + (Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})
+    + (Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet}))^2 \\
+    &=
+    (Y_{jki} - \bar{Y}_{jk\bullet})
+        ((Y_{jki} - \bar{Y}_{jk\bullet})
+        + (Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet})) \\
+    &+ (Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        ((Y_{jki} - \bar{Y}_{jk\bullet})
+        + (Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet})) \\
+    &+ (Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        ((Y_{jki} - \bar{Y}_{jk\bullet})
+        + (Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet})) \\
+    &+ (Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet}))
+        ((Y_{jki} - \bar{Y}_{jk\bullet})
+        + (Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})
+        + (Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet})) \\
+\end{align*}
+
+We note that $\sum (Y_i - \bar{Y}_{\bullet}) = 0$. Due to how the mean works.
+\begin{align*}
+    \sum_{jki}(Y_{jki} - \bar{Y}_{\bullet\bullet\bullet})^2
+    &=
+    \sum_{jki}(Y_{jki} - \bar{Y}_{jk\bullet})^2 \\
+    &+ \sum_{jki}(Y_{j\bullet\bullet} - \bar{Y}_{\bullet\bullet\bullet})^2 \\
+    &+ \sum_{jki}(Y_{\bullet k \bullet} - \bar{Y}_{\bullet\bullet\bullet})^2 \\
+    &+ \sum_{jki}(Y_{jk\bullet} - \bar{Y}_{j\bullet\bullet} - \bar{Y}_{\bullet k \bullet} + \bar{Y}_{\bullet\bullet\bullet}))^2 \\
+    SS_{total} &= SS_{A} + SS_{B} + SS_{AB} + S_{Residual} \\
+\end{align*}
+
+\subsection{c}
+$SS_{residual}$ is the same as taking a sample variance. Sample variances of
+normal distributions are in fact distributed as
+$\sigma^2 \chi^2_{df_{residual}}$.
+
+Since there are $JK$ datapoints which have been taken 3 times we have $3-1 = 2$
+degrees of freedom for each.
+
+\subsection{d}
+We must first recall that the variance around the sample mean is independent of
+the sample mean itself. Likewise we have,
+\begin{align*}
+    SS_{residual} &= \sum_{jki} (Y_{jki} - \bar{Y}_{jk\bullet})^2 \\
+\end{align*}
+
+is independent $\forall Y_{jk\bullet}$. Since $SS_{AB}$ is a function of
+numerous $Y_{jk\bullet}$ we know it is independent of $SS_{residual}$.
+
+\subsection{e}
+The ratio of two independent $\chi^2$ distributions produces a
+$\mathcal{F}$. Hence,
+\begin{align*}
+    F &= \frac{SS_{AB}/df_{AB}}{SS_{residual}/df_{residual}} \\
+    &\sim \mathcal{F} \\
+\end{align*}
+
+\subsection{f}
+\begin{center}
+    \begin{tabular}{c c c c c c}
+        Source & df & SS & MS & F & P \\
+        \hline
+        VitaminB12 & 1 & 218700 & 218700 & 60.33 & 0.08151 \\
+        Antibiotics & 1 & 19200 & 19200 & 5.297 & 0.2610 \\
+        VitaminB12:Antibiotics & 1 & 172800 & 172800 & 47.67 & 0.09157 \\
+        Residuals & 8 & 29000 & 3625 &  &  \\
+        \hline
+        Total & 11 & 439700 &  &  &  \\
+    \end{tabular}
+\end{center}
+
+The data finds that antibiotics on its own does not contribute
+to the weight gain of pigs. In comparison we find marginal strength
+in the relationship between VitaminB12 and strength and we also find
+that the addition of Antibiotics contributes to the effect of
+VitaminB12.
 
 \end{document}

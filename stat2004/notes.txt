@@ -663,6 +663,18 @@ is commonly used because legacy reasons (pre-computer calculations are easy).
 Once you have a Pearson Chi^2 value (with appropriate degrees of freedom)
 use a calculator to determine the pvalue from this.
 
+-2 log \Lambda = Pearson's Chi^2
+can be derived from the Taylor expansion of Chi^2
+
+Degrees of freedom are calculated in general as the number of degrees of freedom
+in the alternate model vs the number of free parameters in the null model.
+
+Consider a table of values with c columns and r rows.
+In the null hypothesis (no changes between columns) we have (r-1) free
+parameters.
+In the alternative hypothesis we have c(r-1) free parameters.
+In total our degrees of freedom are c(r-1) - (r-1) = (c-1)(r-1).
+
 Multinomial distribution----------------------------------------------------
 Multinomial distribution is an extension of the binomial distribution.
 Much like how in the binomial distribution you actually only have 1 free
@@ -675,4 +687,118 @@ P(X_1 = x_1, X_2 = x_2, X_3 = x_3, X_4 = x_4 ...)
 Where the brackets at the start are the multinomial coefficient.
 \frac{n!}{x_1! x_2! x_3! x_3! x_4! ...}
 
-[Finished up to midsem break]
+Ethics in data collection-----------------------------------------------
+While a small p-value makes us suspicious about the null hypothesis,
+a very large p-value also makes us suspicious about data fabrication and/or
+pseudo replication.
+
+Data fabrication: In order to get a proposed theory/hypothesis accepted,
+scientists may be tempted to fake or modify data so that the data aligns well
+with the hypothesis.
+However, bad scientists often fabricate data very poorly because
+they misunderstand the Law of Large Numbers.
+
+The LLN says that as our sample size increases, sample means and sample
+proportions get close to population means and populations proportions, but raw
+totals and raw counts do not have to coverge. In fact they will typically
+diverge.
+
+Pseudo replication: This occurs when we take multiple measurements for each
+unit, but pretend they were individual measurements.
+
+Fisher's exact test---------------------------------------------------------
+If we don't have enough data to perform the Chi^2 test we choose to use the
+exact test.
+
+[ZZZ 15 Oct has a review of everything we should have learnt. I don't recall
+everthing on this list]
+
+ANOVA-------------------------------------------------------------------------
+Stands for Analysis of Variance.
+ANOVA is used when we have multiple categories. We were previously able to
+get by by just comparing two different groups. Now we might have several groups.
+
+We generate our test for the normal case as the example. In this case
+we make the assumption that all the variances are equal.
+
+SS_{total} is the sum of squares total.
+SS_{total} = sum((data - total mean)^2) variance in raw data points
+SS_{resid} = sum((data - group mean)^2) variance in data points in groups
+SS_{group} = sum((group mean - total mean)^2) variance in groups
+
+By taking SS_{total} = sum((data - total mean)^2)
+= sum((data - group mean + group mean - total mean)^2)
+
+We develop SS_{total} = SS_{resid} + SS_{group}
+
+Under the null hypothesis we have SS_{total} as our best guess but for
+the alternative hypothesis we have SS_{resid} thus our GLRT \Lambda becomes
+SS_{group} since it's normal distribution and we're taking exponent.
+
+Should be noted that SS is Chi^2 distributed.
+
+Consider we wanted to find the GLRT of the actual Chi^2. To do this we
+will requires three ingredients.
+
+SS_{group} = Chi^2/df_{group}
+
+SS_{resid} = SS_{resid}/(N-J) Where N-J is the total degrees of freedom.
+
+SS_{group} is independent of SS_{resid}
+
+Using a bunch of (pretty simple) mathematics from [40:00 16 Oct] we
+have Chi^2/Chi^2 ~ F the F distribution.
+
+The Mean Sum of squares is given by SS/df
+
+To find an overall standard deviation (unlike with means)
+we need to first square our results so we first get variance.
+Once we have that we take the weighted average of all these
+variance since there may be different sample sizes for each category
+we're summing up from. You then should square root to get back the overall
+standard deviation.
+
+A contrast is any linear combination \sum a_j \mu_j
+of our group means such that \sum a_j = 0.
+(We choose a_j terms).
+
+e.g. compare \mu_6 - \mu_3
+a = (0, 0, -1, 0, 0, +1)
+
+A key reason for constructing as such is to ensure that if all the \mu are
+the same then any contrast would result in 0.
+
+[Starting 22 Oct]
+It's almost a guarantee that if we were to compare the minimum and maximum of
+a data set we will find something significant even if nothing is actually
+occuring. This is because we are making a post-data decision on what to compare.
+
+Instead it is better to compare all the data using something like ANOVA then
+start exploring significant relationships.
+
+Given an ANOVA model we find an immediate problem,
+Y_{ij} = \mu + \alpha_j + \epsilon_{ij}
+where j is each group. In this model we're overparameterising since
+we have \mu and \alpha_j giving us j+1 parameters for j groups.
+
+There are two solution "sum parametrisation" and "contrast parameterisation"
+each provides a new contraint which drops are number of variables to the
+correct level.
+
+In sum parameterisation we
+ensure that all \alpha_j add to give 0. This is the standard case we've seen
+before. Each \alpha represents the variance from the global mean \mu.
+When we also have interaction factors \delta{ij} they should sum across i
+or j to give 0.
+
+In contrast parameterisation we
+ensure that the first group \alpha_1 = 0. Thus each \alpha is a comparison
+from the first group \mu. The interaction factor \delta_{1j} and \delta_{i1}
+should both be 0.
+
+When we have a two-way layout, our first point of interest must be to test for
+interactions. If there are interactions then it is not meaningful to look at
+main effects. e.g. Viagra has a strong effect on males but no effect on females
+thus it isn't meaningful to look at the overall effect of viagra on humans.
+Only if there are no interactions, then we can talk about the main effects of
+each factor in isolation.
