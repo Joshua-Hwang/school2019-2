@@ -1,0 +1,66 @@
+\documentclass{article}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{verbatim}
+
+\linespread{1.3}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\setcounter{secnumdepth}{0}
+\setcounter{MaxMatrixCols}{20}
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ts}{\textsuperscript}
+\newcommand{\diff}{\mathop{}\!\mathrm{d}}
+\newcommand{\prob}{\mathbb{P}}
+\newcommand{\expect}{\mathbb{E}}
+\newcommand{\var}{\text{Var}}
+
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\DeclarePairedDelimiter\p{\lparan}{\rparan}
+
+\title{Exam prep}
+\author{Joshua Hwang (44302650)}
+
+\begin{document}
+Each generation has a distribution
+\begin{align*}
+    X &\sim Bin(2,0.5)
+\end{align*}
+
+The PGF of our $X$ is,
+\begin{align*}
+    G(s) &= \sum \prob(k) s^k \\
+    &= 1/4 \times s^0 + 1/2 \times s^1
+    + 1/4 \times s^2 \\
+    &= 1/4 + s/2 + s^2/4 \\
+\end{align*}
+
+Each generation is defined by,
+\begin{align*}
+    \eta_0 &= 0 \\
+    \eta_1 &= G(0) \\
+    &= 1/4 \\
+    \eta_2 &= G(1/4) \\
+    &= 1/4 + (1/4)/2 + (1/4)^2/4 \\
+    &= 1/4 + 1/8 + 1/64 \\
+    &= 16/64 + 8/64 + 1/64 \\
+    &= 25/64 \\
+\end{align*}
+
+We extend this for the infinite case.
+\begin{align*}
+    G(\eta) &= \eta \\
+    1/4 + \eta/2 + \eta^2/4 &= \eta \\
+    1/4 - \eta/2 + \eta^2/4 &= 0 \\
+    1 - 2\eta + \eta^2 &= 0 \\
+    (\eta - 1)^2 &= 0 \\
+\end{align*}
+
+\end{document}
