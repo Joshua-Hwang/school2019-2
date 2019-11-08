@@ -909,8 +909,94 @@ In this case we use the SPD to create an SAD entry.
 
 [See inboundprocess.png and outboundprocess.png for clearer explanation]
 
-AH and ESP are used in tandem to implement proper security. The only problem is
-that there is a huge processing overhead.
+Intrusion Detection Systems (IDS)-------------------------------------------
+An intrusion is a set of actions that attempt to compromise the
+CIA of computing resources via causing DoS, backdoors, planting viruses
+or exploiting viruses.
 
-End-to-end AH in transport mode
-Gateway-to-gateway ESP in tunnel mode
+We assume that it is possible to monitor activity of programs and users.
+From this we come up with 3 simple steps,
+1. Monitoring and analysing host/network
+2. Identifying misuse/abnormal activities
+3. Assessing severity and raising alarm
+
+A good IDS needs high detection rate with low false alarms and
+minimum overhead.
+
+We can classify IDSs as either misuse detection and anomaly detection.
+
+We can gather data via:
+Host based detection (command log and system calls),
+Network based detection (packet headers and general traffic),
+or both
+
+Misuse detection
+is identifying the patterns of well known attacks
+to identify intrusion. From this we also record the intrusions that occur
+to learn. The problem here is that we struggle to detect new attacks.
+
+Anomaly detection
+is kinda the opposite. Instead we search for deviation from normal usage
+to identify intrusions. We must first establish what is normal behaviour
+and then report deviations.
+This has the issue of high false positive rates since a new action may be
+benign.
+
+Host-based Intrusion Detection System (HIDS) is OS dependent and is installed
+inside the host (possible to attack?)
+
+Network Intrusion Detection System (NIDS) is based on the packet capturing
+of the network.
+
+SNORT is a NIDS system and is the most widely used one in the world.
+It can even analyse streams, not only single packets at a time.
+
+SNORT first takes a packet and decodes it, then preprocesses it then
+runs it through a detection engine. If it's part of the rules of logging
+it is then logged and checked in the alerting system.
+
+SNORT is a signature based IDS thus they implement two phases of detection.
+Phase 1 involves pattern matching. In Phase 2 we detect more complex patterns
+based on what type of packet is actually being sent, SNORT supports 36 rules.
+
+Another way to detect is SVM-IDSs. IDS use Support Vector Machines (SVM).
+This is pattern matching and categorising much like what we see in
+data science and machine learning.
+
+Cooperative IDS use collective info from others to make intrusion detection
+more accurate.
+
+Intrusion Prevention Systems (IPS)-------------------------------------
+IPS is commonly an extension of intrusion detection. Since an IDS device
+is passive we would like something more active.
+
+This is more preferable since network attacks can happen fast and only need a
+small amount of time to complete the attack.
+
+Should be noted that though IDS is cheap and even open source IPS is very
+EXPENSIVE.
+
+Security Information Event Management (SIEM)--------------------------
+Many large organisations receive an insane number of alerts many of which are
+false alarms. We have a few ways to solve this,
+Alert clustering which groups alerts together in meaningful ways.
+We could only alert if we match a predefined attack scenario. (Matching
+predefined attack scenarios)
+We could also check if the attack could be successful in our system
+and if so what would the outcome be. (Prerequisites/Consequences)
+
+A SIEM
+takes the logs and events and aggregates them. (Normalising and analysing)
+For example, taking from networks, systems, applications etc.
+We create a higher alarm if we find several related events happening.
+This gives us a higher chance that we've detected an attack.
+
+Honeypots----------------------------------------------
+These are decoy systems designed to lure potential attackers away from
+critical systems, collect information about the attacker's activity
+and encourages the attacker to stay on the system long enough for
+administration to respond.
+
+Filled with fabricated information that a legitimate user of the system
+wouldn't access. Once the hackers are within the network,
+admin can observe behaviour.

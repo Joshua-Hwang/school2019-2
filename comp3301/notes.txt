@@ -1429,7 +1429,7 @@ us to use shared libraries which are sometimes stored in between the heap and
 the stack. Keep in mind the stack grows from higher addresses downward while
 the heap grows upward.
 
-Deamnd paging---------------------------------------------------------------
+Demand paging---------------------------------------------------------------
 Another neat trick is to partially bring a process into memory that had been
 swapped out. We simply bring in the pages of memory that are needed instead of
 bringing the entire process. This is called demand paging.

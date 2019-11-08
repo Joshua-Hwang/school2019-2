@@ -1,7 +1,7 @@
 Probability theory is concerned with mathematical
 models for uncertainty.
 
-Th starting point is the idea of a 'random experiment'
+The starting point is the idea of a 'random experiment'
 
 The idea of a random experiment is captured by the
 mathematical idea of a *probability space*. It is a core concept

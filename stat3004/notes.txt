@@ -443,7 +443,7 @@ in between then there's a chance we never get to state y.
 We now implement this new notation.
 r_{yy}^{(2)} = \prob_y(\tau_y^{(2)} < \infty)
 = \prob_y(\tau_y^{(2)} < \infty | \tau_y^{(1)} < \infty)
-\times \prob_y(\tau_y^{(1)} < \infty)
+\times \prob_y(\tau_y^{(1)} < \infty)1−µ
 
 But \prob_y(\tau_y^{(1)} < \infty) is just the chance it happens
 at all so.
@@ -811,7 +811,7 @@ A singular matrix is not invertible and an eigenvalue for this matrix is 0.
 Now we can use a bunch of insane reasoning and equations from 10 Sep,
 P'_t = Q P_t
 Which creates a system of differential equations given the probability matrix
-at time t, P_t. This is known as the Kolmorgorov Bachard Equations.
+at time t, P_t. This is known as the Kolmorgorov Backwards Equations.
 
 Also under the finite and "standard" assumptions this equation is commutative.
 P'_t = P_t Q.
@@ -923,7 +923,7 @@ P(A) \geq 0 \forall A \in event set
 If A_i are mutually dijoint evets then P(\cup^\infty A_n) = \sum^\infty P(A_n)
 
 From these axioms we have some consequences,
-Boole's inequality: P(\cup^\infty A_n) = \sum^\infty P(A_n) but A_i may not
+Boole's inequality: P(\cup^\infty A_n) \leq \sum^\infty P(A_n) but A_i may not
 be disjoint
 
 Continuity from below: If A_1 \subset A_2 \subset A_3 ... then
@@ -1032,7 +1032,7 @@ Further we note
 P(\limsup_{n\to\infty} X_n = 1) = 1
 The probability that we flip a head at infinite time is almost certain but
 the probability that we flip a tail at infinite time is also certain.
-P(\liminf_{n\to\infty} X_n = 1) = 1
+P(\liminf_{n\to\infty} X_n = 0) = 1
 Thus there is no definitive limit in the almost surely convergence.
 
 We go further to weaken convergence so we have the convergence of distributions.
@@ -1051,6 +1051,6 @@ Let F_1, F_2 ... be a sequence of cdfs with corresponding characteristic functio
 \Phi_1, \Phi_2 ... Then,
 If F_n \to F for some cdf F with characteristic function \Phi then
 \Phi_n(t) \to \Phi(t) \forall t
-If \Phi(t) = \lim_{n\t\infty} \Phi_n(t) \forall t 
+If \Phi(t) = \lim_{n\t\infty} \Phi_n(t) \forall t
 AND \Phi(t) is continuous at t = 0 then \Phi is a characteristic function
 and if F is its corresponding cdf then F_n \to^{distribution} F
