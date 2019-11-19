@@ -6,9 +6,6 @@ Classes this semester are:
 * STAT2004
 * STAT3004
 
-Tutoring:
-* CSSE2310
-
 Did a small simulation toy involving the
 Poisson Lilypond model.
 A great example: https://www.mathematik.uni-muenchen.de/~hirsch/scalaGallery.html
