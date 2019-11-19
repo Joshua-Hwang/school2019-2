@@ -8,3 +8,7 @@ Classes this semester are:
 
 Tutoring:
 * CSSE2310
+
+Did a small simulation toy involving the
+Poisson Lilypond model.
+A great example: https://www.mathematik.uni-muenchen.de/~hirsch/scalaGallery.html
