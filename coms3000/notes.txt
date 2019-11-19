@@ -670,9 +670,7 @@ Heartbleed was an implementation bug in OpenSSL.
 You could also ask servers and browsers to downgrade SSL version in a
 version rollback attack.
 
-[59:00 week 7 video]
-
-Permission systesm-------------------------------------------------------------
+Permission systems-------------------------------------------------------------
 The idea of using rwsr-xrwx (where s is the SUID or set user id feature) is
 called the access control list. An access control list has users (subjects)
 and groups which have permissions to do certain operations (access operations)

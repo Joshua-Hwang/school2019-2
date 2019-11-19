@@ -812,4 +812,318 @@ Heartbleed was an implementation bug in OpenSSL\@.
 You could also ask servers and browsers to downgrade SSL version in a
 version rollback attack.
 
+\section{Permission systems}
+The idea of using \texttt{rwsr-xrwx} (where \texttt{s} is the SUID or set user
+id bit) is called the \textbf{access control list (ACL)}.
+An access control list has users
+(subjects) and groups which have permissions to do certain operations
+on certain objects. The \texttt{passwd} command has to change the
+\texttt{/etc/passwd} file which is owned by root so how does it do this safely?
+By using the set uid bit.
+
+Doing this ACL for each individual user is tedious and prone with large problems
+as we scale up. Instead we implement groups (or roles). Some policies allow
+membership to multiple groups but only some (Linux is one of them).
+
+An alternative model for managing access rights is capabilities. A capability is
+an object-rights pair. Think of it like tickets are licenses. If you hold the
+ticket then you're allowed to write/read that object.
+The system then stores all these capabilities in a table where the rows are the
+users/subjects.
+
+This method makes it easy to see the permissions of individuals and easier to
+control those capabilities but is much harder to see who has access to an 
+object. This system is rarely used anywhere except niche systems.
+
+Who determines the access privileges of the file? In UNIX and Windows the owner
+determines these things. This is called 
+\textbf{Discretionary Access Control (DAC)}.
+It's called such because it's at the discretion of the owner.
+The only exceptions to this is restricting the root user which is not
+(and should not be) possible.
+
+One of the problems with DAC is that the power of the file is given purely to
+the owner. If the owner messes up of is tricked then this attacker has power
+over the file. One such trick is a trojan horse (which is a form of malware).
+By running the (apparently benign) program the attacker is able to execute
+commands through the owner.
+
+An alternative method is \textbf{Mandatory Access Control (MAC)}
+which forces objects to
+adhere to system-wide policies rather than the whim of the object's owner. This
+alternative is often used in military and other high security contexts.
+
+In MAC each object has a classification indicating its sensitivity.
+Each user has a clearance indicating what level of sensitivity they can access.
+When a user has access we say the clearance "dominates" the classification.
+
+Of course this method fails the need-to-know principle. People from the
+top-secret R\&D have access to top-secret military documents. Thus at each
+classification we have compartments. Users only have access to their level of
+classification within their assigned compartments.
+
+We could go further and develop an ordering for sensitivity levels and
+compartments. For example,
+\begin{align*}
+    \text{top secret} &\geq \text{secret} \\
+    \text{top secret, nuclear} &\geq \text{secret, nuclear} \\
+    \text{top secret, crypto} &{\ ??\ } \text{secret, nuclear}
+\end{align*}
+
+Observe how one of the relations is a (??). This is because such a relation is
+undefined and makes no sense to define.
+
+An older model for access control is the \textbf{Bell-LaPadula (BLP)} model.
+It follows the same clearance and classification as before. It implements two
+unique rules.
+
+\textbf{Simple Security Property} which prevents reading of a higher 
+classification. (No Read Up)
+
+\textbf{*(star)-property}
+which prevents users of certain levels to writing lower-level
+stuff,
+i.e. Subjects in the Secret classification are allowed to write Top-Secret
+objects. (No Write Down)o
+The *-property is designed to prevent trojan horses which could create an
+unclassified copy of a file.
+Of course you see the problem with this method. The security levels of files
+will go up as more people read and change a document. This effect is known
+as a \textbf{High Water Mark}.
+
+\section{Information theory}
+We first look at Claude Shannon's definition of information.
+
+We define $I(X)$ is the average amount of information gained from observing
+the outcome of random variable $X$.
+
+Equivalently, $I(X)$ is the minimum average number of bits needed to encode all
+possible outcomes of $X$.
+
+In other contexts we call Shannon's definition \textbf{entropy}.
+
+Another representation of information is invented by Ralph Hartley. 20 years
+before Shannon's. The amount of information is defined by how many bits are
+needed to hold all possible outcomes. Given $N$ outcomes there's $\log_2(N)$
+bits (rounded up).
+
+This works out for the most part when the probabilities for each event is equal.
+In Shannon's version of information we define it as $-\sum p\log_2(p)$. Where
+$p$ is the probability of each outcomes and the negative is out the front since
+all $p < 1$.
+
+\section{IPsec}
+TCP/IP was designed in the late 70s and early 80s.
+TCP/IP did not have any data integrity or confidentiality
+You could easily fake the source IP address if desired.
+Replay attack were also possible since no dates or nonces were in IP packets.
+
+Because of this we must decide to put security on some level on the network
+stack.
+\begin{itemize}
+    \item Application SSH and PGP
+    \item Above transport: SSL/TLS
+    \item Above IP: IPsec
+\end{itemize}
+
+The IPsec architecture contains three key areas,
+\textbf{Encapsulating Security Payload (ESP)},
+\textbf{Authentication Header (AH)},
+\textbf{Internet Key Exchance (IKE)}.
+
+There are two modes of IPsec:
+\textbf{Transport mode (aka host mode)} only encrypts the TCP header but
+nothing below it. In transport mode both client and host have knowledge of
+IPsec. This is used in end-to-end scenarios. Think of a Telnet connection
+going across the internet.
+
+In \textbf{tunnel mode} the whole packet including the original IP address
+headers are encoded and packaged in another IP header. The routers
+that send and receive packets are the routers much like what we did in COMP3301.
+This is used in end-to-intermediate. The Maximum Segment Size is less than
+advertised since we waste space with an additional header. Think of this as
+accessing the fungus server and local network from across the internet.
+
+\subsection{Internet Key Exchange (IKE)}
+An established connection is called a Security Association (SA).
+We first setup \textbf{Internet Security Association and Key Management (ISAKMP)}
+which uses X.509 certification for authentication and Diffie-Hellman to exchange
+keys.
+
+Once we have these parts we can generate the IPsec SA.
+
+\subsection{Authentication Header (AH)}
+The Authentication Header not only provides authentication but also ensures data
+integrity as it contains a 96-bit hash. It also protects against replay attacks
+since it has a 32-bit monotonically increasing counter.
+
+Should be noted that this header does not provide confidentiality.
+
+The AH is placed just before the TCP header in transport mode and just before
+the old IP header in tunnel mode.
+
+The following describes the AH.
+There is one octet containing the type of the next header
+(IP:4, TCP:6, UDP:17, ESP:50, AH:51)
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{images/ah.png}
+    \caption{The Authentication header}
+\end{figure}
+
+At the bottom there is a variable number of octets for authentication data.
+This takes the HMAC of the immutable fields in the IP header.
+
+The idea of immutable fields refers to the values in the header that cannot
+change. These include the SPI, the sequence number, etc.
+
+You may notice there is no explicit definition of mode whether it's tunnel
+or transport. The mode is determined by the first parameter which was the type
+of the next header.
+
+\subsection{Encapsulating Security Payload (ESP)}
+The Encapsulating Security Payload provides source authentication and data
+integrity. It makes use of the same 32-bit counter as AH but it provides
+data confidentiality using symmetric keys.
+
+The ESP header is placed in the same place as the AH header. But now there
+is also an ESP trailer and ESP Authentication. There are both placed at the
+end of the packet in the respective order.
+
+The ESP trailer is there to ensure the symmetric cipher has enough padding
+to work.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{images/esppacket.png}
+    \caption{The ESP header}
+\end{figure}
+
+Note that in tunnel mode the new IP address is not authenticated.
+ESP is often used to implement VPNs.
+
+\subsection{Security Authentication (SA)}
+Security Authentications are asymmetric (uni-directional).
+Thus you need an SA for inbound traffic and an SA for outbound.
+
+All this information is stored in a \textbf{Security Association Database (SAD)}.
+This along with a \textbf{Security Policy Database (SPD)} allows the computer
+to correctly handle IPsec packets.
+
+The SPD is two steps removed from the actual processing.
+Imagine we're using the SPD for outgoing packets
+(though inbound is also possible), to decide what SAD entries should be used,
+and the SAD entries in turn describe the actual processing (SAD contains
+the SPI).
+
+You will notice that the SPD contains a lot of information from the SAD entry
+this is okay in the case that there is not suitable entry in the SAD.
+In this case we use the SPD to create a SAD entry.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{images/inboundprocess.png}
+    \caption{The inbound process}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{images/outboundprocess.png}
+    \caption{The outbound process}
+\end{figure}
+
+\section{Intrusion Detection Systems (IDS) and family}
+An intrusion is a set of actions that attempt to compromise the CIA triad
+of computing resources via causing DoS, backdoors, planting viruses or
+exploiting viruses.
+
+We assume that it is possible to monitor activity of programs and users.
+From this we come up with 3 simple steps,
+\begin{enumerate}
+    \item Monitoring and analysing host/network
+    \item Identifying misuse/abnormal activities
+    \item Assessing severity and raising alarms
+\end{enumerate}
+
+A good IDS needs high detection rate with low false alarms and minimum
+overhead.
+
+We can classify IDSs as either misuse detection and anomaly detection.
+
+We can gather data via: Host based detection (command log and system calls),
+Network based detection (packet headers and general traffic),
+or both.
+
+\textbf{Misuse detection}
+is identifying the patterns of well known attacks to identify
+intrusion. From this we also record the intrusions that occur to learn from
+them. The problem here is that we struggle to detect new attacks.
+
+\textbf{Anomaly detection}
+is the opposite. Instead we search for deviation from normal usage to identify
+intrusions. We must first establish what is normal behaviour and then report
+deviations. This has the issue of high false positive rates since a new action
+may be benign.
+
+\textbf{Host-based Intrusion Detection System (HIDS)} is OS dependent and is
+installed inside the host which means it is also possible to attack.
+
+\textbf{Network Intrusion Detection System (NIDS)} is based on the packet
+capturing of the network.
+
+Another method of detection is \textbf{Support Vector Machines (SVN)-IDS}s.
+This is pattern matching and categorising much like what we see in data science
+and machine learning.
+
+\textbf{Cooperative IDS}s use collective info from others to make instrusion
+detection more accurate.
+
+\subsection{SNORT}
+SNORT is a NIDS system and is the most widely used one in the world. It can
+even analyse streams, not just single packets.
+
+SNORT first takes a packet and decodes it, then pre-processes it then runs it
+through a detection engine. If it's part of the rules of logging it is then
+logged and checked in the alerting system.
+
+SNORT is a \textbf{signature based IDS}
+thus they implement two phases of detection.
+Phase 1 involves pattern matching. In Phase 2 we detect more complex patterns
+based on what type of packet is actually being send, SNORT support 36 such
+rules.
+
+\subsection{Intrusion Prevention Systems (IPS)}
+IPS is commonly an extension of intrusion detection. Since an IDS device is
+passive we would like something more active.
+
+This is more preferable since network attacks can happen fast and usually
+only needs a small window of time to complete an attack.
+
+Should be noted that though and IDS is cheap, IPS is \emph{very} expensive.
+
+\subsection{Security Information Event management (SIEM)}
+Many large organisations receive an insane number of alerts many of which are
+false alarms. We have a few ways to solve this:
+alert clustering which groups alerts together in meaningful ways,
+only alerting if we match a predefined attack scenario (matching predefined
+attack scenarios) or
+we could also check if the attack could be successful in our system
+and if so what would the outcome be (prerequisites/consequences).
+
+SIEMs attempt to use all these techniques to help with false alarms.
+A SIEM takes the logs and events and aggregates them (normalising and
+analysing). For example, taking from networks, systems, applications etc.
+We create a higher alarm if we find several related events happening.
+This gives us a higher chance that we've detected an attack.
+
+\section{Honeypots}
+These are decoy systems designed to lure potential attackers away from
+critical systems, collect information about the attackers activity
+and encourages the attacker to stay on the system long enough for
+admins to respond.
+
 \end{document}
+
+Filled with fabricated information that a legitimate user of the system
+wouldn't be able to access. Once the hackers are within the network, admin
+can observe behaviour.
