@@ -1,0 +1,2 @@
+We learn about the boilerplate makefile provided by openbsd in the
+hello folder and we learn how to add libraries with LDADD.

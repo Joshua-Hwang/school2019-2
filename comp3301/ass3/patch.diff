@@ -1,0 +1,2008 @@
+Index: bin/ps/extern.h
+===================================================================
+RCS file: /cvs/src/bin/ps/extern.h,v
+retrieving revision 1.21
+diff -u -p -u -p -r1.21 extern.h
+--- bin/ps/extern.h	23 Jun 2019 17:18:50 -0000	1.21
++++ bin/ps/extern.h	22 Oct 2019 11:29:20 -0000
+@@ -60,6 +60,7 @@ void	 nlisterr(struct nlist *);
+ void	 p_rssize(const struct kinfo_proc *, VARENT *);
+ void	 pagein(const struct kinfo_proc *, VARENT *);
+ void	 parsefmt(char *);
++void	 zonefmt(void);
+ void	 pcpu(const struct kinfo_proc *, VARENT *);
+ void	 pmem(const struct kinfo_proc *, VARENT *);
+ void	 pri(const struct kinfo_proc *, VARENT *);
+@@ -83,4 +84,5 @@ void	 curwd(const struct kinfo_proc *, V
+ void	 euname(const struct kinfo_proc *, VARENT *);
+ void	 vsize(const struct kinfo_proc *, VARENT *);
+ void	 wchan(const struct kinfo_proc *, VARENT *);
++void	 zvar(const struct kinfo_proc *, VARENT *);
+ __END_DECLS
+Index: bin/ps/keyword.c
+===================================================================
+RCS file: /cvs/src/bin/ps/keyword.c,v
+retrieving revision 1.47
+diff -u -p -u -p -r1.47 keyword.c
+--- bin/ps/keyword.c	23 Jun 2019 17:18:50 -0000	1.47
++++ bin/ps/keyword.c	22 Oct 2019 11:29:20 -0000
+@@ -187,6 +187,7 @@ VAR var[] = {
+ 	{"vsz", "VSZ", NULL, 0, vsize, 5},
+ 	{"wchan", "WCHAN", NULL, LJUST, wchan, KI_WMESGLEN - 1},
+ 	{"xstat", "XSTAT", NULL, 0, pvar, 4, 0, POFF(p_xstat), UINT16, "x"},
++	{"zone", "ZONE", NULL, 0, zvar, 8, 0, POFF(p_zoneid)},
+ 	{""},
+ };
+ 
+@@ -243,6 +244,20 @@ parsefmt(char *p)
+ 	}
+ 	if (!vhead)
+ 		errx(1, "no valid keywords");
++}
++
++void
++zonefmt(void)
++{
++	struct varent *vent;
++
++	vent = malloc(sizeof(*vent));
++	if (vent == NULL)
++		err(1, "zone fmt malloc");
++
++	vent->var = findvar("zone");
++	vent->next = vhead;
++	vhead = vent;
+ }
+ 
+ static VAR *
+Index: bin/ps/print.c
+===================================================================
+RCS file: /cvs/src/bin/ps/print.c,v
+retrieving revision 1.74
+diff -u -p -u -p -r1.74 print.c
+--- bin/ps/print.c	23 Jun 2019 17:18:50 -0000	1.74
++++ bin/ps/print.c	22 Oct 2019 11:29:20 -0000
+@@ -49,6 +49,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
++#include <zones.h>
+ #include <limits.h>
+ #include <pwd.h>
+ 
+@@ -743,6 +744,23 @@ pvar(const struct kinfo_proc *kp, VARENT
+ 		(void)printf("%*s", v->width, "-");
+ 	else
+ 		printval((char *)kp + v->off, v);
++}
++
++void
++zvar(const struct kinfo_proc *kp, VARENT *ve)
++{
++	char zonename[MAXZONENAMELEN];
++	VAR *v = ve->var;
++	int width;
++
++	if (zone_name(kp->p_zoneid, zonename, sizeof(zonename)) == -1)
++		err(1, "zone_name");
++
++	if (strlen(zonename) > v->width) {
++		width = v->width - 1;
++		(void)printf("%*.*s*", width, width, zonename);
++	} else
++		(void)printf("%*s", (int)v->width, zonename);
+ }
+ 
+ void
+Index: bin/ps/ps.1
+===================================================================
+RCS file: /cvs/src/bin/ps/ps.1,v
+retrieving revision 1.116
+diff -u -p -u -p -r1.116 ps.1
+--- bin/ps/ps.1	5 Sep 2019 22:01:14 -0000	1.116
++++ bin/ps/ps.1	22 Oct 2019 11:29:20 -0000
+@@ -39,7 +39,7 @@
+ .Sh SYNOPSIS
+ .Nm ps
+ .Sm off
+-.Op Oo Fl Oc Cm AaceHhjkLlmrSTuvwx
++.Op Oo Fl Oc Cm AaceHhjkLlmrSTuvwxZ
+ .Sm on
+ .Op Fl M Ar core
+ .Op Fl N Ar system
+@@ -49,6 +49,7 @@
+ .Op Fl t Ar tty
+ .Op Fl U Ar username
+ .Op Fl W Ar swap
++.Op Fl z Ar zone
+ .Sh DESCRIPTION
+ The
+ .Nm
+@@ -173,6 +174,10 @@ option is specified more than once,
+ will use as many columns as necessary without regard for window size.
+ .It Fl x
+ Display information about processes without controlling terminals.
++.It Fl Z
++Prepends the displayed information with the zone field.
++.It Fl z Ar zone
++Display information about processes running in the specified zone.
+ .El
+ .Sh KEYWORDS
+ The following is a complete list of the available keywords
+Index: bin/ps/ps.c
+===================================================================
+RCS file: /cvs/src/bin/ps/ps.c,v
+retrieving revision 1.75
+diff -u -p -u -p -r1.75 ps.c
+--- bin/ps/ps.c	24 Mar 2019 05:30:35 -0000	1.75
++++ bin/ps/ps.c	22 Oct 2019 11:29:20 -0000
+@@ -53,6 +53,7 @@
+ #include <string.h>
+ #include <unistd.h>
+ #include <limits.h>
++#include <zones.h>
+ 
+ #include "ps.h"
+ 
+@@ -70,6 +71,7 @@ int	needcomm, needenv, neednlist, comman
+ enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
+ 
+ static char	*kludge_oldps_options(char *);
++static zoneid_t	 zone_lookup_name(const char *);
+ static int	 pscomp(const void *, const void *);
+ static void	 scanvars(void);
+ static void	 usage(void);
+@@ -98,6 +100,9 @@ main(int argc, char *argv[])
+ 	int all, ch, flag, i, fmt, lineno, nentries;
+ 	int prtheader, showthreads, wflag, kflag, what, Uflag, xflg;
+ 	char *nlistf, *memf, *swapf, *cols, errbuf[_POSIX2_LINE_MAX];
++	int Zflag = 0;
++	const char *zone = NULL;
++	zoneid_t zoneid = -1;
+ 
+ 	setlocale(LC_CTYPE, "");
+ 
+@@ -122,7 +127,7 @@ main(int argc, char *argv[])
+ 	ttydev = NODEV;
+ 	memf = nlistf = swapf = NULL;
+ 	while ((ch = getopt(argc, argv,
+-	    "AaCcegHhjkLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
++	    "AaCcegHhjkLlM:mN:O:o:p:rSTt:U:uvW:wxZz:")) != -1)
+ 		switch (ch) {
+ 		case 'A':
+ 			all = 1;
+@@ -248,6 +253,12 @@ main(int argc, char *argv[])
+ 		case 'x':
+ 			xflg = 1;
+ 			break;
++		case 'Z':
++			Zflag = 1;
++			break;
++		case 'z':
++			zone = optarg;
++			break;
+ 		default:
+ 			usage();
+ 		}
+@@ -275,6 +286,9 @@ main(int argc, char *argv[])
+ 	if (kd == NULL)
+ 		errx(1, "%s", errbuf);
+ 
++	if (zone != NULL)
++		zoneid = zone_lookup_name(zone);
++
+ 	if (unveil(_PATH_DEVDB, "r") == -1 && errno != ENOENT)
+ 		err(1, "unveil");
+ 	if (unveil(_PATH_DEV, "r") == -1 && errno != ENOENT)
+@@ -297,6 +311,8 @@ main(int argc, char *argv[])
+ 		else
+ 			parsefmt(dfmt);
+ 	}
++	if (Zflag)
++		zonefmt();
+ 
+ 	/* XXX - should be cleaner */
+ 	if (!all && ttydev == NODEV && pid == -1 && !Uflag) {
+@@ -361,6 +377,8 @@ main(int argc, char *argv[])
+ 	 * for each proc, call each variable output function.
+ 	 */
+ 	for (i = lineno = 0; i < nentries; i++) {
++		if (zoneid != -1 && zoneid != kinfo[i]->p_zoneid)
++			continue;
+ 		if (showthreads == 0 && (kinfo[i]->p_flag & P_THREAD) != 0)
+ 			continue;
+ 		if (xflg == 0 && ((int)kinfo[i]->p_tdev == NODEV ||
+@@ -383,6 +401,25 @@ main(int argc, char *argv[])
+ 	exit(eval);
+ }
+ 
++static zoneid_t
++zone_lookup_name(const char *zone)
++{
++	const char *errstr;
++	zoneid_t z;
++
++	z = zone_lookup(zone);
++	if (z != -1)
++		return (z);
++	if (errno != ESRCH)
++		err(1, "zone %s", zone);
++
++	z = strtonum(zone, 0, MAXZONEIDS, &errstr);
++	if (errstr != NULL)
++		errx(1, "zone %s: %s", zone, errstr);
++
++	return (z);
++}
++
+ static void
+ scanvars(void)
+ {
+@@ -488,9 +525,9 @@ static void
+ usage(void)
+ {
+ 	(void)fprintf(stderr,
+-	    "usage: %s [-AaceHhjkLlmrSTuvwx] [-M core] [-N system] [-O fmt] [-o fmt] [-p pid]\n",
++	    "usage: %s [-AaceHhjkLlmrSTuvwxZ] [-M core] [-N system] [-O fmt] [-o fmt] [-p pid]\n",
+ 	    __progname);
+ 	(void)fprintf(stderr,
+-	    "%-*s[-t tty] [-U username] [-W swap]\n", (int)strlen(__progname) + 8, "");
++	    "%-*s[-t tty] [-U username] [-W swap] [-z zone]\n", (int)strlen(__progname) + 8, "");
+ 	exit(1);
+ }
+Index: include/Makefile
+===================================================================
+RCS file: /cvs/src/include/Makefile,v
+retrieving revision 1.225
+diff -u -p -u -p -r1.225 Makefile
+--- include/Makefile	6 Apr 2019 02:56:16 -0000	1.225
++++ include/Makefile	22 Oct 2019 11:29:36 -0000
+@@ -29,7 +29,8 @@ FILES=	a.out.h ar.h asr.h assert.h \
+ 	tar.h tgmath.h tib.h time.h ttyent.h \
+ 	unistd.h utime.h utmp.h uuid.h \
+ 	vis.h  \
+-	wchar.h wctype.h
++	wchar.h wctype.h \
++	zones.h
+ 
+ MFILES=	frame.h
+ LFILES=	endian.h fcntl.h syslog.h termios.h stdarg.h stdint.h varargs.h
+Index: include/zones.h
+===================================================================
+RCS file: include/zones.h
+diff -N include/zones.h
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ include/zones.h	22 Oct 2019 11:29:36 -0000
+@@ -0,0 +1,15 @@
++#ifndef _ZONES_H_
++#define _ZONES_H_
++
++#include <sys/zones.h>
++
++__BEGIN_DECLS
++zoneid_t zone_create(const char *);
++int zone_destroy(zoneid_t);
++int zone_enter(zoneid_t);
++int zone_list(zoneid_t *, size_t *);
++zoneid_t zone_lookup(const char *);
++int zone_name(zoneid_t, char *, size_t);
++__END_DECLS
++
++#endif /* !_UNISTD_H_ */
+Index: lib/libc/Symbols.list
+===================================================================
+RCS file: /cvs/src/lib/libc/Symbols.list,v
+retrieving revision 1.72
+diff -u -p -u -p -r1.72 Symbols.list
+--- lib/libc/Symbols.list	28 May 2019 14:49:38 -0000	1.72
++++ lib/libc/Symbols.list	22 Oct 2019 11:29:37 -0000
+@@ -1763,3 +1763,11 @@ yperr_string
+ ypprot_err
+ _yp_check		/* chpass, passwd, login_chpass */
+ yp_unbind		/* passwd */
++
++/* zones */
++zone_create
++zone_destroy
++zone_enter
++zone_list
++zone_lookup
++zone_name
+Index: lib/libc/shlib_version
+===================================================================
+RCS file: /cvs/src/lib/libc/shlib_version,v
+retrieving revision 1.208
+diff -u -p -u -p -r1.208 shlib_version
+--- lib/libc/shlib_version	13 May 2019 22:25:27 -0000	1.208
++++ lib/libc/shlib_version	22 Oct 2019 11:29:37 -0000
+@@ -1,4 +1,4 @@
+ major=95
+-minor=1
++minor=2
+ # note: If changes were made to include/thread_private.h or if system calls
+ # were added/changed then librthread/shlib_version must also be updated.
+Index: lib/libc/sys/Makefile.inc
+===================================================================
+RCS file: /cvs/src/lib/libc/sys/Makefile.inc,v
+retrieving revision 1.157
+diff -u -p -u -p -r1.157 Makefile.inc
+--- lib/libc/sys/Makefile.inc	28 May 2019 13:08:56 -0000	1.157
++++ lib/libc/sys/Makefile.inc	22 Oct 2019 11:29:37 -0000
+@@ -73,7 +73,9 @@ ASM=	__semctl.o __syscall.o __thrsigdive
+ 	shmget.o shutdown.o sigaltstack.o socket.o \
+ 	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
+ 	sysarch.o sysctl.o thrkill.o unlink.o unlinkat.o \
+-	unmount.o unveil.o utimensat.o utimes.o utrace.o
++	unmount.o unveil.o utimensat.o utimes.o utrace.o \
++	zone_create.o zone_destroy.o zone_enter.o zone_list.o \
++	zone_lookup.o zone_name.o
+ 
+ SRCS+=	${SRCS_${MACHINE_CPU}}
+ .for i in ${SRCS_${MACHINE_CPU}}
+Index: sys/conf/files
+===================================================================
+RCS file: /cvs/src/sys/conf/files,v
+retrieving revision 1.675
+diff -u -p -u -p -r1.675 files
+--- sys/conf/files	5 Oct 2019 05:33:14 -0000	1.675
++++ sys/conf/files	22 Oct 2019 11:29:45 -0000
+@@ -725,6 +725,7 @@ file kern/sys_generic.c
+ file kern/sys_pipe.c
+ file kern/sys_process.c			ptrace
+ file kern/sys_socket.c
++file kern/sys_zones.c
+ file kern/syscalls.c			syscall_debug
+ file kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
+ file kern/sysv_msg.c			sysvmsg
+@@ -1060,4 +1061,3 @@ file lib/libz/zutil.c			ppp_deflate | ip
+ file lib/libz/zopenbsd.c		ppp_deflate | ipsec | crypto
+ file lib/libz/trees.c			ppp_deflate | ipsec | crypto
+ file lib/libz/compress.c		ppp_deflate | ipsec | crypto
+-
+Index: sys/kern/init_main.c
+===================================================================
+RCS file: /cvs/src/sys/kern/init_main.c,v
+retrieving revision 1.290
+diff -u -p -u -p -r1.290 init_main.c
+--- sys/kern/init_main.c	21 Jun 2019 09:39:48 -0000	1.290
++++ sys/kern/init_main.c	22 Oct 2019 11:29:45 -0000
+@@ -61,6 +61,7 @@
+ #include <sys/protosw.h>
+ #include <sys/reboot.h>
+ #include <sys/user.h>
++#include <sys/zones.h>
+ #ifdef SYSVSHM
+ #include <sys/shm.h>
+ #endif
+@@ -279,6 +280,11 @@ main(void *framep)
+ 	 * Initialize futexes.
+ 	 */
+ 	futex_init();
++
++	/*
++	 * Initialise zones.
++	 */
++	zone_init();
+ 
+ 	/* Create credentials. */
+ 	p->p_ucred = crget();
+Index: sys/kern/init_sysent.c
+===================================================================
+RCS file: /cvs/src/sys/kern/init_sysent.c,v
+retrieving revision 1.208
+diff -u -p -u -p -r1.208 init_sysent.c
+--- sys/kern/init_sysent.c	13 Aug 2019 07:10:30 -0000	1.208
++++ sys/kern/init_sysent.c	22 Oct 2019 11:29:45 -0000
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: init_sysent.c,v 1.208 2019/08/13 07:10:30 anton Exp $	*/
++/*	$OpenBSD$	*/
+ 
+ /*
+  * System call switch table.
+@@ -747,9 +747,21 @@ struct sysent sysent[] = {
+ 	    sys_nosys },			/* 327 = obsolete t32_futimens */
+ 	{ 0, 0, 0,
+ 	    sys_nosys },			/* 328 = obsolete __tfork51 */
+-	{ 1, s(struct sys___set_tcb_args), SY_NOLOCK | 0,
++	{ 1, s(struct sys___set_tcb_args), 0,
+ 	    sys___set_tcb },			/* 329 = __set_tcb */
+-	{ 0, 0, SY_NOLOCK | 0,
++	{ 0, 0, 0,
+ 	    sys___get_tcb },			/* 330 = __get_tcb */
++	{ 1, s(struct sys_zone_create_args), 0,
++	    sys_zone_create },			/* 331 = zone_create */
++	{ 1, s(struct sys_zone_destroy_args), 0,
++	    sys_zone_destroy },			/* 332 = zone_destroy */
++	{ 1, s(struct sys_zone_enter_args), 0,
++	    sys_zone_enter },			/* 333 = zone_enter */
++	{ 2, s(struct sys_zone_list_args), 0,
++	    sys_zone_list },			/* 334 = zone_list */
++	{ 1, s(struct sys_zone_lookup_args), 0,
++	    sys_zone_lookup },			/* 335 = zone_lookup */
++	{ 3, s(struct sys_zone_name_args), 0,
++	    sys_zone_name },			/* 336 = zone_name */
+ };
+ 
+Index: sys/kern/kern_fork.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_fork.c,v
+retrieving revision 1.215
+diff -u -p -u -p -r1.215 kern_fork.c
+--- sys/kern/kern_fork.c	21 Oct 2019 10:24:01 -0000	1.215
++++ sys/kern/kern_fork.c	22 Oct 2019 11:29:45 -0000
+@@ -243,6 +243,9 @@ process_new(struct proc *p, struct proce
+ 	if (pr->ps_textvp)
+ 		vref(pr->ps_textvp);
+ 
++	/* inherit parents zone */
++	pr->ps_zid = parent->ps_zid;
++
+ 	/* copy unveil if unveil is active */
+ 	unveil_copy(parent, pr);
+ 
+Index: sys/kern/kern_pledge.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_pledge.c,v
+retrieving revision 1.255
+diff -u -p -u -p -r1.255 kern_pledge.c
+--- sys/kern/kern_pledge.c	25 Aug 2019 18:46:40 -0000	1.255
++++ sys/kern/kern_pledge.c	22 Oct 2019 11:29:45 -0000
+@@ -364,6 +364,9 @@ const uint64_t pledge_syscalls[SYS_MAXSY
+ 	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YPACTIVE,
+ 
+ 	[SYS_swapctl] = PLEDGE_VMINFO,	/* XXX should limit to "get" operations */
++
++	[SYS_zone_name] = PLEDGE_ALWAYS,
++	[SYS_zone_lookup] = PLEDGE_ALWAYS,
+ };
+ 
+ static const struct {
+Index: sys/kern/kern_sig.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_sig.c,v
+retrieving revision 1.235
+diff -u -p -u -p -r1.235 kern_sig.c
+--- sys/kern/kern_sig.c	6 Oct 2019 16:24:14 -0000	1.235
++++ sys/kern/kern_sig.c	22 Oct 2019 11:29:45 -0000
+@@ -64,6 +64,7 @@
+ #include <sys/syslog.h>
+ #include <sys/pledge.h>
+ #include <sys/witness.h>
++#include <sys/zones.h>
+ 
+ #include <sys/mount.h>
+ #include <sys/syscallargs.h>
+@@ -84,6 +85,7 @@ struct timeout proc_stop_to;
+ 
+ void postsig(struct proc *, int);
+ int cansignal(struct proc *, struct process *, int);
++int inzone(struct proc *, struct process *);
+ 
+ struct pool sigacts_pool;	/* memory pool for sigacts structures */
+ 
+@@ -107,6 +109,10 @@ cansignal(struct proc *p, struct process
+ 	if (pr == qr)
+ 		return (1);		/* process can always signal itself */
+ 
++	/* Not root since earlier test and qr not in global */
++	if (pr->ps_zid == GLOBAL_ZID && qr->ps_zid != GLOBAL_ZID)
++		return (0);
++
+ 	/* optimization: if the same creds then the tests below will pass */
+ 	if (uc == quc)
+ 		return (1);
+@@ -147,6 +153,13 @@ cansignal(struct proc *p, struct process
+ 	return (0);
+ }
+ 
++int
++inzone(struct proc *p, struct process *qr) {
++	struct process *pr = p->p_p;
++	/* check if in global or same zone */
++	return pr->ps_zid == GLOBAL_ZID || pr->ps_zid == qr->ps_zid;
++}
++
+ /*
+  * Initialize signal-related data structures.
+  */
+@@ -593,6 +606,10 @@ sys_kill(struct proc *cp, void *v, regis
+ 			else
+ 				zombie = 1;
+ 		}
++		/* check in same zone or global zone */
++		if (!inzone(cp, pr))
++			return (ESRCH);
++
+ 		if (!cansignal(cp, pr, signum))
+ 			return (EPERM);
+ 
+@@ -685,7 +702,7 @@ killpg1(struct proc *cp, int signum, int
+ 		}
+ 		LIST_FOREACH(pr, &pgrp->pg_members, ps_pglist) {
+ 			if (pr->ps_pid <= 1 || pr->ps_flags & PS_SYSTEM ||
+-			    !cansignal(cp, pr, signum))
++			    !cansignal(cp, pr, signum) || !inzone(cp,pr))
+ 				continue;
+ 			nfound++;
+ 			if (signum)
+Index: sys/kern/kern_sysctl.c
+===================================================================
+RCS file: /cvs/src/sys/kern/kern_sysctl.c,v
+retrieving revision 1.366
+diff -u -p -u -p -r1.366 kern_sysctl.c
+--- sys/kern/kern_sysctl.c	21 Aug 2019 20:44:09 -0000	1.366
++++ sys/kern/kern_sysctl.c	22 Oct 2019 11:29:46 -0000
+@@ -80,6 +80,7 @@
+ #include <sys/mount.h>
+ #include <sys/syscallargs.h>
+ #include <sys/witness.h>
++#include <sys/zones.h>
+ 
+ #include <uvm/uvm_extern.h>
+ 
+@@ -173,6 +174,7 @@ sys_sysctl(struct proc *p, void *v, regi
+ 	sysctlfn *fn;
+ 	int name[CTL_MAXNAME];
+ 
++	/* this checks if suser and fails if you ain't */
+ 	if (SCARG(uap, new) != NULL &&
+ 	    (error = suser(p)))
+ 		return (error);
+@@ -275,6 +277,14 @@ struct diskstats *diskstats = NULL;
+ size_t diskstatslen;
+ int securelevel;
+ 
++/* I know the index 0 never gets touched but I don't care */
++char zhostname[MAXZONEIDS][MAXHOSTNAMELEN];
++int zhostnamelen[MAXZONEIDS];
++char zdomainname[MAXZONEIDS][MAXHOSTNAMELEN];
++int zdomainnamelen[MAXZONEIDS];
++long zhostid[MAXZONEIDS];
++struct timeval zboottime[MAXZONEIDS];
++
+ /*
+  * kernel related system variables.
+  */
+@@ -284,6 +294,7 @@ kern_sysctl(int *name, u_int namelen, vo
+ {
+ 	int error, level, inthostid, stackgap;
+ 	dev_t dev;
++	ssize_t index;
+ 	extern int somaxconn, sominconn;
+ 	extern int nosuidcoredump;
+ 	extern int maxlocksperuid;
+@@ -364,33 +375,74 @@ kern_sysctl(int *name, u_int namelen, vo
+ 		return (sysctl_int(oldp, oldlenp, newp, newlen,
+ 		    &allowkmem));
+ 	case KERN_HOSTNAME:
+-		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+-		    hostname, sizeof(hostname));
+-		if (newp && !error)
+-			hostnamelen = newlen;
++		/* check if global or zone */
++		if (p->p_p->ps_zid == GLOBAL_ZID) {
++			error = sysctl_tstring(oldp, oldlenp, newp, newlen,
++			    hostname, sizeof(hostname));
++			if (newp && !error)
++				hostnamelen = newlen;
++		} else if ((index = find_index_zid(p->p_p->ps_zid)) > 0) {
++			error = sysctl_tstring(oldp, oldlenp, newp, newlen,
++			    zhostname[index], sizeof(zhostname[index]));
++			if (newp && !error)
++				zhostnamelen[index] = newlen;
++		} else {
++			printf("%s: p->p_p->ps_zid = %d\n", __func__, p->p_p->ps_zid);
++			error = ESRCH;
++		}
+ 		return (error);
+ 	case KERN_DOMAINNAME:
+-		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+-		    domainname, sizeof(domainname));
+-		if (newp && !error)
+-			domainnamelen = newlen;
++		/* check if in zone or global */
++		if (p->p_p->ps_zid == GLOBAL_ZID) {
++			error = sysctl_tstring(oldp, oldlenp, newp, newlen,
++			    domainname, sizeof(domainname));
++			if (newp && !error)
++				domainnamelen = newlen;
++		} else if ((index = find_index_zid(p->p_p->ps_zid)) > 0) {
++			error = sysctl_tstring(oldp, oldlenp, newp, newlen,
++			    zdomainname[index], sizeof(zdomainname[index]));
++			if (newp && !error)
++				zdomainnamelen[index] = newlen;
++		} else {
++			printf("%s: p->p_p->ps_zid = %d\n", __func__, p->p_p->ps_zid);
++			error = ESRCH;
++		}
+ 		return (error);
+ 	case KERN_HOSTID:
+-		inthostid = hostid;  /* XXX assumes sizeof long <= sizeof int */
+-		error =  sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
+-		hostid = inthostid;
++		/* ZZZ check if in zone or global */
++		if (p->p_p->ps_zid == GLOBAL_ZID) {
++			inthostid = hostid;  /* XXX assumes sizeof long <= sizeof int */
++			error =  sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
++			hostid = inthostid;
++		} else if ((index = find_index_zid(p->p_p->ps_zid)) > 0) {
++			inthostid = zhostid[index];  /* XXX assumes sizeof long <= sizeof int */
++			error =  sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
++			zhostid[index] = inthostid;
++		} else {
++			printf("%s: p->p_p->ps_zid = %d\n", __func__, p->p_p->ps_zid);
++			error = ESRCH;
++		}
+ 		return (error);
+ 	case KERN_CLOCKRATE:
+ 		return (sysctl_clockrate(oldp, oldlenp, newp));
+ 	case KERN_BOOTTIME: {
+ 		struct timeval bt;
+-		memset(&bt, 0, sizeof bt);
+-		microboottime(&bt);
++		if (p->p_p->ps_zid == GLOBAL_ZID) {
++			memset(&bt, 0, sizeof bt);
++			microboottime(&bt);
++		} else if ((index = find_index_zid(p->p_p->ps_zid)) > 0) {
++			memset(&bt, 0, sizeof bt);
++			bt = zboottime[index];
++		} else {
++			printf("%s: p->p_p->ps_zid = %d\n", __func__, p->p_p->ps_zid);
++			error = ESRCH;
++		}
+ 		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
+ 	  }
+ #ifndef SMALL_KERNEL
+ 	case KERN_PROC:
+-		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
++		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp,
++		     p));
+ 	case KERN_PROC_ARGS:
+ 		return (sysctl_proc_args(name + 1, namelen - 1, oldp, oldlenp,
+ 		     p));
+@@ -590,6 +642,10 @@ kern_sysctl(int *name, u_int namelen, vo
+ 		    newp, newlen));
+ #endif
+ 	case KERN_MAXCLUSTERS: {
++		/* check for write operation */
++		if (newp != NULL &&
++		    p->p_p->ps_zid != GLOBAL_ZID)
++			return (EPERM);
+ 		int val = nmbclust;
+ 		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+ 		if (error == 0 && val != nmbclust)
+@@ -610,6 +666,9 @@ kern_sysctl(int *name, u_int namelen, vo
+ 		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
+ 		    newp, newlen));
+ 	case KERN_CACHEPCT: {
++		if (newp != NULL &&
++		    p->p_p->ps_zid != GLOBAL_ZID)
++			return (EPERM);
+ 		u_int64_t dmapages;
+ 		int opct, pgs;
+ 		opct = bufcachepercent;
+@@ -640,6 +699,9 @@ kern_sysctl(int *name, u_int namelen, vo
+ 	case KERN_NETLIVELOCKS:
+ 		return (sysctl_rdint(oldp, oldlenp, newp, net_livelocks));
+ 	case KERN_POOL_DEBUG: {
++		if (newp != NULL &&
++		    p->p_p->ps_zid != GLOBAL_ZID)
++			return (EPERM);
+ 		int old_pool_debug = pool_debug;
+ 
+ 		error = sysctl_int(oldp, oldlenp, newp, newlen,
+@@ -1086,6 +1148,7 @@ fill_file(struct kinfo_file *kf, struct 
+ 	memset(kf, 0, sizeof(*kf));
+ 
+ 	kf->fd_fd = fd;		/* might not really be an fd */
++	kf->p_zoneid = pr->ps_zid;	/* not sure if this is right but I'm just guessing */
+ 
+ 	if (fp != NULL) {
+ 		if (show_pointers)
+@@ -1409,6 +1472,12 @@ sysctl_file(int *name, u_int namelen, ch
+ 				/* not the pid we are looking for */
+ 				continue;
+ 			}
++			/*
++			 * Also skip unmatching zones
++			 */
++			if (!(p->p_p->ps_zid == GLOBAL_ZID || pr->ps_zid == p->p_p->ps_zid))
++				continue;
++
+ 			matched = 1;
+ 			fdp = pr->ps_fd;
+ 			if (pr->ps_textvp)
+@@ -1441,6 +1510,12 @@ sysctl_file(int *name, u_int namelen, ch
+ 				/* not the uid we are looking for */
+ 				continue;
+ 			}
++			/*
++			 * Also skip unmatching zones
++			 */
++			if (!(p->p_p->ps_zid == GLOBAL_ZID || pr->ps_zid == p->p_p->ps_zid))
++				continue;
++
+ 			fdp = pr->ps_fd;
+ 			if (fdp->fd_cdir)
+ 				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pr);
+@@ -1479,7 +1554,8 @@ sysctl_file(int *name, u_int namelen, ch
+ #define KERN_PROCSLOP	5
+ 
+ int
+-sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep)
++sysctl_doproc(int *name, u_int namelen, char *where, size_t *sizep,
++    struct proc *cp)
+ {
+ 	struct kinfo_proc *kproc = NULL;
+ 	struct proc *p;
+@@ -1523,6 +1599,15 @@ again:
+ 		 */
+ 		if (pr->ps_flags & PS_EMBRYO)
+ 			continue;
++
++		/*
++		 * Skip processes with different zones
++		 */
++		if (!(cp->p_p->ps_zid == GLOBAL_ZID || pr->ps_zid == cp->p_p->ps_zid)) {
++			printf("%s: pr->ps_zid = %d\n", __func__, pr->ps_zid);
++			printf("%s: cp->p_p->ps_zid = %d\n", __func__, cp->p_p->ps_zid);
++			continue;
++		}
+ 
+ 		/*
+ 		 * TODO - make more efficient (see notes below).
+Index: sys/kern/sys_zones.c
+===================================================================
+RCS file: sys/kern/sys_zones.c
+diff -N sys/kern/sys_zones.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ sys/kern/sys_zones.c	22 Oct 2019 11:29:46 -0000
+@@ -0,0 +1,503 @@
++#include <sys/param.h>
++#include <sys/acct.h>
++#include <sys/atomic.h>
++#include <sys/systm.h>
++#include <sys/time.h>
++#include <sys/ucred.h>
++#include <sys/proc.h>
++
++#include <sys/filedesc.h>
++#include <sys/pool.h>
++#include <sys/mount.h>
++#include <sys/syscallargs.h>
++#include <sys/zones.h>
++
++#include <lib/libkern/libkern.h>
++#include <sys/types.h>
++#include <sys/malloc.h>
++
++extern struct processlist allprocess;
++extern char zhostname[MAXZONEIDS][MAXHOSTNAMELEN];
++extern int zhostnamelen[MAXZONEIDS];
++extern struct timeval zboottime[MAXZONEIDS];
++
++struct node {
++	bool exists; /* can be removed */
++	bool existed;
++	char name[MAXZONENAMELEN];
++	zoneid_t z;
++};
++
++zoneid_t genzid(const char *); /* generates an initial zone id for a name */
++size_t count_zone(zoneid_t);
++int add_zone(struct node *, zoneid_t *); /* copies zone to the hashmap returns ERANGE on full */
++struct node *find_zone_str(const char *); /* returns NULL on failure */
++struct node *find_zone_zid(zoneid_t); /* returns NULL on failure */
++bool valid_zonename(const char *, size_t); /* checks if the zonename meets spec */
++
++/* global variables are default 0 */
++struct node allzones[MAXZONEIDS];
++static uint32_t zonecounter = 1;
++
++int
++sys_zone_create(struct proc *p, void *v, register_t *retval)
++{
++	printf("%s\n", __func__);
++	struct sys_zone_create_args /* {
++		syscallarg(const char *) zonename;
++	}*/ *uap = v;
++
++	*retval = -1;
++	const char *zonename = SCARG(uap, zonename);
++
++	struct node elm = {}; /* attempting to 0 the memory */
++	struct process *p_p = p->p_p;
++
++	int err;
++	size_t len;
++	/* zonename points to a bad address */
++	/* zonename too long */
++	if ((err = copyinstr(zonename, elm.name, sizeof(char) * MAXZONENAMELEN - 1, &len))) {
++		return err;
++	}
++	len = len - 1; /* length should not include the null terminator */
++
++	/* check process is in GLOBAL_ZID */
++	if (p_p->ps_zid != GLOBAL_ZID) {
++		return EPERM;
++	}
++
++	/* check if process is current user is root */
++	if (suser(p) != 0) {
++		return EPERM;
++	}
++
++	/* check if name already exists */
++	if (find_zone_str(zonename)) {
++		return EEXIST;
++	}
++
++	/* check if too many zones have been created */
++	if (zonecounter >= MAXZONES) {
++		return ERANGE;
++	}
++
++	/* check zonename for invalid characters */
++	/* remove the null terminator from the length */
++	if (!valid_zonename(elm.name, len)) {
++		return EINVAL;
++	}
++
++	/* add zoneid */
++	if ((err = add_zone(&elm, (zoneid_t *)retval))) {
++		return (err);
++	}
++
++	zonecounter++;
++
++	return (0);
++}
++
++int
++sys_zone_destroy(struct proc *p, void *v, register_t *retval)
++{
++	printf("%s\n", __func__);
++	struct sys_zone_destroy_args /* {
++		syscallarg(zoneid_t) z;
++	}*/ *uap = v;
++
++	zoneid_t z = SCARG(uap, z);
++
++	struct process *p_p = p->p_p;
++
++	*retval = -1;
++
++	/* check current program is in global */
++	if (p_p->ps_zid != GLOBAL_ZID) {
++		return EPERM;
++	}
++
++	/* check the current user is root */
++	if (suser(p) != 0) {
++		return EPERM;
++	}
++
++	/* check global zone */
++	if (z == GLOBAL_ZID) {
++		return EBUSY;
++	}
++
++	/* check the zone exists */
++	struct node *znode;
++	if (!(znode = find_zone_zid(z))) {
++		return EEXIST;
++	}
++
++	/* check noone is using the zone */
++	if (count_zone(z) != 0) {
++		return EBUSY;
++	}
++
++	znode->exists = false;
++	zonecounter--;
++	*retval = 0;
++	return (0);
++}
++
++int
++sys_zone_enter(struct proc *p, void *v, register_t *retval)
++{
++	printf("%s\n", __func__);
++	struct sys_zone_enter_args /* {
++		syscallarg(zoneid_t) z;
++	}*/ *uap = v;
++	zoneid_t z = SCARG(uap, z);
++
++	struct process *p_p = p->p_p;
++
++	*retval = -1;
++	/* check if global process is not in global zone */
++	if (p_p->ps_zid != GLOBAL_ZID) {
++		return EPERM;
++	}
++
++	/* check the current user is root */
++	if (suser(p) != 0) {
++		return EPERM;
++	}
++
++	/* check the zone exists or is global */
++	if (z != GLOBAL_ZID && !find_zone_zid(z)) {
++		return EEXIST;
++	}
++
++	/* change the process zid to zone */
++	p_p->ps_zid = z;
++	/* add to the counter in the allzones */
++	/* znode->counter++; */
++	*retval = 0;
++
++	return (0);
++}
++
++int
++sys_zone_lookup(struct proc *p, void *v, register_t *retval)
++{
++	printf("%s\n", __func__);
++	struct sys_zone_lookup_args /* {
++		syscallarg(const char *) name;
++	}*/ *uap = v;
++	const char *name = SCARG(uap, name);
++
++	struct process *p_p = p->p_p;
++
++	*retval = -1;
++	/* check if name is NULL */
++	/* if it is then find current process zone id */
++	if (name == NULL) {
++		*retval = p_p->ps_zid;
++		return (0);
++	}
++	char kname[MAXZONENAMELEN]; /* kernel version of the name parameter */
++	kname[MAXZONENAMELEN - 1] = '\0';
++	size_t len;
++
++	int err;
++	/* bad address */
++	if ((err = copyinstr(name, kname, sizeof(char) * MAXZONENAMELEN - 1, &len))) {
++		return (err);
++	}
++	len = len - 1; /* length should not include the null terminator */
++
++	/* name too long */
++	if (kname[MAXZONENAMELEN - 1] != '\0') {
++		return ENAMETOOLONG;
++	}
++
++	/* check if global process is not in global zone */
++	zoneid_t pzid = p_p->ps_zid;
++
++	struct node *znode;
++	/* check specified zone exists */
++	/* check if zone can be seen since process is non-global zone */
++	if (!(znode = find_zone_str(name))) {
++		return ESRCH;
++	}
++
++	/* only show one zone if non-global */
++	if (pzid != GLOBAL_ZID && pzid != znode->z) {
++		return ESRCH;
++	}
++
++	*retval = znode->z;
++	return (0);
++}
++
++int
++sys_zone_list(struct proc *p, void *v, register_t *retval)
++{
++	printf("%s\n", __func__);
++	struct sys_zone_list_args /* {
++		syscallarg(zoneid_t *) zs;
++		syscallarg(size_t *) nzs;
++	}*/ *uap = v;
++	zoneid_t *zs = SCARG(uap, zs);
++	size_t *nzs = SCARG(uap, nzs);
++
++	*retval = -1;
++	int err;
++
++	struct process *p_p = p->p_p;
++	zoneid_t pzid = p_p->ps_zid;
++
++	/* compare nzs with count if out of range return ERANGE */
++	size_t unzs;
++	if ((err = copyin(nzs, &unzs, sizeof(size_t)))) { /* guessed space */
++		return err;
++	}
++
++	size_t knzs = 1;
++	zoneid_t *kzs;
++	if (!(kzs = mallocarray(zonecounter, sizeof(zoneid_t), M_TEMP, M_NOWAIT))) {
++		/* welp */
++		return ENOMEM;
++	}
++	/* check if not global zone in which case only one zone */
++	if (pzid != GLOBAL_ZID) {
++		kzs[0] = pzid;
++	} else {
++		/* set global */
++		knzs = 0;
++		for (size_t i = 0; i < MAXZONEIDS && knzs < zonecounter; i++) {
++			kzs[knzs] = 0;
++			if (allzones[i].exists) {
++				kzs[knzs++] = allzones[i].z;
++			}
++		}
++	}
++
++	if (knzs > unzs) {
++		free(kzs, M_TEMP, zonecounter * sizeof(zoneid_t));
++		return ERANGE;
++	}
++
++	if ((err = copyout(&knzs, nzs, sizeof(size_t)))) {
++		free(kzs, M_TEMP, zonecounter * sizeof(zoneid_t));
++		return err;
++	}
++
++	if ((err = copyout(kzs, zs, sizeof(zoneid_t) * knzs))) {
++		free(kzs, M_TEMP, zonecounter * sizeof(zoneid_t));
++		return err;
++	}
++
++	*retval = 0;
++	free(kzs, M_TEMP, zonecounter * sizeof(zoneid_t));
++	return (0);
++}
++
++int
++sys_zone_name(struct proc *p, void *v, register_t *retval)
++{
++	printf("%s\n", __func__);
++	struct sys_zone_name_args /* {
++		syscallarg(zoneid_t) z;
++		syscallarg(char *) name;
++		syscallarg(size_t) namelen;
++	}*/ *uap = v;
++	zoneid_t z = SCARG(uap, z);
++	char *name = SCARG(uap, name);
++	size_t namelen = SCARG(uap, namelen);
++
++	printf("&name = %p\n", name);
++	printf("namelen = %ld\n", namelen);
++
++	struct process *p_p = p->p_p;
++	zoneid_t pzid = p_p->ps_zid;
++	struct node *znode;
++
++	*retval = -1;
++	int err;
++	/* check if name is NULL */
++	/* if it is then find current process zone id */
++	if (z == -1) {
++		/* find name */
++		znode = find_zone_zid(pzid);
++	} else {
++		/* check specified zone exists */
++		if (!(znode = find_zone_zid(z))) {
++			return ESRCH;
++		}
++	}
++
++	/* only show one zone if non-global */
++	if (pzid != GLOBAL_ZID && pzid != znode->z) {
++		return ESRCH;
++	}
++
++	/* check if name is too long */
++	if (strnlen(znode->name, MAXZONENAMELEN) > namelen) {
++		return ENAMETOOLONG;
++	}
++
++	if ((err = copyoutstr(znode->name, name, MAXZONENAMELEN, NULL))) {
++		return err;
++	}
++
++	*retval = 0;
++	return (0);
++}
++
++void
++zone_init()
++{
++	struct node elm = {};
++	char globalname[] = "global";
++	strncpy(elm.name, globalname, sizeof(globalname));
++
++	zoneid_t z;
++	add_zone(&elm, &z);
++	printf("global zoneid set to: %u\n", z);
++}
++
++/* returns GLOBAL_ZID for "global" */
++zoneid_t
++genzid(const char *name)
++{
++	if (strncmp("global", name, sizeof(char) * MAXZONENAMELEN) == 0) {
++		return GLOBAL_ZID;
++	}
++	/* uses djb2 http://www.cse.yorku.ca/~oz/hash.html */
++        zoneid_t hash = 5381;
++	int c;
++
++	while ((c = *name++))
++		hash = (((hash << 5) + hash) + c) % MAXZONEIDS; /* hash * 33 + c */
++
++	/* creates a bias for hash = GLOBAL_ZID + 1 but I don't care */
++	return (hash != GLOBAL_ZID) ? hash : ((GLOBAL_ZID+1) % MAXZONEIDS);
++}
++
++/* please ensure no duplicates prior using this function */
++int
++add_zone(struct node *elm, zoneid_t *ret)
++{
++    	/* uses linear probing */
++    	/* check if full */
++	if (zonecounter >= MAXZONES) {
++		return ERANGE;
++	}
++
++	/* generate zoneid */
++	elm->z = genzid(elm->name);
++	*ret = elm->z;
++	elm->exists = true;
++	elm->existed = true;
++
++	size_t index = elm->z % MAXZONEIDS;
++
++	/* linear probing */
++	while (allzones[index].exists)
++		index = (index + 1) % MAXZONEIDS;
++
++	allzones[index] = *elm;
++
++	/* add to the hostname */
++	strncpy(zhostname[index], elm->name, sizeof(zhostname[index]));
++	/* update the zboottime */
++	getmicrotime(&(zboottime[index]));
++	return 0;
++}
++
++struct node *
++find_zone_str(const char *name)
++{
++	zoneid_t z = genzid(name);
++	size_t index = z % MAXZONEIDS;
++	size_t orgindex = index;
++
++	struct node *ret = NULL;
++	while (allzones[index].existed && index != orgindex - 1) {
++		/* compare string */
++	    	if (allzones[index].exists &&
++		    (strncmp(name, allzones[index].name, MAXZONENAMELEN) == 0)) {
++			ret = &(allzones[index]);
++			break;
++		}
++	    	/* if not then move on */
++		index = (index + 1) % MAXZONEIDS;
++	}
++
++	return ret;
++}
++
++struct node *
++find_zone_zid(zoneid_t z)
++{
++	ssize_t index = find_index_zid(z);
++	struct node *ret = index >= 0 ? &(allzones[index]) : NULL;
++
++	return ret;
++}
++
++ssize_t
++find_index_zid(zoneid_t z)
++{
++	size_t index = z % MAXZONEIDS;
++	size_t orgindex = index;
++
++	ssize_t ret = -1;
++	while (allzones[index].existed && index != orgindex - 1) {
++		/* compare string */
++	    	if (allzones[index].exists) {
++			ret = index;
++			break;
++		}
++	    	/* if not then move on */
++		index = (index + 1) % MAXZONEIDS;
++	}
++
++	return ret;
++}
++
++size_t
++count_zone(zoneid_t z)
++{
++    	/* check if global zoneid_t */
++    	size_t ret = 0;
++	struct process *pr;
++	if (z != GLOBAL_ZID) {
++		LIST_FOREACH(pr, &allprocess, ps_list) {
++			ret += (pr->ps_zid == z);
++		}
++
++	} else {
++		LIST_FOREACH(pr, &allprocess, ps_list) {
++			ret += 1;
++		}
++	}
++
++	return ret;
++}
++
++bool
++valid_zonename(const char *str, size_t len)
++{
++	if (len == 0)
++		return false;
++
++	for (size_t i = 0; i < len; i++) {
++		char c = str[i];
++		/* check for alphanumeric */
++		bool islower = 'a' <= c && c <= 'z';
++		bool isupper = 'A' <= c && c <= 'Z';
++		bool isnum = '0' <= c && c <= '9';
++		bool isspecial = (c == '-') || (c == '_');
++
++		if (!(islower || isupper || isnum || isspecial)) {
++			return false;
++		}
++	}
++
++	return true;
++}
+Index: sys/kern/syscalls.c
+===================================================================
+RCS file: /cvs/src/sys/kern/syscalls.c,v
+retrieving revision 1.207
+diff -u -p -u -p -r1.207 syscalls.c
+--- sys/kern/syscalls.c	13 Aug 2019 07:10:30 -0000	1.207
++++ sys/kern/syscalls.c	22 Oct 2019 11:29:46 -0000
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: syscalls.c,v 1.207 2019/08/13 07:10:30 anton Exp $	*/
++/*	$OpenBSD$	*/
+ 
+ /*
+  * System call names.
+@@ -393,4 +393,10 @@ char *syscallnames[] = {
+ 	"#328 (obsolete __tfork51)",		/* 328 = obsolete __tfork51 */
+ 	"__set_tcb",			/* 329 = __set_tcb */
+ 	"__get_tcb",			/* 330 = __get_tcb */
++	"zone_create",			/* 331 = zone_create */
++	"zone_destroy",			/* 332 = zone_destroy */
++	"zone_enter",			/* 333 = zone_enter */
++	"zone_list",			/* 334 = zone_list */
++	"zone_lookup",			/* 335 = zone_lookup */
++	"zone_name",			/* 336 = zone_name */
+ };
+Index: sys/kern/syscalls.master
+===================================================================
+RCS file: /cvs/src/sys/kern/syscalls.master,v
+retrieving revision 1.197
+diff -u -p -u -p -r1.197 syscalls.master
+--- sys/kern/syscalls.master	13 Aug 2019 07:09:21 -0000	1.197
++++ sys/kern/syscalls.master	22 Oct 2019 11:29:46 -0000
+@@ -564,5 +564,11 @@
+ 326	OBSOL		t32_utimensat
+ 327	OBSOL		t32_futimens
+ 328	OBSOL		__tfork51
+-329	STD NOLOCK	{ void sys___set_tcb(void *tcb); }
+-330	STD NOLOCK	{ void *sys___get_tcb(void); }
++329	STD		{ void sys___set_tcb(void *tcb); }
++330	STD		{ void *sys___get_tcb(void); }
++331	STD		{ zoneid_t sys_zone_create(const char *zonename); }
++332	STD		{ int sys_zone_destroy(zoneid_t z); }
++333	STD		{ int sys_zone_enter(zoneid_t z); }
++334	STD		{ int sys_zone_list(zoneid_t *zs, size_t *nzs); }
++335	STD		{ zoneid_t sys_zone_lookup(const char *name); }
++336	STD		{ int sys_zone_name(zoneid_t z, char *name, size_t namelen); }
+Index: sys/sys/_types.h
+===================================================================
+RCS file: /cvs/src/sys/sys/_types.h,v
+retrieving revision 1.9
+diff -u -p -u -p -r1.9 _types.h
+--- sys/sys/_types.h	22 Aug 2014 23:05:15 -0000	1.9
++++ sys/sys/_types.h	22 Oct 2019 11:29:46 -0000
+@@ -64,6 +64,7 @@ typedef	__int32_t	__swblk_t;	/* swap off
+ typedef	__int64_t	__time_t;	/* epoch time */
+ typedef	__int32_t	__timer_t;	/* POSIX timer identifiers */
+ typedef	__uint32_t	__uid_t;	/* user id */
++typedef	__int32_t	__zoneid_t;	/* zone id */
+ typedef	__uint32_t	__useconds_t;	/* microseconds */
+ 
+ /*
+Index: sys/sys/_zones.h
+===================================================================
+RCS file: sys/sys/_zones.h
+diff -N sys/sys/_zones.h
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ sys/sys/_zones.h	22 Oct 2019 11:29:46 -0000
+@@ -0,0 +1,13 @@
++#ifndef _ZONES_H_
++#define _ZONES_H_
++
++#include <sys/types.h>
++
++#define GLOBAL_ZID 0
++
++void zone_init(void);
++
++/* unlike genzid this one handles the collisions */
++ssize_t find_index_zid(zoneid_t z);
++
++#endif // _ZONES_H_
+Index: sys/sys/proc.h
+===================================================================
+RCS file: /cvs/src/sys/sys/proc.h,v
+retrieving revision 1.274
+diff -u -p -u -p -r1.274 proc.h
+--- sys/sys/proc.h	21 Oct 2019 10:24:01 -0000	1.274
++++ sys/sys/proc.h	22 Oct 2019 11:29:46 -0000
+@@ -51,6 +51,7 @@
+ #include <sys/rwlock.h>			/* For struct rwlock */
+ #include <sys/sigio.h>			/* For struct sigio */
+ #include <sys/tree.h>
++#include <sys/zones.h>
+ 
+ #ifdef _KERNEL
+ #include <sys/atomic.h>
+@@ -184,6 +185,7 @@ struct process {
+ 	struct	filedesc *ps_fd;	/* Ptr to open files structure */
+ 	struct	vmspace *ps_vmspace;	/* Address space */
+ 	pid_t	ps_pid;			/* Process identifier. */
++	zoneid_t	ps_zid;		/* Zone identifier. */
+ 
+ 	struct	futex_list ps_ftlist;	/* futexes attached to this process */
+ 	LIST_HEAD(, kqueue) ps_kqlist;	/* kqueues attached to this process */
+@@ -652,4 +654,3 @@ struct cpu_info *cpuset_first(struct cpu
+ 
+ #endif	/* _KERNEL */
+ #endif	/* !_SYS_PROC_H_ */
+-
+Index: sys/sys/syscall.h
+===================================================================
+RCS file: /cvs/src/sys/sys/syscall.h,v
+retrieving revision 1.205
+diff -u -p -u -p -r1.205 syscall.h
+--- sys/sys/syscall.h	13 Aug 2019 07:10:31 -0000	1.205
++++ sys/sys/syscall.h	22 Oct 2019 11:29:46 -0000
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: syscall.h,v 1.205 2019/08/13 07:10:31 anton Exp $	*/
++/*	$OpenBSD$	*/
+ 
+ /*
+  * System call numbers.
+@@ -700,4 +700,22 @@
+ /* syscall: "__get_tcb" ret: "void *" args: */
+ #define	SYS___get_tcb	330
+ 
+-#define	SYS_MAXSYSCALL	331
++/* syscall: "zone_create" ret: "zoneid_t" args: "const char *" */
++#define	SYS_zone_create	331
++
++/* syscall: "zone_destroy" ret: "int" args: "zoneid_t" */
++#define	SYS_zone_destroy	332
++
++/* syscall: "zone_enter" ret: "int" args: "zoneid_t" */
++#define	SYS_zone_enter	333
++
++/* syscall: "zone_list" ret: "int" args: "zoneid_t *" "size_t *" */
++#define	SYS_zone_list	334
++
++/* syscall: "zone_lookup" ret: "zoneid_t" args: "const char *" */
++#define	SYS_zone_lookup	335
++
++/* syscall: "zone_name" ret: "int" args: "zoneid_t" "char *" "size_t" */
++#define	SYS_zone_name	336
++
++#define	SYS_MAXSYSCALL	337
+Index: sys/sys/syscallargs.h
+===================================================================
+RCS file: /cvs/src/sys/sys/syscallargs.h,v
+retrieving revision 1.208
+diff -u -p -u -p -r1.208 syscallargs.h
+--- sys/sys/syscallargs.h	13 Aug 2019 07:10:31 -0000	1.208
++++ sys/sys/syscallargs.h	22 Oct 2019 11:29:46 -0000
+@@ -1,4 +1,4 @@
+-/*	$OpenBSD: syscallargs.h,v 1.208 2019/08/13 07:10:31 anton Exp $	*/
++/*	$OpenBSD$	*/
+ 
+ /*
+  * System call argument lists.
+@@ -1100,6 +1100,33 @@ struct sys___set_tcb_args {
+ 	syscallarg(void *) tcb;
+ };
+ 
++struct sys_zone_create_args {
++	syscallarg(const char *) zonename;
++};
++
++struct sys_zone_destroy_args {
++	syscallarg(zoneid_t) z;
++};
++
++struct sys_zone_enter_args {
++	syscallarg(zoneid_t) z;
++};
++
++struct sys_zone_list_args {
++	syscallarg(zoneid_t *) zs;
++	syscallarg(size_t *) nzs;
++};
++
++struct sys_zone_lookup_args {
++	syscallarg(const char *) name;
++};
++
++struct sys_zone_name_args {
++	syscallarg(zoneid_t) z;
++	syscallarg(char *) name;
++	syscallarg(size_t) namelen;
++};
++
+ /*
+  * System call prototypes.
+  */
+@@ -1349,3 +1376,9 @@ int	sys_symlinkat(struct proc *, void *,
+ int	sys_unlinkat(struct proc *, void *, register_t *);
+ int	sys___set_tcb(struct proc *, void *, register_t *);
+ int	sys___get_tcb(struct proc *, void *, register_t *);
++int	sys_zone_create(struct proc *, void *, register_t *);
++int	sys_zone_destroy(struct proc *, void *, register_t *);
++int	sys_zone_enter(struct proc *, void *, register_t *);
++int	sys_zone_list(struct proc *, void *, register_t *);
++int	sys_zone_lookup(struct proc *, void *, register_t *);
++int	sys_zone_name(struct proc *, void *, register_t *);
+Index: sys/sys/sysctl.h
+===================================================================
+RCS file: /cvs/src/sys/sys/sysctl.h,v
+retrieving revision 1.195
+diff -u -p -u -p -r1.195 sysctl.h
+--- sys/sys/sysctl.h	21 Aug 2019 20:44:09 -0000	1.195
++++ sys/sys/sysctl.h	22 Oct 2019 11:29:46 -0000
+@@ -472,6 +472,7 @@ struct kinfo_proc {
+ 	u_int32_t p_rtableid;		/* U_INT: Routing table identifier. */
+ 
+ 	u_int64_t p_pledge;		/* U_INT64_T: Pledge flags. */
++	int32_t   p_zoneid;		/* ZONEID_T: zone identifier */
+ };
+ 
+ /*
+@@ -572,6 +573,7 @@ do {									\
+ 	(kp)->p_exitsig = 0;						\
+ 	(kp)->p_flag = (p)->p_flag;					\
+ 	(kp)->p_pid = (pr)->ps_pid;					\
++	(kp)->p_zoneid = (pr)->ps_zid;					\
+ 	(kp)->p_psflags = (pr)->ps_flags;				\
+ 									\
+ 	(kp)->p__pgid = (pg)->pg_id;					\
+@@ -782,6 +784,7 @@ struct kinfo_file {
+ 
+ 	/* process information when retrieved via KERN_FILE_BY[PU]ID */
+ 	uint32_t	p_pid;		/* PID_T: process id */
++	int32_t		p_zoneid;	/* ZONEID_T: zone identifier */
+ 	int32_t		fd_fd;		/* INT: descriptor number */
+ 	uint32_t	fd_ofileflags;	/* CHAR: open file flags */
+ 	uint32_t	p_uid;		/* UID_T: process credentials */
+@@ -994,7 +997,7 @@ int sysctl_rdstring(void *, size_t *, vo
+ int sysctl_rdstruct(void *, size_t *, void *, const void *, size_t);
+ int sysctl_struct(void *, size_t *, void *, size_t, void *, size_t);
+ int sysctl_file(int *, u_int, char *, size_t *, struct proc *);
+-int sysctl_doproc(int *, u_int, char *, size_t *);
++int sysctl_doproc(int *, u_int, char *, size_t *, struct proc *);
+ struct mbuf_queue;
+ int sysctl_mq(int *, u_int, void *, size_t *, void *, size_t,
+     struct mbuf_queue *);
+Index: sys/sys/types.h
+===================================================================
+RCS file: /cvs/src/sys/sys/types.h,v
+retrieving revision 1.48
+diff -u -p -u -p -r1.48 types.h
+--- sys/sys/types.h	9 Feb 2019 04:54:11 -0000	1.48
++++ sys/sys/types.h	22 Oct 2019 11:29:46 -0000
+@@ -146,6 +146,7 @@ typedef	__rlim_t	rlim_t;		/* resource li
+ typedef	__segsz_t	segsz_t;	/* segment size */
+ typedef	__swblk_t	swblk_t;	/* swap offset */
+ typedef	__uid_t		uid_t;		/* user id */
++typedef	__zoneid_t	zoneid_t;	/* zone id */
+ typedef	__useconds_t	useconds_t;	/* microseconds */
+ typedef	__suseconds_t	suseconds_t;	/* microseconds (signed) */
+ typedef	__fsblkcnt_t	fsblkcnt_t;	/* file system block count */
+Index: sys/sys/zones.h
+===================================================================
+RCS file: sys/sys/zones.h
+diff -N sys/sys/zones.h
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ sys/sys/zones.h	22 Oct 2019 11:29:46 -0000
+@@ -0,0 +1,29 @@
++/*	$OpenBSD$ */
++
++/*
++ * Copyright (c) 2019 The University of Queensland
++ *
++ * Permission to use, copy, modify, and distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++
++#ifndef _SYS_ZONES_H_
++#define _SYS_ZONES_H_
++
++#define MAXZONENAMELEN  256             /* max zone name length w/ NUL */
++#define MAXZONES	1024
++#define MAXZONEIDS	(MAXZONES * 32)
++
++/* your assignment code goes in src/sys/sys/_zones.h */
++#include <sys/_zones.h>
++
++#endif /* _SYS_ZONES_H_ */
+Index: usr.bin/pkill/pkill.1
+===================================================================
+RCS file: /cvs/src/usr.bin/pkill/pkill.1,v
+retrieving revision 1.24
+diff -u -p -u -p -r1.24 pkill.1
+--- usr.bin/pkill/pkill.1	31 Aug 2018 15:56:42 -0000	1.24
++++ usr.bin/pkill/pkill.1	22 Oct 2019 11:29:46 -0000
+@@ -46,6 +46,7 @@
+ .Op Fl t Ar tty
+ .Op Fl U Ar uid
+ .Op Fl u Ar euid
++.Op Fl z Ar zone
+ .Op Ar pattern ...
+ .Nm pkill
+ .Op Fl Ar signal
+@@ -58,6 +59,7 @@
+ .Op Fl t Ar tty
+ .Op Fl U Ar uid
+ .Op Fl u Ar euid
++.Op Fl z Ar zone
+ .Op Ar pattern ...
+ .Sh DESCRIPTION
+ The
+@@ -170,6 +172,8 @@ A non-negative decimal number or symboli
+ to be sent instead of the default TERM.
+ This option is valid only when given as the first argument to
+ .Nm pkill .
++.It Fl z Ar zone
++Display information about processes running in the specified zone.
+ .El
+ .Pp
+ If any
+Index: usr.bin/pkill/pkill.c
+===================================================================
+RCS file: /cvs/src/usr.bin/pkill/pkill.c,v
+retrieving revision 1.41
+diff -u -p -u -p -r1.41 pkill.c
+--- usr.bin/pkill/pkill.c	28 Jun 2019 13:35:02 -0000	1.41
++++ usr.bin/pkill/pkill.c	22 Oct 2019 11:29:46 -0000
+@@ -52,6 +52,7 @@
+ #include <pwd.h>
+ #include <grp.h>
+ #include <errno.h>
++#include <zones.h>
+ 
+ #define	STATUS_MATCH	0
+ #define	STATUS_NOMATCH	1
+@@ -107,6 +108,7 @@ static int	grepact(struct kinfo_proc *, 
+ static void	makelist(struct listhead *, enum listtype, char *);
+ static char	*getargv(struct kinfo_proc *);
+ static int	askyn(struct kinfo_proc *);
++static zoneid_t	getzoneid(const char *);
+ 
+ extern char *__progname;
+ 
+@@ -148,6 +150,8 @@ main(int argc, char **argv)
+ 	u_int32_t bestsec, bestusec;
+ 	regex_t reg;
+ 	regmatch_t regmatch;
++	const char *zone = NULL;
++	zoneid_t z = -1;
+ 
+ 	if (strcmp(__progname, "pgrep") == 0) {
+ 		action = grepact;
+@@ -180,7 +184,7 @@ main(int argc, char **argv)
+ 
+ 	criteria = 0;
+ 
+-	while ((ch = getopt(argc, argv, "G:P:T:U:d:fg:Ilnoqs:t:u:vx")) != -1)
++	while ((ch = getopt(argc, argv, "G:P:T:U:d:fg:Ilnoqs:t:u:vxz:")) != -1)
+ 		switch (ch) {
+ 		case 'G':
+ 			makelist(&rgidlist, LT_GROUP, optarg);
+@@ -245,6 +249,9 @@ main(int argc, char **argv)
+ 		case 'x':
+ 			fullmatch = 1;
+ 			break;
++		case 'z':
++			zone = optarg;
++			break;
+ 		default:
+ 			usage();
+ 			/* NOTREACHED */
+@@ -259,6 +266,9 @@ main(int argc, char **argv)
+ 
+ 	mypid = getpid();
+ 
++	if (zone != NULL)
++		z = getzoneid(zone);
++
+ 	/*
+ 	 * Retrieve the list of running processes from the kernel.
+ 	 */
+@@ -298,6 +308,7 @@ main(int argc, char **argv)
+ 
+ 		for (i = 0, kp = plist; i < nproc; i++, kp++) {
+ 			if ((kp->p_flag & (P_SYSTEM | P_THREAD)) != 0 ||
++			    (z != -1 && z != kp->p_zoneid) ||
+ 			     kp->p_pid == mypid)
+ 				continue;
+ 
+@@ -436,6 +447,7 @@ main(int argc, char **argv)
+ 	rv = STATUS_NOMATCH;
+ 	for (i = 0, j = 0, kp = plist; i < nproc; i++, kp++) {
+ 		if ((kp->p_flag & (P_SYSTEM | P_THREAD)) != 0 ||
++		    (z != -1 && z != kp->p_zoneid) ||
+ 		     kp->p_pid == mypid)
+ 			continue;
+ 		if (selected[i] == inverse)
+@@ -471,7 +483,8 @@ usage(void)
+ 		ustr = "[-signal] [-fIlnoqvx]";
+ 
+ 	fprintf(stderr, "usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid]"
+-	    "\n\t[-T rtable] [-t tty] [-U uid] [-u euid] [pattern ...]\n",
++	    "\n\t[-T rtable] [-t tty] [-U uid] [-u euid] [-z zone]"
++	    " [pattern ...]\n",
+ 	    __progname, ustr);
+ 
+ 	exit(STATUS_BADUSAGE);
+@@ -632,4 +645,23 @@ makelist(struct listhead *head, enum lis
+ 
+ 	if (empty)
+ 		usage();
++}
++
++static zoneid_t
++getzoneid(const char *zone)
++{
++	const char *errstr;
++	zoneid_t z;
++
++	z = zone_lookup(zone);
++	if (z != -1)
++		return (z);
++	if (errno != ESRCH)
++		err(1, "zone %s", zone);
++
++	z = strtonum(zone, 0, MAXZONEIDS, &errstr);
++	if (errstr != NULL)
++		errx(1, "zone id %s: %s", zone, errstr);
++
++	return (z);
+ }
+Index: usr.sbin/Makefile
+===================================================================
+RCS file: /cvs/src/usr.sbin/Makefile,v
+retrieving revision 1.207
+diff -u -p -u -p -r1.207 Makefile
+--- usr.sbin/Makefile	16 Aug 2019 17:03:55 -0000	1.207
++++ usr.sbin/Makefile	22 Oct 2019 11:29:46 -0000
+@@ -19,7 +19,7 @@ SUBDIR=	ac accton acme-client acpidump a
+ 	snmpd spamdb switchctl switchd syslogc syslogd sysmerge \
+ 	syspatch sysupgrade tcpdrop tcpdump tftp-proxy tftpd tokenadm \
+ 	tokeninit traceroute trpt unbound unwindctl usbdevs user vmd vmctl \
+-	vipw watchdogd wsconscfg wsfontload wsmoused zdump zic
++	vipw watchdogd wsconscfg wsfontload wsmoused zdump zic zone
+ 
+ .if (${YP:L} == "yes")
+ SUBDIR+=ypbind ypldap yppoll ypset ypserv
+Index: usr.sbin/zone/Makefile
+===================================================================
+RCS file: usr.sbin/zone/Makefile
+diff -N usr.sbin/zone/Makefile
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ usr.sbin/zone/Makefile	22 Oct 2019 11:29:47 -0000
+@@ -0,0 +1,6 @@
++PROG=zone
++SRCS=zone.c
++MAN=
++CFLAGS+=-Wall
++
++.include <bsd.prog.mk>
+Index: usr.sbin/zone/zone.c
+===================================================================
+RCS file: usr.sbin/zone/zone.c
+diff -N usr.sbin/zone/zone.c
+--- /dev/null	1 Jan 1970 00:00:00 -0000
++++ usr.sbin/zone/zone.c	22 Oct 2019 11:29:47 -0000
+@@ -0,0 +1,273 @@
++/*	$OpenBSD$ */
++
++/*
++ * Copyright (c) 2015, 2019 The University of Queensland
++ *
++ * Permission to use, copy, modify, and distribute this software for any
++ * purpose with or without fee is hereby granted, provided that the above
++ * copyright notice and this permission notice appear in all copies.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
++ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
++ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
++ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
++ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
++ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
++ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++ */
++
++#include <sys/types.h>
++#include <sys/wait.h>
++
++#include <stdlib.h>
++#include <stdio.h>
++#include <string.h>
++#include <signal.h>
++#include <unistd.h>
++#include <err.h>
++#include <errno.h>
++#include <zones.h>
++
++#ifndef nitems
++#define nitems(_a) (sizeof(_a) / sizeof(_a[0]))
++#endif
++
++static int	zcreate(int, char *[]);
++static int	zdestroy(int, char *[]);
++static int	zexec(int, char *[]);
++static int	zlist(int, char *[]);
++static int	zname(int, char *[]);
++static int	zlookup(int, char *[]);
++
++__dead void usage(void);
++
++struct task {
++	const char *name;
++	int (*task)(int, char *[]);
++};
++
++/* must be sorted alphanumerically */
++static const struct task tasks[] = {
++	{ "create",	zcreate },
++	{ "destroy",	zdestroy },
++	{ "exec",	zexec },
++	{ "list",	zlist },
++	{ "lookup",	zlookup },
++	{ "name",	zname },
++};
++
++static int	task_cmp(const void *, const void *);
++
++static int
++task_cmp(const void *a, const void *b)
++{
++	const struct task *ta = a;
++	const struct task *tb = b;
++
++	return (strcmp(ta->name, tb->name));
++}
++
++__dead void
++usage(void)
++{
++	extern char *__progname;
++
++	fprintf(stderr, "usage:\t%s create zonename\n", __progname);
++	fprintf(stderr, "\t%s destroy zonename|zoneid\n", __progname);
++	fprintf(stderr, "\t%s list\n", __progname);
++	fprintf(stderr, "\t%s lookup [zonename]\n", __progname);
++	fprintf(stderr, "\t%s name [zoneid]\n", __progname);
++	fprintf(stderr, "\t%s exec zonename|zoneid command ...\n", __progname);
++
++	exit(1);
++}
++
++int
++main(int argc, char *argv[])
++{
++	struct task key, *t;
++
++	if (argc < 2)
++		usage();
++
++	key.name = argv[1];
++	t = bsearch(&key, tasks, nitems(tasks), sizeof(tasks[0]), task_cmp);
++	if (t == NULL)
++		usage();
++
++	argc -= 2;
++	argv += 2;
++
++	return (t->task(argc, argv));
++}
++
++static zoneid_t
++getzoneid(const char *zone)
++{
++	const char *errstr;
++	zoneid_t z;
++
++	z = zone_lookup(zone);
++	if (z != -1)
++		return (z);
++	if (errno != ESRCH)
++		err(1, "lookup %s", zone);
++
++	z = strtonum(zone, 0, MAXZONEIDS, &errstr);
++	if (errstr != NULL)
++		errx(1, "lookup %s: %s", zone, errstr);
++
++	return (z);
++}
++
++static int
++zcreate(int argc, char *argv[])
++{
++	const char *zone;
++
++	if (argc != 1)
++		usage();
++
++	zone = argv[0];
++	if (zone_create(zone) == -1)
++		err(1, "create %s", zone);
++
++	return (0);
++}
++
++static int
++zdestroy(int argc, char *argv[])
++{
++	const char *zone;
++	zoneid_t z;
++
++	if (argc != 1)
++		usage();
++
++	zone = argv[0];
++
++	z = getzoneid(zone);
++	if (zone_destroy(z) == -1)
++		err(1, "destroy %s", zone);
++
++	return (0);
++}
++
++static int
++zexec(int argc, char *argv[])
++{
++	const char *zone;
++	zoneid_t z;
++
++	if (argc < 2)
++		usage();
++
++	zone = argv[0];
++	z = getzoneid(zone);
++
++	argc -= 1;
++	argv += 1;
++
++	if (zone_enter(z) == -1)
++		err(1, "enter %s", zone);
++
++	execvp(argv[0], argv);
++
++	err(1, "exec %s", argv[0]);
++	/* NOTREACHED */
++}
++
++static int
++zlist(int argc, char *argv[])
++{
++	char zonename[MAXZONENAMELEN];
++	zoneid_t *zs = NULL;
++	size_t nzs, i = 8;
++	zoneid_t z;
++
++	if (argc != 0)
++		usage();
++
++	for (;;) {
++		nzs = i;
++
++		zs = reallocarray(zs, nzs, sizeof(*zs));
++		if (zs == NULL)
++			err(1, "lookup");
++
++		if (zone_list(zs, &nzs) == 0)
++			break;
++
++		if (errno != EFAULT)
++			err(1, "list");
++
++		i <<= 1;
++	}
++
++	printf("%8s %s\n", "ID", "NAME");
++
++	for (i = 0; i < nzs; i++) {
++		z = zs[i];
++		if (zone_name(z, zonename, sizeof(zonename)) == -1)
++			err(1, "name");
++		printf("%8d %s\n", z, zonename);
++	}
++
++	free(zs);
++
++	return (0);
++}
++
++static int
++zname(int argc, char *argv[])
++{
++	char zonename[MAXZONENAMELEN];
++	const char *zid;
++	const char *errstr;
++	zoneid_t z = -1;
++
++	switch (argc) {
++	case 1:
++		zid = argv[0];
++		z = strtonum(zid, 0, MAXZONEIDS, &errstr);
++		if (errstr != NULL)
++			errx(1, "name %s: %s", zid, errstr);
++		break;
++	case 0:
++		break;
++	default:
++		usage();
++	}
++
++	if (zone_name(z, zonename, sizeof(zonename)) == -1)
++		err(1, "name %d", z);
++
++	printf("%s\n", zonename);
++
++	return (0);
++}
++
++static int
++zlookup(int argc, char *argv[])
++{
++	const char *zone = NULL;
++	zoneid_t z;
++
++	switch (argc) {
++	case 1:
++		zone = argv[0];
++		break;
++	case 0:
++		break;
++	default:
++		usage();
++	}
++
++	z = zone_lookup(zone);
++	if (z == -1)
++		err(1, "lookup %s", zone);
++
++	printf("%d\n", z);
++
++	return (0);
++}
