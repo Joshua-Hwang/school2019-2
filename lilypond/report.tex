@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{verbatim}
+
+\linespread{1.3}
+\setlength{\parindent}{0em}
+\setlength{\parskip}{1em}
+\setcounter{secnumdepth}{0}
+\setcounter{MaxMatrixCols}{20}
+\renewcommand{\arraystretch}{1.5}
+
+\newcommand{\ts}{\textsuperscript}
+\newcommand{\diff}{\mathop{}\!\mathrm{d}}
+\newcommand{\prob}{\mathbb{P}}
+\newcommand{\expect}{\mathbb{E}}
+\newcommand{\var}{\text{Var}}
+
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+\DeclarePairedDelimiter\p{\lparan}{\rparan}
+
+\title{Lilypond}
+\author{Joshua Hwang}
+
+\begin{document}
+\section{Brief overview, stream of consciousness}
+One of the results of this summer research has been the
+development and extension of the classic Poisson Lilypond model.
+
+We will not describe the Lilypond model here and it is assumed the
+reader has a brief understanding of it.
+
+The extensions we intended to introduce were the non-homogeneous
+placement which was achieved using thinning.
+A negative of this method is that we need a maximum which we initially
+give an upper bound with.
+
+Another extension was the changing of rates. We had previously had
+each grain growing at equal rates. We now produce a random rate
+(currently) based off independent uniform distributions.
+
+Finally we implement Ebert and Last (2015) extension of random birth
+times. The grains develop at different times in the cycle based
+(currently) off independent uniform distributions. If the grain
+begins growing \emph{after} another grain has grown on top it does not
+get realised.
+
+From these extensions we define the growing radii to be,
+\begin{align*}
+    r_i
+    &=
+    \begin{cases}
+        v_i \times (t - t_{i0}) \quad &[t_{i0}, \infty) \\
+        0 &\text{otherwise} \\
+    \end{cases}
+\end{align*}
+
+With $D$ being the distance between the grains,
+the question of collision time becomes,
+\begin{align*}
+    0 &= |D - r_j - r_k| \qquad [\max\{t_{j0}, t_{k0}\}, \infty) \\
+    0 &= D - r_j - r_k \\
+    &= D - v_j \times (t - t_{j0}) - v_k \times (t - t_{k0}) \\
+    D &= v_j \times (t - t_{j0}) + v_k \times (t - t_{k0}) \\
+    D &= v_j \times t - v_j \times t_{j0} + v_k \times t - v_k \times t_{k0} \\
+    D + v_j t_{j0} + v_k t_{k0} &= (v_j + v_k)t \\
+    t &= \frac{D + v_j t_{j0} + v_k t_{k0}}{v_j + v_k} \\
+\end{align*}
+
+Where $t$ is the global time.
+
+This is only for the case where two grains are growing. In the case where the
+one of the grains ($k$) is stationary we have,
+\begin{align*}
+    0 &= |D - r_j - r_k| \qquad [t_{j0}, \infty) \\
+    0 &= D - v_j \times (t - t_{j0}) - r_k \\
+    0 &= D - v_j t + v_j t_{j0} - r_k \\
+    t &= \frac{D + v_j t_{j0} - r_k}{v_j} \\
+\end{align*}
+
+One issue that came up while working on this is determining if a collision will
+ever occur. Keep in mind that our model allows a growing grain to smother an
+unborn one.
+
+A growing grain ($j$) will smother an unborn one ($k$) if the time of
+smothering $t_{\text{smother}}$ occurs before the time $k$ gets born
+then we know that grain will die.
+\begin{align*}
+    D &= v_j (t_{\text{smother}} - t_j) \\
+    \frac{D}{v_j} &= t_{\text{smother}} - t_j \\
+    t_{\text{smother}} &= \frac{D}{v_j} + t_j \\
+    \text{thus} \\
+    t_{\text{smother}} < t_k
+\end{align*}
+
+I first implemented the model in Python, \texttt{sim.py},
+this was because speed was initially
+not considered a factor. The program 
+
+We're currently also using numeric integrals \texttt{dblquad} to calculate the 
+integrals. This has the issues of numeric errors.
+
+\section{Percolation}
+A question that constantly arises with these models is the idea of percolation.
+
+I claim the extensions we have made to the model do not alter the fact that the
+model will percolate.
+
+Here is a hand-wavy proof: We note our model rests in a continuous space thus
+no two collisions will happen at the same time. This has converted our problem
+into a graph problem involving cycles. If a cycle exists then percolation isn't
+possible.
+
+We recognise that two growing grains
+can generate a collision and turn both stationary,
+a growing grain and a stationary grain can
+also generate a collision but two stationary grains cannot.
+We consider a collision of two grains to be equivalent to creating a line
+between the centres of each grain.
+
+\subsection{ZZZ}
+I'm struggling to go further with this type of proof.
+
+\end{document}
