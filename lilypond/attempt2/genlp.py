@@ -20,8 +20,6 @@ class Grain:
         self.y = y
         self.t = t
         self.v = v
-        self.r = r
-        self.i = i
 
     def __repr__(self):
         return "%f,%f,%f,%f,0,0" % (self.x, self.y, self.t, self.v)
@@ -33,7 +31,7 @@ def main():
             lambda t, y: dimX[0], lambda t, y: dimX[1]) # '_' assigned numerical error
 
     # single grain simulation is boring
-    N = np.random.poisson(maxLam)
+    N = np.random.poisson(lam)
     generate_grains(N, dimX, dimY, dimT, lamDensity, lam)
 
 def generate_grains(N, dimX, dimY, dimT, lamDensity, maxLam = None):
@@ -44,9 +42,9 @@ def generate_grains(N, dimX, dimY, dimT, lamDensity, maxLam = None):
     n = 0
     while n < N:
         potentialGrain = (np.random.uniform(*dimX), np.random.uniform(*dimY), np.random.uniform(*dimT))
-        if np.random.uniform(0,1) <= lamd(*potentialGrain)/maxlam:
+        if np.random.uniform(0,1) <= lamDensity(*potentialGrain)/maxLam:
             # accept point
-            print(Grain(*tmp, np.random.uniform()/100))
+            print(Grain(*potentialGrain, np.random.uniform()/100))
             n += 1
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -7,9 +8,7 @@
 #include <errno.h>
 #include <string.h>
 
-/* Using the gnu science libraries */
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
+#include "grain.h"
 
 void print_usage(const char *progname) {
     fprintf(stderr, "Usage: %s [-i inputfile] [-o outputfile]\n", progname);
@@ -74,7 +73,6 @@ void parse_args(int argc, char **argv) {
 int main(int argc, char **argv) {
     parse_args(argc, argv);
 
-    printf("hello\n");
 
     return 0;
 }
