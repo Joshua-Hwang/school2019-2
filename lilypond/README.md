@@ -13,9 +13,6 @@ I have introduced a few new elements to the model.
 For more information please look at the `report.tex`
 
 # to do
-Forcing the first point to time 0 is not okay. Instead we realise all our times
-then transform the set by the minimum.
-
 Focus on better algorithms and where the bottlenecks might be.
 
 Maybe reduce to C.
@@ -61,8 +58,10 @@ Understand why the thinning method is working
 attempt2 will be written in C and various techniques will be used to
 reduce the constant factor for our time. This will hopefully evaluation faster
 for small samples.
-The C does not create an animation but rather a plain text file that
+The C does not create an animation but takes in a plain text file and outputs
+a plain text file of the same format that
 contains tuples of each grain, position, birth time, growth rate,
 final radius and which grain it collided with (helpful for generating
-the graph). From there a visualised (made in python) can be used
+the graph). The C program overrides the radius.
+From there a visualised (made in python) can be used
 to parse and visualise our result.

@@ -1,9 +1,9 @@
 .PHONY: all touch
 
-all: genlp
+all: solvelp
 
-genlp: genlp.c
-	gcc -std=gnu99 -pthread genlp.c -o genlp
+solvelp: solvelp.c
+	gcc -Wall -pedantic -std=gnu99 -pthread solvelp.c -o solvelp
 
 touch:
 	touch *
