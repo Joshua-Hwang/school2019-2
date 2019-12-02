@@ -14,9 +14,9 @@ Notify.init("sim.py job")
 # lamd is lambda density
 #lamd = lambda x, y, t: np.exp(-1/2*(x**2 + y**2)) * 10
 #lamd = lambda x, y, t: np.sin(x)**2/10
-lamd = lambda x, y, t: 1/2
+lamd = lambda x, y, t: 1/20
 maxlam = 1 # a maximum lambda for our non homogeneous lam function
-dims = ((-10, 10), (-2, 2), (0, 10)) # where we have the x dimensions first
+dims = ((-10, 10), (-2, 2), (0, 50)) # where we have the x dimensions first
 tol = 0.01 # tolerance for floating point
 
 # [DEBUG] Give every circle a unique id
@@ -82,30 +82,29 @@ def main(run = 1):
         ###
     else:
         print("No errors at run", run)
-        main(run+1)
 
-#    artistShapes = [circle.shape for circle in circles] # needed for init() and animate()
-#
-#    def init():
-#        for circle in circles:
-#            ax.add_patch(circle.shape)
-#        return artistShapes
-#
-#    def animate(i):
-#        for circle in circles:
-#            # ignore circle if radius <= 0 (never born) or birth time hasn't happened yet
-#            r = circle.v * (i - circle.t)
-#            if r < circle.r:
-#                circle.shape.set_radius(max(r,0))
-#            else:
-#                circle.shape.set_radius(circle.r)
-#        return artistShapes
-#
-#    anim = animation.FuncAnimation(fig, animate, init_func=init,
-#            frames=math.ceil(t) + 100, interval=1, blit=True)
-#
-#    plt.axis('scaled')
-#    plt.show()
+    artistShapes = [circle.shape for circle in circles] # needed for init() and animate()
+
+    def init():
+        for circle in circles:
+            ax.add_patch(circle.shape)
+        return artistShapes
+
+    def animate(i):
+        for circle in circles:
+            # ignore circle if radius <= 0 (never born) or birth time hasn't happened yet
+            r = circle.v * (i - circle.t)
+            if r < circle.r:
+                circle.shape.set_radius(max(r,0))
+            else:
+                circle.shape.set_radius(circle.r)
+        return artistShapes
+
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+            frames=math.ceil(t) + 100, interval=1, blit=True)
+
+    plt.axis('scaled')
+    plt.show()
 
 def generate_circles(N, dims, lamd, maxlam):
     n = 0

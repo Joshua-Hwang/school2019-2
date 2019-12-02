@@ -10,8 +10,8 @@ struct GrainPair;
 struct GrainPairListNode;
 
 /**
- * Creates (calloc) space for a new GrainPair
- * Returns a new GrainPair on success
+ * Creates (calloc) space for a new Grain
+ * Returns a new Grain on success
  * NULL on failure
  */
 struct Grain *new_g(size_t id, double x, double y, double t,
@@ -24,6 +24,11 @@ struct Grain *new_g(size_t id, double x, double y, double t,
 void free_g(struct Grain *g);
 
 /**
+ * converts a grain to an allocated printable string
+ */
+char *g_to_str(struct Grain *g);
+
+/**
  * Once we've solved for r and i we do a lot of behind-the-scenes
  * updating.
  *
@@ -31,7 +36,7 @@ void free_g(struct Grain *g);
  * Removes the spair
  * Searches through its lst in search of other grains
  * Removes it's own entry from other grains and replaces spair
- * if it's better otherwise nah.
+ * if it's better otherwise don't update.
  */
 void set_g(struct Grain *g, double r, size_t i);
 
@@ -72,14 +77,26 @@ struct GrainPair *new_gp(struct Grain *g1, struct Grain *g2);
 void free_gp(struct GrainPair *gp);
 
 /**
+ * Forces this grain pair to have the radius they claim to have
+ * Essentially calls set_g
+ */
+void set_gp(struct GrainPair *gp);
+
+/**
  * Gets the first grain of the grain pair
  */
-double get_gp_1(struct GrainPair *gp);
+struct Grain *get_gp_1(struct GrainPair *gp);
 
 /**
  * Gets the second grain of the grain pair
  */
-double get_gp_2(struct GrainPair *gp);
+struct Grain *get_gp_2(struct GrainPair *gp);
+
+/**
+ * Assuming g is actually in the grain pair return the other
+ * Returns NULL on failure
+ */
+struct Grain *get_gp_other(struct GrainPair *gp, struct Grain *g);
 
 /**
  * Checks if both grains in the pair are already realised
@@ -89,25 +106,26 @@ bool is_gp_done(struct GrainPair *gp);
 /**
  * Sets the glst to what the GrainPair considers is the GlobalListNode it resides in
  */
-void set_gp_glst(struct Grainpair *gp, struct GrainPairListNode *glst);
+void set_gp_glst(struct GrainPair *gp, struct GrainPairListNode *glst);
 
 /**
- * Computes the score of the GrainPair but doesn't store it
+ * Computes the time of the GrainPair but doesn't store it
  */
-double calc_gp_score(struct GrainPair *gp);
+double calc_gp_time(struct GrainPair *gp);
 
 /**
- * Gets the score of the grain pair
+ * Gets the time of the grain pair
  */
-double get_gp_score(struct GrainPair *gp);
+double get_gp_time(struct GrainPair *gp);
 
 /**
- * Sets the score of the grain pair
+ * Sets the time of the grain pair
  */
-void set_gp_score(struct GrainPair *gp, double newscore);
+void set_gp_time(struct GrainPair *gp, double newtime);
 
 /**
  * Create (calloc) space for a new GrainPairListNode
+ * gp can also be NULL to create an empty node
  * Returns a new GrainPairListNode on success
  * NULL on failure
  */

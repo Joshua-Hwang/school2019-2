@@ -39,7 +39,7 @@ def main():
             x, y, t, v, r, i = float(x), float(y), abs(float(t)), abs(float(v)), abs(float(r)), abs(int(i))
             dimX = (min(dimX[0], x), max(dimX[1], x))
             dimY = (min(dimY[0], y), max(dimY[1], y))
-            dimT = (0, math.ceil((max(dimT[1], t + r/v)))) # this is determined by the birth and how long it takes to reach max radius
+            dimT = (0, math.ceil(max(dimT[1], t + r/v))) # this is determined by the birth and how long it takes to reach max radius
             circles.append(Circle(n, x, y, t, v, r, i))
             n += 1
     except ValueError as e:
@@ -71,6 +71,8 @@ def visualise(circles, dimX, dimY, dimT):
             if r < circle.r:
                 circle.shape.set_radius(max(r,0))
             else:
+                # show line between each circle
+                # append a line, = ax.plot(x, y, color='k') to artistShapes
                 circle.shape.set_radius(circle.r)
         return artistShapes
 

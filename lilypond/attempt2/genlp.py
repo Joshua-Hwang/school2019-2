@@ -28,7 +28,7 @@ class Grain:
 # [WIP] Get it to accept command line arguments to save to file
 def main():
     lam, _ = tplquad(lamDensity, dimT[0], dimT[1], lambda y: dimY[0], lambda y: dimY[1],
-            lambda t, y: dimX[0], lambda t, y: dimX[1]) # '_' assigned numerical error
+            lambda t, y: dimX[0], lambda t, y: dimX[1]) # '_' is the numerical error
 
     # single grain simulation is boring
     N = np.random.poisson(lam)
@@ -44,8 +44,12 @@ def generate_grains(N, dimX, dimY, dimT, lamDensity, maxLam = None):
         potentialGrain = (np.random.uniform(*dimX), np.random.uniform(*dimY), np.random.uniform(*dimT))
         if np.random.uniform(0,1) <= lamDensity(*potentialGrain)/maxLam:
             # accept point
-            print(Grain(*potentialGrain, np.random.uniform()/100))
+            print(Grain(*potentialGrain, np.random.uniform()/10))
             n += 1
+
 
 if __name__ == "__main__":
     main()
+    # Was used for measuring performance
+    #import profile
+    #profile.run('main()')

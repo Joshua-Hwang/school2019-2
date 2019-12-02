@@ -23,6 +23,9 @@
 ## Prerequisites
 *.d
 
+# Debug files
+.gdb_history
+
 ## Object files
 *.o
 *.ko
