@@ -23,6 +23,9 @@
 #include <string.h>
 #include <float.h>
 
+/* For timing the operation */
+#include <time.h>
+
 #include "grain.h"
 
 #define MAX_BUFFER 256
@@ -127,10 +130,7 @@ size_t parse_stdin(struct Grain ***ret) {
     return id;
 }
 
-/**
- * Prints the result to stdout if no filename specified
- */
-int main(int argc, char **argv) {
+void solve(int argc, char **argv) {
     parse_args(argc, argv);
 
     struct Grain **grains;
@@ -165,7 +165,6 @@ int main(int argc, char **argv) {
     }
 
     /* when we have a minimum it's important to them remove the gpln */
-    rm_gpln(minnode);
     set_gp(get_gpln_gp(minnode));
 
     while (get_gpln_r(head)) { /* NOTNULL */
@@ -189,14 +188,28 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i < len; i++) {
         struct Grain *g = grains[i];
-        printf("%lf,%lf,%lf,%lf,%lf,%zu\n",
-                get_g_x(g),
-                get_g_y(g),
-                get_g_t(g),
-                get_g_v(g),
-                get_g_r(g),
-                get_g_i(g));
+        double x = get_g_x(g);
+        double y = get_g_y(g);
+        double t = get_g_t(g);
+        double v = get_g_v(g);
+        double r = get_g_r(g);
+        ssize_t i = get_g_i(g);
+        printf("%lf,%lf,%lf,%lf,%lf,%zu\n",x,y,t,v,r,i);
     }
+}
+
+/**
+ * Prints the result to stdout if no filename specified
+ */
+int main(int argc, char **argv) {
+    /* Print the amount of time spent */
+    clock_t begin = clock();
+    solve(argc, argv);
+    clock_t end = clock();
+
+    double time = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    fprintf(stderr, "%s solve time: %lf\n", argv[0], time);
 
     return 0;
 }

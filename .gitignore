@@ -1,3 +1,5 @@
+*.lp
+
 # Python files
 *.sw*
 **/output/*

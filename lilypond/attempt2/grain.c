@@ -2,16 +2,6 @@
  * This implementation is VERY coupled but this was to improve
  * lookup speeds
  */
-
-/**
- * TODO
- * Just a heads up future self.
- * Because this program needs to print all the grains and we're actually
- * destroying all the grains that suffocate you're gonna have to bucketsort
- * the final collection of grains to print them. The empty cells should tell
- * you which ones died.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +18,7 @@
  * between two grains. Should be updated every timestep.
  * glst is the global node attached to this GrainPair.
  * g1lst is the grain 1 node attached to this GrainPair.
- * g2lst is the grain 1 node attached to this GrainPair.
+ * g2lst is the grain 2 node attached to this GrainPair.
  */
 struct GrainPair {
     struct Grain* g1;
@@ -131,6 +121,7 @@ void free_g(struct Grain *g) {
  * converts a grain to an allocated printable string
  */
 char *g_to_str(struct Grain *g) {
+    /*
     size_t needed = snprintf(NULL, 0,
             "Grain %lu: x=%lf, y=%lf, t=%lf, v=%lf, r=%lf, i=%zd",
             g->id, g->x, g->y, g->t, g->v, g->r, g->i) + 1;
@@ -140,6 +131,16 @@ char *g_to_str(struct Grain *g) {
     snprintf(buffer, needed,
             "Grain %lu: x=%lf, y=%lf, t=%lf, v=%lf, r=%lf, i=%zd",
             g->id, g->x, g->y, g->t, g->v, g->r, g->i);
+    */
+    size_t needed = snprintf(NULL, 0,
+            "Grain %lu: r=%lf",
+            g->id, g->r) + 1;
+
+    char *buffer = calloc(needed, sizeof(*buffer));
+
+    snprintf(buffer, needed,
+            "Grain %lu: r=%lf",
+            g->id, g->r);
 
     return buffer;
 }
@@ -162,12 +163,17 @@ void set_g(struct Grain *g, double r, size_t i) {
     g->i = i;
 
     /*
+     * Always free spair because the otherside of the pair
+     * is always already done
+     */
+    free_gp(g->spair);
+
+    /*
      * If we have a pair of stationary grains or we have a suffocated grain.
      * In that case we should throw out ALL pairs involved with it
-     * Luckily we're not destorying someone's spair because an overlap
-     * only ever occurs between two growing grains.
      */
     if (r == 0) {
+        /* Free all grain pairs via free_gp */
         for (struct GrainPairListNode *node = get_gpln_r(&(g->lst)); node;) {
             /* free_gp will also remove oldnode so we have to jump prior */
             struct GrainPairListNode *oldnode = node;
@@ -175,9 +181,6 @@ void set_g(struct Grain *g, double r, size_t i) {
 
             free_gp(get_gpln_gp(oldnode));
         }
-
-        /* Free the special spair */
-        free_gp(g->spair);
 
         return;
     }
@@ -188,14 +191,16 @@ void set_g(struct Grain *g, double r, size_t i) {
         node = get_gpln_r(node);
 
         struct GrainPair *gp = get_gpln_gp(oldnode);
+
         if (is_gp_done(gp)) {
             free_gp(gp);
         } else { /* Otherwise consider replacing spair */
             /* Remove self from other grain (og) list (assuming og has lst) */
             struct Grain *og = get_gp_other(gp, g);
-            struct GrainPairListNode **oglstnode = get_gp_glst(gp, og);
-            free_gpln(*(oglstnode));
-            *oglstnode = NULL;
+            free_gpln(gp->g1lst);
+            free_gpln(gp->g2lst);
+            gp->g1lst = NULL;
+            gp->g2lst = NULL;
 
             /* Compare our time to spair */
             /* Update our gp time */
@@ -205,6 +210,8 @@ void set_g(struct Grain *g, double r, size_t i) {
             double sptime = (og->spair) ? get_gp_time(og->spair) : DBL_MAX;
             /* Which of these isn't us */
             if (gptime < sptime) { /* replace the old spair */
+                /* free the old spair */
+                free_gp(og->spair);
                 og->spair = gp;
             } else { /* Free pair since both grains don't need it anymore */
                 free_gp(gp);
@@ -414,12 +421,13 @@ double calc_gp_time(struct GrainPair *gp) {
         vg = v2;
         tg = t2;
     } else {
+        /* g2 is stationary */
         rs = get_g_r(g2);
         vg = v1;
         tg = t1;
     }
     /* Everything works out fine */
-    return (dist - rs)/(vg) + tg;
+    return (rs != 0) ? (dist - rs)/(vg) + tg : DBL_MAX;
 }
 
 /**
@@ -439,23 +447,35 @@ void set_gp_time(struct GrainPair *gp, double newtime) {
 /**
  * Only sets grains that are growing
  * Sets both grains in the grain pair using the time in gp
+ * Also removes self
  */
 void set_gp(struct GrainPair *gp) {
     struct Grain *g1 = get_gp_1(gp);
     struct Grain *g2 = get_gp_2(gp);
 
-    double time = get_gp_time(gp);
+    if (is_gp_done(gp)) {
+        /* Both are done */
+        free_gp(gp);
+        return;
+    }
 
-    if (!is_g_done(g1)) {
-        double r1 = calc_g_r(g1, time);
+    double time = get_gp_time(gp);
+    double r1 = calc_g_r(g1, time);
+    double r2 = calc_g_r(g2, time);
+
+    /* Check if growing AND if it wasn't a case of suffocation */
+    char *str1 = g_to_str(g1);
+    char *str2 = g_to_str(g2);
+    if (!is_g_done(g1) && r2 != 0) {
         size_t id2 = get_g_id(g2);
         set_g(g1, r1, id2);
     }
-    if (!is_g_done(g2)) {
-        double r2 = calc_g_r(g2, time);
+    if (!is_g_done(g2) && r1 != 0) {
         size_t id1 = get_g_id(g1);
         set_g(g2, r2, id1);
     }
+    free(str1);
+    free(str2);
 }
 
 /**
@@ -479,6 +499,7 @@ void free_gpln(struct GrainPairListNode *node) {
     if (!node) { /* NULL */
         return;
     }
+
     /* This is for my own protection because one day I'll forget */
     rm_gpln(node);
     /* for the sake of cleanliness also memset the memory */
