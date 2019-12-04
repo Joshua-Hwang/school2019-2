@@ -389,9 +389,14 @@ double calc_gp_time(struct GrainPair *gp) {
     struct Grain *g1 = get_gp_1(gp);
     struct Grain *g2 = get_gp_2(gp);
 
-    double distx = get_g_x(g1) - get_g_x(g2);
-    double disty = get_g_y(g1) - get_g_y(g2);
+    double distx = fabs(get_g_x(g1) - get_g_x(g2));
+    double disty = fabs(get_g_y(g1) - get_g_y(g2));
+    /* ZZZ changing to Manhattan or L-2 or L-inf
     double dist = sqrt(distx*distx + disty*disty);
+    double dist = distx + disty;
+    double dist = (distx > disty) ? distx : disty;
+    */
+    double dist = distx + disty;
 
     double v1 = get_g_v(g1);
     double v2 = get_g_v(g2);

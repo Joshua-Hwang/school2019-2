@@ -15,7 +15,7 @@ parser.add_argument("inputimage", help="if specified reads an otherwise standard
 useThreads = True
 
 # numerical integration is slow. Precompute for speed. None for numeric.
-maxLam = 0.05
+maxLam = 0.01
 
 dimX = (0, 0)
 dimY = (0, 0)
