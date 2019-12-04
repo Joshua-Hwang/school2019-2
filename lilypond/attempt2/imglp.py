@@ -5,22 +5,30 @@ import imageio
 import math
 from multiprocessing import Pool
 from functools import partial
+from PIL import Image, ImageOps
+
+import argparse
+
+parser = argparse.ArgumentParser(description="Takes an input of an image generates points based on blackness of pixels")
+parser.add_argument("inputimage", help="if specified reads an otherwise standard in")
 
 useThreads = True
+
 # numerical integration is slow. Precompute for speed. None for numeric.
-maxLam = 20
+maxLam = 0.05
 
-dimX = (-20, 20)
-dimY = (-20, 20)
-dimT = (0, 100)
-dimV = (0.005, 0.1)
+dimX = (0, 0)
+dimY = (0, 0)
+V = 0.01 # velocity for all grains
 
+pix = None
 # lam is short for the Poisson parameter lambda (not the functional thing)
-def lamDensity(x, y, t, v):
-    return np.exp(-1/2*(x**2 + y**2)) * 10
-    return 1/(t+1) * np.exp(-1/2*(x**2 + y**2)) * 10
-    return 1/2
-    return 1/(t+1) * np.sin(x)**2 * 10
+def lamDensity(x, y):
+    # round x and y to nearest integer
+    x = int(x)
+    y = int(y)
+    # since row and column
+    return pix[y, x]
 
 # The reason I'm making a new class instead of grabbing from visualiser
 # is because of the potential differences in how the grains will be represented
@@ -36,46 +44,49 @@ class Grain:
 
 # Takes the points and prints them to stdout for now
 # [WIP] Get it to accept command line arguments to save to file
-def main(dimX, dimY, dimT, dimV, lamDensity, maxLam):
+def main(dimX, dimY, lamDensity, maxLam):
     # single grain simulation is boring
-    volume = (np.diff(dimX) * np.diff(dimY) * np.diff(dimT) * np.diff(dimV))[0]
+    volume = (np.diff(dimX) * np.diff(dimY))[0]
     maxN = np.random.poisson(maxLam * volume)
-    N = generate_grains(maxN, dimX, dimY, dimT, dimV, lamDensity, maxLam)
+    N = generate_grains(maxN, dimX, dimY, lamDensity, maxLam)
     return N
 
-def generate_grains(N, dimX, dimY, dimT, dimV, lamDensity, maxLam = None):
-    if maxLam is None:
-        maxLam, _ = nquad(lamDensity, [dimX, dimY, dimT, dimV])
-
+def generate_grains(N, dimX, dimY, lamDensity, maxLam):
     grains = []
     if useThreads:
         pool = Pool()
         grains = list(filter(None, pool.starmap(generate_grain,
-                ((dimX, dimY, dimT, dimV, lamDensity, maxLam, i) for i in range(N)))))
+                ((dimX, dimY, lamDensity, maxLam, i) for i in range(N)))))
     else:
         grains = list(filter(None,
-                (generate_grain(dimX, dimY, dimT, dimV, lamDensity, maxLam, i)
+                (generate_grain(dimX, dimY, lamDensity, maxLam, i)
                 for i in range(N))))
     for grain in grains:
         print(grain)
     return len(grains)
 
-def generate_grain(dimX, dimY, dimT, dimV, lamDensity, maxLam, seed = 0):
+def generate_grain(dimX, dimY, lamDensity, maxLam, seed = 0):
     localState = np.random.RandomState(seed)
-    potentialGrain = (localState.uniform(*dimX), localState.uniform(*dimY), \
-            localState.uniform(*dimT), localState.uniform(*dimV))
+    potentialGrain = (localState.uniform(*dimX), localState.uniform(*dimY))
     if localState.uniform(0,1) <= lamDensity(*potentialGrain)/maxLam:
-        return Grain(*potentialGrain)
+        return Grain(*potentialGrain, 0, V)
     else:
         return None
 
 if __name__ == "__main__":
+    args = parser.parse_args()
+    pic = Image.open(args.inputimage).convert('L').transpose(Image.FLIP_TOP_BOTTOM)
+    pic = ImageOps.invert(pic)
+    pix = np.array(pic)/255 * maxLam
+    dimX = (0, pix.shape[1])
+    dimY = (0, pix.shape[0])
+
     # Used for measuring performance
     import time
     import sys
 
     start = time.time()
-    N = main(dimX, dimY, dimT, dimV, lamDensity, maxLam)
+    N = main(dimX, dimY, lamDensity, maxLam)
     end = time.time()
     generationTime = end - start
 

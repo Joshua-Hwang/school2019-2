@@ -12,6 +12,8 @@ from matplotlib import animation
 parser = argparse.ArgumentParser(description="Takes an input of *.lp format and generates a visual")
 parser.add_argument("inputfile", help="if specified reads a *.lp formatted file otherwise standard in")
 
+showLines = False
+
 class Circle:
     def __init__(self, ID, x, y, t, v, r, i):
         self.id = ID
@@ -22,7 +24,7 @@ class Circle:
         self.r = r
         self.i = i
         # line generation happens in visualise()
-        self.shape = plt.Circle((x,y), 0, color='cornflowerblue')
+        self.shape = plt.Circle((x,y), r, color='cornflowerblue')
 
     def __repr__(self):
         return "Circle:{id: %d, x: %f, y: %f, t: %f, v: %f, r: %f, i: %d}" \
@@ -63,37 +65,25 @@ def visualise(circles, dimX, dimY, dimT):
     ax = plt.axes(xlim=dimX, ylim=dimY)
 
     # Generate lines, circle generation happens in Circle.__init__()
-    for circle in circles:
-        otherCircle = circles[circle.i]
-        x2x = (circle.x, otherCircle.x)
-        y2y = (circle.y, otherCircle.y)
-        circle.line = ax.plot(x2x, y2y, color='lightcoral', linewidth=1, visible=False)[0]
+    if showLines:
+        for circle in circles:
+            otherCircle = circles[circle.i]
+            x2x = (circle.x, otherCircle.x)
+            y2y = (circle.y, otherCircle.y)
+            circle.line = ax.plot(x2x, y2y, color='lightcoral', linewidth=1, visible=False)[0]
 
     # append a line, = ax.plot(x, y, color='k') to artistShapes
     artistShapes = [circle.shape for circle in circles] \
-            + [circle.line for circle in circles] # needed for init() and animate()
+            + [circle.line for circle in circles] if showLines else [] # needed for init() and animate()
 
-    def init():
+    for circle in circles:
+        ax.add_patch(circle.shape)
+
+    if showLines:
         for circle in circles:
-            ax.add_patch(circle.shape)
-        return artistShapes
-
-    def animate(i):
-        for circle in circles:
-            # ignore circle if radius <= 0 (never born) or birth time hasn't happened yet
-            r = circle.v * (i - circle.t)
-            if r < circle.r:
-                circle.shape.set_radius(max(r,0))
-                circle.line.set_visible(False)
-            else:
-                # show line between each circle
-                circle.shape.set_radius(circle.r)
-                if circle.r > 0:
-                    circle.line.set_visible(True)
-        return artistShapes
-
-    anim = animation.FuncAnimation(fig, animate, init_func=init,
-            frames=dimT[1] + 100, interval=1, blit=True)
+            # show line between each circle
+            if circle.r > 0 and showLines:
+                circle.line.set_visible(True)
 
     plt.axis('scaled')
     plt.show()
