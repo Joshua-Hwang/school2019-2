@@ -25,6 +25,9 @@
 ## Prerequisites
 *.d
 
+# IDE files
+*.ccls-cache/*
+
 # Debug files
 .gdb_history
 

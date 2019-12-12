@@ -12,6 +12,8 @@ from matplotlib import animation
 parser = argparse.ArgumentParser(description="Takes an input of *.lp format and generates a visual")
 parser.add_argument("inputfile", help="if specified reads a *.lp formatted file otherwise standard in")
 
+showLines = True
+
 class Circle:
     def __init__(self, ID, x, y, t, v, r, i):
         self.id = ID
@@ -53,6 +55,7 @@ def main():
         raise IndexError("circle %d collides with circle %d which does not exist" % (circle.id, circle.i))
 
     visualise(circles, dimX, dimY, dimT)
+    print(__file__, "num frames:", dimT[1])
 
 
 # displays the list of circles as a matplotlib figure
@@ -62,16 +65,18 @@ def visualise(circles, dimX, dimY, dimT):
     fig = plt.figure()
     ax = plt.axes(xlim=dimX, ylim=dimY)
 
-    # Generate lines, circle generation happens in Circle.__init__()
-    for circle in circles:
-        otherCircle = circles[circle.i]
-        x2x = (circle.x, otherCircle.x)
-        y2y = (circle.y, otherCircle.y)
-        circle.line = ax.plot(x2x, y2y, color='lightcoral', linewidth=1, visible=False)[0]
-
     # append a line, = ax.plot(x, y, color='k') to artistShapes
-    artistShapes = [circle.shape for circle in circles] \
-            + [circle.line for circle in circles] # needed for init() and animate()
+    artistShapes = [circle.shape for circle in circles] # needed for init() and animate()
+
+    # Generate lines, circle generation happens in Circle.__init__()
+    if showLines:
+        for circle in circles:
+            otherCircle = circles[circle.i]
+            x2x = (circle.x, otherCircle.x)
+            y2y = (circle.y, otherCircle.y)
+            circle.line = ax.plot(x2x, y2y, color='lightcoral', linewidth=1, visible=False)[0]
+
+        artistShapes += [circle.line for circle in circles]
 
     def init():
         for circle in circles:
@@ -84,18 +89,23 @@ def visualise(circles, dimX, dimY, dimT):
             r = circle.v * (i - circle.t)
             if r < circle.r:
                 circle.shape.set_radius(max(r,0))
-                circle.line.set_visible(False)
+                if showLines:
+                    circle.line.set_visible(False)
             else:
                 # show line between each circle
                 circle.shape.set_radius(circle.r)
-                if circle.r > 0:
+                if showLines and circle.r > 0:
                     circle.line.set_visible(True)
         return artistShapes
 
     anim = animation.FuncAnimation(fig, animate, init_func=init,
             frames=dimT[1] + 100, interval=1, blit=True)
 
+    Writer = animation.writers['ffmpeg']
+    writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+
     plt.axis('scaled')
+    #anim.save('test.mp4', writer=writer)
     plt.show()
 
 

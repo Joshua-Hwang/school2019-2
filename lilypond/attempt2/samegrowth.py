@@ -21,14 +21,13 @@ class Circle:
         self.r = r
         self.i = i
         # line generation happens in visualise()
-
     def __repr__(self):
         return "%f,%f,%f,%f,%f,%d" % (self.x, self.y, self.t, self.v, self.r, self.i)
 
 def main():
     reader = csv.reader(row for row in fileinput.input() if not row.startswith("#"))
 
-    circles = set()
+    circles = []
     try: # parsing
         for row in reader:
             x, y, t, v, r, i = row # see example.lp for these values
@@ -37,7 +36,7 @@ def main():
                     abs(float(t)), abs(float(v)), \
                     abs(float(r)), abs(int(i))
             circle = Circle(x, y, t, V, r, i)
-            circles.add(circle)
+            circles.append(circle)
     except ValueError as e:
         raise ValueError("Parsing error has occurred in %s at %s" % (fileinput.filename(), row[0]))
 

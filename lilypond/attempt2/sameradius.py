@@ -22,6 +22,16 @@ class Circle:
         self.i = i
         # line generation happens in visualise()
 
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+    # If they're in the same position we need to get rid of them
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        diff = abs(self.x - other.x) + abs(self.y - other.y)
+        return diff < tol
+
     def __repr__(self):
         return "%f,%f,%f,%f,%f,%d" % (self.x, self.y, self.t, self.v, self.r, self.i)
 

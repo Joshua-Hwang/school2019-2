@@ -23,7 +23,7 @@
 struct GrainPair {
     struct Grain* g1;
     struct Grain* g2;
-    double time;
+    double time; /* is used to store dist in 2nd phase */
     struct GrainPairListNode *glst;
     struct GrainPairListNode *g1lst;
     struct GrainPairListNode *g2lst;
@@ -208,6 +208,7 @@ void set_g(struct Grain *g, double r, size_t i) {
             set_gp_time(gp, gptime);
 
             double sptime = (og->spair) ? get_gp_time(og->spair) : DBL_MAX;
+            /* XXX this is what needs to get changed don't free the spair but move it */
             /* Which of these isn't us */
             if (gptime < sptime) { /* replace the old spair */
                 /* free the old spair */
@@ -382,6 +383,26 @@ void set_gp_glst(struct GrainPair *gp, struct GrainPairListNode *glst) {
 }
 
 /**
+ * Computes the distance between the grains in the GrainPair
+ */
+double calc_gp_dist(struct GrainPair *gp) {
+    struct Grain *g1 = get_gp_1(gp);
+    struct Grain *g2 = get_gp_2(gp);
+
+    double distx = fabs(get_g_x(g1) - get_g_x(g2));
+    double disty = fabs(get_g_y(g1) - get_g_y(g2));
+
+    /* ZZZ changing to Manhattan or L-2 or L-inf
+    double dist = sqrt(distx*distx + disty*disty);
+    double dist = distx + disty;
+    double dist = (distx > disty) ? distx : disty;
+    */
+    double dist = sqrt(distx*distx + disty*disty);
+
+    return dist;
+}
+
+/**
  * Computes the time of the GrainPair but doesn't store it
  * If overlap it will be time of overlap.
  */
@@ -389,14 +410,7 @@ double calc_gp_time(struct GrainPair *gp) {
     struct Grain *g1 = get_gp_1(gp);
     struct Grain *g2 = get_gp_2(gp);
 
-    double distx = fabs(get_g_x(g1) - get_g_x(g2));
-    double disty = fabs(get_g_y(g1) - get_g_y(g2));
-    /* ZZZ changing to Manhattan or L-2 or L-inf
-    double dist = sqrt(distx*distx + disty*disty);
-    double dist = distx + disty;
-    double dist = (distx > disty) ? distx : disty;
-    */
-    double dist = distx + disty;
+    double dist = calc_gp_dist(gp);
 
     double v1 = get_g_v(g1);
     double v2 = get_g_v(g2);
@@ -436,6 +450,22 @@ double calc_gp_time(struct GrainPair *gp) {
 }
 
 /**
+ * Gets the distance of the grain pair.
+ * Only use in the second phase.
+ */
+double get_gp_dist(struct GrainPair *gp) {
+    return gp->time;
+}
+
+/**
+ * Sets the time of the grain pair
+ * Only use in the second phase.
+ */
+void set_gp_dist(struct GrainPair *gp, double newtime) {
+    gp->time = newtime;
+}
+
+/**
  * Gets the time of the grain pair
  */
 double get_gp_time(struct GrainPair *gp) {
@@ -469,8 +499,6 @@ void set_gp(struct GrainPair *gp) {
     double r2 = calc_g_r(g2, time);
 
     /* Check if growing AND if it wasn't a case of suffocation */
-    char *str1 = g_to_str(g1);
-    char *str2 = g_to_str(g2);
     if (!is_g_done(g1) && r2 != 0) {
         size_t id2 = get_g_id(g2);
         set_g(g1, r1, id2);
@@ -479,8 +507,6 @@ void set_gp(struct GrainPair *gp) {
         size_t id1 = get_g_id(g1);
         set_g(g2, r2, id1);
     }
-    free(str1);
-    free(str2);
 }
 
 /**

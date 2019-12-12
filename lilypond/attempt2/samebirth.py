@@ -26,7 +26,7 @@ class Circle:
 def main():
     reader = csv.reader(row for row in fileinput.input() if not row.startswith("#"))
 
-    circles = set()
+    circles = []
     try: # parsing
         for row in reader:
             x, y, t, v, r, i = row # see example.lp for these values
@@ -35,7 +35,7 @@ def main():
                     abs(float(t)), abs(float(v)), \
                     abs(float(r)), abs(int(i))
             circle = Circle(x, y, 0, v, r, i)
-            circles.add(circle)
+            circles.append(circle)
     except ValueError as e:
         raise ValueError("Parsing error has occurred in %s at %s" % (fileinput.filename(), row[0]))
 

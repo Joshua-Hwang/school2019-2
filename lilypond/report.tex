@@ -101,30 +101,33 @@ then we know that grain will die.
 
 I first implemented the model in Python, \texttt{sim.py},
 this was because speed was initially
-not considered a factor. The program 
+not considered a factor. The program runs in $O(n^4)$ time where
+$n$ is the number of points.
 
-We're currently also using numeric integrals \texttt{dblquad} to calculate the 
-integrals. This has the issues of numeric errors.
+A second model was created under the folder \texttt{attempt2}. This new model
+was partially written in C was written around the piping paradigm
+present in Unix-like systems. Creating a format with the file extension
+\texttt{.lp}. The program is split into three main parts; generating points,
+solving the system and analysing the data.
 
-\section{Percolation}
-A question that constantly arises with these models is the idea of percolation.
+The programs that
+can generate points are currently still being done in Python and
+is able to generate 1000s of points in a few seconds. The implementation,
+\texttt{genlp.py}, is currently running in linear time. A second implementation
+(which was more for fun) \texttt{imglp.py} is able to generate points as if the
+image is the joint pdf we are sampling from. These programs generate an
+unfinished \texttt{.lp} file which gets sent to a solver program.
 
-I claim the extensions we have made to the model do not alter the fact that the
-model will percolate.
+The second part is aimed at solving a system represented by the \texttt{.lp}
+files. This part of the pipeline was implemented as a C program. It still
+runs in $O(n^4)$ time with $O(n^2)$ mempry but making a few modifications has
+greatly reduced parts of the computation. It might be slightly improved by
+parallelizing with threads but I do not believe this step could be done
+any faster. An alternative solution may come from a complete reconstruction
+of the problem.
 
-Here is a hand-wavy proof: We note our model rests in a continuous space thus
-no two collisions will happen at the same time. This has converted our problem
-into a graph problem involving cycles. If a cycle exists then percolation isn't
-possible.
-
-We recognise that two growing grains
-can generate a collision and turn both stationary,
-a growing grain and a stationary grain can
-also generate a collision but two stationary grains cannot.
-We consider a collision of two grains to be equivalent to creating a line
-between the centres of each grain.
-
-\subsection{ZZZ}
-I'm struggling to go further with this type of proof.
+The final part involves reading and analysing the data, currently we are
+seeing the final system using \texttt{matplotlib}, a python library, to animate
+the circles. We can also analyse the system for some quantitative features.
 
 \end{document}

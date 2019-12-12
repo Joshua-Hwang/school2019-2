@@ -140,7 +140,7 @@ void solve(int argc, char **argv) {
     struct GrainPairListNode *head = new_gpln(NULL);
 
     /* while we're here might as well find the minimum pair */
-    struct GrainPairListNode *minnode;
+    struct GrainPairListNode *minnode = NULL;
     double mintime = DBL_MAX;
 
     /* generate a global list of pairs */

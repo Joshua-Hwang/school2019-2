@@ -12,7 +12,7 @@ from matplotlib import animation
 parser = argparse.ArgumentParser(description="Takes an input of *.lp format and generates a visual")
 parser.add_argument("inputfile", help="if specified reads a *.lp formatted file otherwise standard in")
 
-showLines = False
+showLines = True
 
 class Circle:
     def __init__(self, ID, x, y, t, v, r, i):
