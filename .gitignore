@@ -1,4 +1,6 @@
+# Data files
 *.lp
+*.mp4
 
 # Python files
 *.sw*
