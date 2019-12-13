@@ -6,7 +6,7 @@ from functools import partial
 
 useThreads = False
 
-dimX = (-50, 50)
+dimX = (-10, 10)
 dimY = (-10, 10)
 dimT = (0, 10)
 dimV = (0.005, 0.1)

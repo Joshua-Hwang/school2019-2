@@ -11,6 +11,9 @@
 
 #include "grain.h"
 
+/* Ensure this value is never 1 because the resize is by 1.5 rounded down */
+#define INITIAL_SIZE 256
+
 /* Structs */
 /**
  * Contains all information about a collision between two grains
@@ -23,7 +26,8 @@
 struct GrainPair {
     struct Grain* g1;
     struct Grain* g2;
-    double time; /* is used to store dist in 2nd phase */
+    double time;
+    double dist;
     struct GrainPairListNode *glst;
     struct GrainPairListNode *g1lst;
     struct GrainPairListNode *g2lst;
@@ -58,6 +62,15 @@ struct Grain {
     /* GRAINS SHOULD BE ADDED TO THE RIGHT LIKE A STACK */
     struct GrainPairListNode lst; /* this is considered the head of the lst */
     struct GrainPair *spair;
+};
+
+/**
+ * Resizing array that will contain GrainPairs
+ */
+struct GrainPairArray {
+    struct GrainPair **arr; /* Where the array will be */
+    size_t size; /* The actual size of the array */
+    size_t count; /* How many elements in the array */
 };
 
 /* Private Prototypes */
@@ -158,7 +171,7 @@ double calc_g_r(struct Grain *g, double time) {
  * Also consider setting itself as a grains spair if it's the best.
  * Keep in mind when we're replacing spair we have to remove an entry from glst
  */
-void set_g(struct Grain *g, double r, size_t i) {
+void set_g(struct Grain *g, double r, size_t i, struct GrainPairArray *gpa) {
     g->r = r;
     g->i = i;
 
@@ -193,7 +206,8 @@ void set_g(struct Grain *g, double r, size_t i) {
         struct GrainPair *gp = get_gpln_gp(oldnode);
 
         if (is_gp_done(gp)) {
-            free_gp(gp);
+            clean_gp(gp);
+            append_gpa(gpa, gp);
         } else { /* Otherwise consider replacing spair */
             /* Remove self from other grain (og) list (assuming og has lst) */
             struct Grain *og = get_gp_other(gp, g);
@@ -212,10 +226,15 @@ void set_g(struct Grain *g, double r, size_t i) {
             /* Which of these isn't us */
             if (gptime < sptime) { /* replace the old spair */
                 /* free the old spair */
-                free_gp(og->spair);
+                if (og->spair) {
+                    clean_gp(og->spair);
+                    append_gpa(gpa, og->spair);
+                }
+
                 og->spair = gp;
-            } else { /* Free pair since both grains don't need it anymore */
-                free_gp(gp);
+            } else { /* Move pair since both grains don't need it anymore */
+                clean_gp(gp);
+                append_gpa(gpa, gp);
             }
         }
     }
@@ -277,6 +296,7 @@ struct GrainPair *new_gp(struct Grain *g1, struct Grain *g2) {
     ret->g1 = g1;
     ret->g2 = g2;
     /* update time */
+    ret->dist = calc_gp_dist(ret);
     set_gp_time(ret, calc_gp_time(ret));
     ret->glst = NULL;
 
@@ -293,6 +313,23 @@ struct GrainPair *new_gp(struct Grain *g1, struct Grain *g2) {
 }
 
 /**
+ * Cleans all baggage attached to GrainPair but doesn't free.
+ * Will also free all GrainPairListNodes ensuring they're properly
+ * removed from their lists.
+ * Doesn't get rid of the Grains.
+ * Does nothing if gp is NULL.
+ */
+void clean_gp(struct GrainPair *gp) {
+    if (!gp) { /* NULL */
+        return;
+    }
+
+    free_gpln(gp->glst);
+    free_gpln(gp->g1lst);
+    free_gpln(gp->g2lst);
+}
+
+/**
  * Frees and cleans up the GrainPair.
  * Will also free all GrainPairListNodes ensuring they're properly
  * removed from their lists.
@@ -304,14 +341,13 @@ void free_gp(struct GrainPair *gp) {
         return;
     }
 
-    free_gpln(gp->glst);
-    free_gpln(gp->g1lst);
-    free_gpln(gp->g2lst);
+    clean_gp(gp);
 
     /* Just to be safe memset it */
     memset(gp, 0, sizeof(*gp));
     free(gp);
 }
+
 
 /**
  * Gets the first grain of the grain pair
@@ -410,7 +446,7 @@ double calc_gp_time(struct GrainPair *gp) {
     struct Grain *g1 = get_gp_1(gp);
     struct Grain *g2 = get_gp_2(gp);
 
-    double dist = calc_gp_dist(gp);
+    double dist = get_gp_dist(gp);
 
     double v1 = get_g_v(g1);
     double v2 = get_g_v(g2);
@@ -454,7 +490,7 @@ double calc_gp_time(struct GrainPair *gp) {
  * Only use in the second phase.
  */
 double get_gp_dist(struct GrainPair *gp) {
-    return gp->time;
+    return gp->dist;
 }
 
 /**
@@ -484,15 +520,9 @@ void set_gp_time(struct GrainPair *gp, double newtime) {
  * Sets both grains in the grain pair using the time in gp
  * Also removes self
  */
-void set_gp(struct GrainPair *gp) {
+void set_gp(struct GrainPair *gp, struct GrainPairArray *gpa) {
     struct Grain *g1 = get_gp_1(gp);
     struct Grain *g2 = get_gp_2(gp);
-
-    if (is_gp_done(gp)) {
-        /* Both are done */
-        free_gp(gp);
-        return;
-    }
 
     double time = get_gp_time(gp);
     double r1 = calc_g_r(g1, time);
@@ -501,11 +531,11 @@ void set_gp(struct GrainPair *gp) {
     /* Check if growing AND if it wasn't a case of suffocation */
     if (!is_g_done(g1) && r2 != 0) {
         size_t id2 = get_g_id(g2);
-        set_g(g1, r1, id2);
+        set_g(g1, r1, id2, gpa);
     }
     if (!is_g_done(g2) && r1 != 0) {
         size_t id1 = get_g_id(g1);
-        set_g(g2, r2, id1);
+        set_g(g2, r2, id1, gpa);
     }
 }
 
@@ -651,4 +681,61 @@ void free_gpln_a(struct GrainPairListNode *lst) {
         free_gpln_r(lst->r);
     }
     free_gpln(lst);
+}
+
+
+/**
+ * Create (calloc) space for a new GrainPairListNode
+ * Returns a new GrainPairArray on success
+ * NULL on failure
+ */
+struct GrainPairArray *new_gpa() {
+    struct GrainPairArray *ret = calloc(1, sizeof(*ret));
+    ret->count = 0;
+    ret->size = INITIAL_SIZE;
+    ret->arr = calloc(ret->size, sizeof(*(ret->arr)));
+
+    return ret;
+}
+
+/**
+ * Appends gp to the end of the array. Resizes if necessary.
+ */
+void append_gpa(struct GrainPairArray *gpa, struct GrainPair *gp) {
+    gpa->arr[(gpa->count)++] = gp;
+    if (gpa->count >= gpa->size) {
+        /* Time to resize */
+        gpa->size *= 1.5;
+        gpa->arr = realloc(gpa->arr, gpa->size * sizeof(*(gpa->arr)));
+    }
+}
+
+/**
+ * Helper function used to do the sorting of sort_gpa
+ * Compare functions are in essence (p1 - p2)
+ */
+static int cmp_gp(const void *p1, const void *p2) {
+    double ans = (*(struct GrainPair * const *) p1)->dist
+        - (*(struct GrainPair * const *) p2)->dist;
+    /* Since > ALWAYS returns 1 or 0 */
+    return (ans > 0) - (ans < 0);
+}
+
+/**
+ * Sorts the internal array
+ * [IMPL] We're using quicksort so n*log(n) right?
+ */
+void sort_gpa(struct GrainPairArray *gpa) {
+    qsort(gpa->arr, gpa->count, sizeof(*(gpa->arr)), cmp_gp);
+}
+
+/**
+ * Fancy for loop because I want to do it this way okay
+ * Refusing to expose the inner array to the public >:(
+ * Goes through the array forwards.
+ */
+void for_gpa(struct GrainPairArray *gpa, void (*func)(struct GrainPair *)) {
+    for (int i = 0; i < gpa->count; i++) {
+        func((gpa->arr)[i]);
+    }
 }

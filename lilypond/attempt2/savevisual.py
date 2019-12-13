@@ -102,7 +102,7 @@ def visualise(circles, dimX, dimY, dimT):
             frames=dimT[1] + 100, interval=1, blit=True)
 
     plt.axis('scaled')
-    plt.show()
+    anim.save('test.mp4', fps=15, dpi=240)
 
 
 if __name__ == "__main__":

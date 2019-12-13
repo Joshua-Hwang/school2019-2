@@ -34,6 +34,11 @@ void print_usage(const char *progname) {
     fprintf(stderr, "Usage: %s [-i inputfile] [-o outputfile]\n", progname);
 }
 
+/* Prototypes */
+void extend(struct GrainPairArray *gpa);
+
+/* Functions */
+
 /**
  * Redirects a file descriptor to a file by filename
  * Only uses the mode argument if oflag & O_CREAT
@@ -138,6 +143,7 @@ void solve(int argc, char **argv) {
 
     /* generate the head with a grain pair of NULL */
     struct GrainPairListNode *head = new_gpln(NULL);
+    struct GrainPairArray *gpa = new_gpa();
 
     /* while we're here might as well find the minimum pair */
     struct GrainPairListNode *minnode = NULL;
@@ -165,7 +171,7 @@ void solve(int argc, char **argv) {
     }
 
     /* when we have a minimum it's important to them remove the gpln */
-    set_gp(get_gpln_gp(minnode));
+    set_gp(get_gpln_gp(minnode), gpa);
 
     while (get_gpln_r(head)) { /* NOTNULL */
         minnode = NULL;
@@ -183,7 +189,7 @@ void solve(int argc, char **argv) {
 
         /* when we have a minimum it's important to them remove the gpln */
         rm_gpln(minnode);
-        set_gp(get_gpln_gp(minnode));
+        set_gp(get_gpln_gp(minnode), gpa);
     }
 
     for (int i = 0; i < len; i++) {
@@ -196,6 +202,29 @@ void solve(int argc, char **argv) {
         ssize_t i = get_g_i(g);
         printf("%lf,%lf,%lf,%lf,%lf,%zu\n",x,y,t,v,r,i);
     }
+
+    for (int i = 0; i < 10; i++) {
+        putchar('-');
+    }
+    putchar('\n');
+
+    extend(gpa);
+}
+
+/**
+ * Helper function used to iterate and print each grain pair
+ */
+void print_gp(struct GrainPair *gp) {
+    printf("%lu,%lu,%lf\n",
+            get_g_id(get_gp_1(gp)), get_g_id(get_gp_2(gp)), get_gp_dist(gp));
+}
+
+/**
+ * For now all it does is sort the remaining grains and then prints them
+ */
+void extend(struct GrainPairArray *gpa) {
+    sort_gpa(gpa);
+    for_gpa(gpa, print_gp);
 }
 
 /**

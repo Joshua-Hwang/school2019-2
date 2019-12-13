@@ -3,11 +3,13 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 /* Definitions in grain.c */
 struct Grain;
 struct GrainPair;
 struct GrainPairListNode;
+struct GrainPairArray;
 
 /**
  * Creates (calloc) space for a new Grain
@@ -16,6 +18,7 @@ struct GrainPairListNode;
  */
 struct Grain *new_g(size_t id, double x, double y, double t,
         double v);
+
 /**
  * Frees and cleans up the Grain.
  * Will also free all GrainPairs ensuring they properly
@@ -38,7 +41,7 @@ char *g_to_str(struct Grain *g);
  * Removes it's own entry from other grains and replaces spair
  * if it's better otherwise don't update.
  */
-void set_g(struct Grain *g, double r, size_t i);
+void set_g(struct Grain *g, double r, size_t i, struct GrainPairArray *gpa);
 
 size_t get_g_id(struct Grain *g);
 double get_g_x(struct Grain *g);
@@ -69,6 +72,15 @@ ssize_t get_g_i(struct Grain *g);
 struct GrainPair *new_gp(struct Grain *g1, struct Grain *g2);
 
 /**
+ * Cleans all baggage attached to GrainPair but doesn't free.
+ * Will also free all GrainPairListNodes ensuring they're properly
+ * removed from their lists.
+ * Doesn't get rid of the Grains.
+ * Does nothing if gp is NULL.
+ */
+void clean_gp(struct GrainPair *gp);
+
+/**
  * Frees and cleans up the GrainPair.
  * Will also free all GrainPairListNodes ensuring they're properly
  * removed from their lists.
@@ -80,7 +92,7 @@ void free_gp(struct GrainPair *gp);
  * Forces this grain pair to have the radius they claim to have
  * Essentially calls set_g
  */
-void set_gp(struct GrainPair *gp);
+void set_gp(struct GrainPair *gp, struct GrainPairArray *gpa);
 
 /**
  * Gets the first grain of the grain pair
@@ -107,6 +119,16 @@ bool is_gp_done(struct GrainPair *gp);
  * Sets the glst to what the GrainPair considers is the GlobalListNode it resides in
  */
 void set_gp_glst(struct GrainPair *gp, struct GrainPairListNode *glst);
+
+/**
+ * Gets the minimum distance of the grain pair
+ */
+double get_gp_dist(struct GrainPair *gp);
+
+/**
+ * Computes the distance between the grains in the GrainPair
+ */
+double calc_gp_dist(struct GrainPair *gp);
 
 /**
  * Computes the time of the GrainPair but doesn't store it
@@ -174,5 +196,30 @@ void rm_gpln(struct GrainPairListNode *node);
  * Performs free_gpln on all nodes of lst including self
  */
 void free_gpln_a(struct GrainPairListNode *lst);
+
+/**
+ * Create (calloc) space for a new GrainPairListNode
+ * Returns a new GrainPairArray on success
+ * NULL on failure
+ */
+struct GrainPairArray *new_gpa();
+
+/**
+ * Appends gp to the end of the array. Resizes if necessary.
+ */
+void append_gpa(struct GrainPairArray *gpa, struct GrainPair *gp);
+
+/**
+ * Sorts the internal array
+ * [IMPL] We're using quicksort so n*log(n) right?
+ */
+void sort_gpa(struct GrainPairArray *gpa);
+
+/**
+ * Fancy for loop because I want to do it this way okay
+ * Refusing to expose the inner array to the public >:(
+ * Goes through the array forwards.
+ */
+void for_gpa(struct GrainPairArray *gpa, void (*func)(struct GrainPair *));
 
 #endif
