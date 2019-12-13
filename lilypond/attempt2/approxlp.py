@@ -81,7 +81,7 @@ class GrainPair:
 # Consider producing graphs that show the distribution of radii pyplot.hist
 def main():
     """ This is the main function """
-    reader = csv.reader(row for row in fileinput.input() if not row.startswith("#"))
+    reader = csv.reader(row for row in fileinput.input() if not row.startswith('#'))
 
     n = 0
     grains = []
@@ -91,6 +91,9 @@ def main():
     dimX, dimY = (math.inf, -math.inf), (math.inf, -math.inf)
     try: # parsing
         for row in reader:
+            # Alphabet characters are used to halt parsing
+            if row[0].isalpha():
+                break
             x, y, t, v, r, i = row # see example.lp for these values
             # perform a very forgiving parse of the file
             x, y, t, v, r, i = float(x), float(y), \

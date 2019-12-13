@@ -35,12 +35,14 @@ class Circle:
         return "%f,%f,%f,%f,%f,%d" % (self.x, self.y, self.t, self.v, self.r, self.i)
 
 def main():
-    reader = csv.reader(row for row in fileinput.input() if not row.startswith("#"))
+    reader = csv.reader(row for row in fileinput.input() if not row.startswith('#'))
 
-    dupCircle = Circle(-11.0,1.0,0,0,0,0)
     circles = set()
     try: # parsing
         for row in reader:
+            # Alphabet characters are used to halt parsing
+            if row[0].isalpha():
+                break
             x, y, t, v, r, i = row # see example.lp for these values
             # perform a very forgiving parse of the file
             x, y, t, v, r, i = round(float(x)), round(float(y)), \
