@@ -5,6 +5,12 @@
 #include <stddef.h>
 #include <sys/types.h>
 
+#define NO_INDEX -1
+#define UNINITIALISED_RADIUS -1
+#define NUM_DIMENSIONS 2
+
+typedef unsigned char Dimension;
+
 /* Definitions in grain.c */
 struct Grain;
 struct GrainPair;
@@ -12,12 +18,79 @@ struct GrainPairListNode;
 struct GrainPairArray;
 
 /**
+ * The different types of collisions we consider
+ * at the border
+ */
+enum BorderStyle {
+    BORDER_NONE = '\0',
+    BORDER_WRAP = 'W',
+    BORDER_HARD = 'H',
+};
+
+/**
+ * How are we measuring distance between the points
+ */
+enum MeasureStyle {
+    MEASURE_L1_NORM,
+    MEASURE_L2_NORM, /* This is the normal one */
+    MEASURE_LINF_NORM,
+};
+
+/**
+ * The intention of this struct is to hold small
+ * decision based information about our system.
+ * Currently it's holding what happens at the
+ * borders and which form of measure should we use
+ * granted there's only the Lp-norms.
+ */
+struct SystemInfo;
+
+/**
+ * Generated with "natural" defaults
+ *
+ * Borderstyle is BORDER_NONE for both dimensions
+ * Measure will be L2_NORM
+ *
+ * These choices can be changed later on.
+ * The reason we're not providing a way to initialise
+ * with a choice of your own parameters is because this is
+ * C and that's annoying to do.
+ */
+struct SystemInfo *new_si();
+
+/**
+ * Alters the type of border we experience in the d dimension
+ */
+void set_si_dim(struct SystemInfo *si,
+        Dimension d, double dmin, double dmax, enum BorderStyle dstyle);
+
+/**
+ * Gets various dimension related info
+ */
+double get_si_dmin(struct SystemInfo *si, Dimension d);
+double get_si_dmax(struct SystemInfo *si, Dimension d);
+enum BorderStyle get_si_dstyle(struct SystemInfo *si, Dimension d);
+
+/**
+ * Sets what kind of measure our system will be working with
+ */
+void set_si_measure(struct SystemInfo *si, enum MeasureStyle measure);
+
+/**
+ * Gets what kind of measure our system will be working with
+ */
+enum MeasureStyle get_si_measure(struct SystemInfo *si);
+
+/**
  * Creates (calloc) space for a new Grain
  * Returns a new Grain on success
  * NULL on failure
+ *
+ * NOTE: This mallocs space for an stationary pair against a wall.
+ * To get it use the get_g_spair function.
  */
-struct Grain *new_g(size_t id, double x, double y, double t,
-        double v);
+struct Grain *new_g(struct SystemInfo *si, size_t id, double x, double y,
+        double t, double v);
 
 /**
  * Frees and cleans up the Grain.
@@ -40,8 +113,16 @@ char *g_to_str(struct Grain *g);
  * Searches through its lst in search of other grains
  * Removes it's own entry from other grains and replaces spair
  * if it's better otherwise don't update.
+ * Afterwards we throw all the "done" pairs into gpa
  */
-void set_g(struct Grain *g, double r, size_t i, struct GrainPairArray *gpa);
+void set_g(struct Grain *g, double r, ssize_t i, struct GrainPairArray *gpa);
+
+/**
+ * Returns the minimum stationary pair for the grain.
+ * This was defined because we need a way to get the stationary pair
+ * developed with regards to collisions with the boundaries.
+ */
+struct GrainPair *get_g_spair(struct Grain *g);
 
 size_t get_g_id(struct Grain *g);
 double get_g_x(struct Grain *g);
@@ -65,11 +146,14 @@ ssize_t get_g_i(struct Grain *g);
  * Returns a new GrainPair on success
  * NULL on failure
  *
+ * If g2 is NULL then we treat it as if it's up against a wall.
+ *
  * [IMPL] This function should append itself to each grains linked
  * list. We can do this because these pairs are expected to be unique
  * unlike the GrainPairListNodes
  */
-struct GrainPair *new_gp(struct Grain *g1, struct Grain *g2);
+struct GrainPair *new_gp(struct SystemInfo *si,
+        struct Grain *g1, struct Grain *g2);
 
 /**
  * Cleans all baggage attached to GrainPair but doesn't free.
@@ -128,7 +212,7 @@ double get_gp_dist(struct GrainPair *gp);
 /**
  * Computes the distance between the grains in the GrainPair
  */
-double calc_gp_dist(struct GrainPair *gp);
+double calc_gp_dist(struct SystemInfo *si, struct GrainPair *gp);
 
 /**
  * Computes the time of the GrainPair but doesn't store it

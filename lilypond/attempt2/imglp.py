@@ -19,7 +19,7 @@ maxLam = 0.01
 
 dimX = (0, 0)
 dimY = (0, 0)
-V = 0.01 # velocity for all grains
+V = 0.1 # velocity for all grains
 
 pix = None
 # lam is short for the Poisson parameter lambda (not the functional thing)

@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
+import sys
+
 import numpy as np
 from scipy.integrate import nquad # we use this to integrate for higher dimensions this must be changed
 from multiprocessing import Pool
 from functools import partial
 
+homogeneous = True
 useThreads = False
 
-dimX = (-10, 10)
-dimY = (-10, 10)
-dimT = (0, 10)
-dimV = (0.005, 0.1)
+dimX = (0, 1)
+dimY = (0, 1)
+dimT = (0, 100)
+dimV = (0.05, 0.05)
 
 # numerical integration is slow. Precompute for speed. None for numeric.
-maxLam = 1
+maxLam = float(sys.argv[1]) if len(sys.argv) > 1 else 200
 # lam is short for the Poisson parameter lambda (not the functional thing)
 def lamDensity(x, y, t, v):
-    return 1
+    if homogeneous:
+        return maxLam
+    return 2000
     return np.exp(-1/2*(x**2 + y**2)) * 10
     return 1/(t+1) * np.exp(-1/2*(x**2 + y**2)) * 10
     return 1/(t+1) * np.sin(x)**2 * 10
@@ -36,7 +41,12 @@ class Grain:
 # [WIP] Get it to accept command line arguments to save to file
 def main(dimX, dimY, dimT, dimV, lamDensity, maxLam):
     # single grain simulation is boring
-    volume = (np.diff(dimX) * np.diff(dimY) * np.diff(dimT) * np.diff(dimV))[0]
+    volume = (np.diff(dimX) * np.diff(dimY))[0]
+    if np.diff(dimT)[0] > 0.00001:
+        volume *= np.diff(dimT)[0]
+    if np.diff(dimV)[0] > 0.00001:
+        volume *= np.diff(dimV)[0]
+
     maxN = np.random.poisson(maxLam * volume)
     N = generate_grains(maxN, dimX, dimY, dimT, dimV, lamDensity, maxLam)
     return N
@@ -55,21 +65,6 @@ def generate_grains(N, dimX, dimY, dimT, dimV, lamDensity, maxLam):
     else:
         grains = list(filter(None, (create_grain_wrapper(*pc) for pc in precompute)))
 
-    #if useThreads:
-    #    pool = Pool()
-    #    grains = list(filter(None, pool.starmap(create_grain, precompute)))
-    #else:
-    #    grains = list(filter(None, (create_grain(*pc) for pc in precompute)))
-    # Old code that generate each grain on a separate thread instead all in one go
-    #grains = []
-    #if useThreads:
-    #    pool = Pool()
-    #    grains = list(filter(None, pool.starmap(generate_grain,
-    #            ((dimX, dimY, dimT, dimV, lamDensity, maxLam, i) for i in range(N)))))
-    #else:
-    #    grains = list(filter(None,
-    #            (generate_grain(dimX, dimY, dimT, dimV, lamDensity, maxLam, 0)
-    #            for i in range(N))))
     for grain in grains:
         print(grain)
     return len(grains)
@@ -98,9 +93,17 @@ if __name__ == "__main__":
     import time
     import sys
 
+    # print the dimensions
+    print("DDDDDDDDDD")
+    print("0," + ",".join(repr(i) for i in dimX) + ",W")
+    print("1," + ",".join(repr(i) for i in dimY) + ",W")
+
+    # print the grains after ZZZZZZZZZZ
+    print("ZZZZZZZZZZ")
     start = time.time()
     N = main(dimX, dimY, dimT, dimV, lamDensity, maxLam)
     end = time.time()
+
     generationTime = end - start
 
     print(__file__, "maxLam:", maxLam, file=sys.stderr)

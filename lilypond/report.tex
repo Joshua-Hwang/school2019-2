@@ -7,6 +7,7 @@
 \usepackage{float}
 \usepackage{multirow}
 \usepackage{verbatim}
+\usepackage[]{algorithm2e}
 
 \linespread{1.3}
 \setlength{\parindent}{0em}
@@ -120,7 +121,7 @@ unfinished \texttt{.lp} file which gets sent to a solver program.
 
 The second part is aimed at solving a system represented by the \texttt{.lp}
 files. This part of the pipeline was implemented as a C program. It still
-runs in $O(n^4)$ time with $O(n^2)$ mempry but making a few modifications has
+runs in $O(n^3)$ time with $O(n^3)$ memory but making a few modifications has
 greatly reduced parts of the computation. It might be slightly improved by
 parallelizing with threads but I do not believe this step could be done
 any faster. An alternative solution may come from a complete reconstruction
@@ -129,5 +130,58 @@ of the problem.
 The final part involves reading and analysing the data, currently we are
 seeing the final system using \texttt{matplotlib}, a python library, to animate
 the circles. We can also analyse the system for some quantitative features.
+
+\subsection{Algorithm detail}
+To speed up the algorithm we note the following properties.
+
+We recognise that given any two grains the fastest collision time
+will occur when they're both growing. If one of the grains stops growing
+prematurely (from colliding with another grain) then the collision time
+will increase.
+
+Because of this we define two types of pairs, a growing pair is where
+both grains are growing while a stationary pair is one where one of the
+grains is stationary. If both grains are stationary then the pair is
+useless and such a case is discarded.
+
+We also recognise that a growing pair can evaluate both grains OR
+turn into a stationary pair. In comparison, a stationary pair can only
+evaluate it's remaing growing grain.
+Because of this we will store each grains best stationary pair in
+the grain data structure.
+
+\begin{algorithm}[H]
+    \SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+
+    \Input{Grains locations, velocities and birth times given}
+    Generate all combinations of pairs of grains and put them in $pairs$
+    (\tcp*[f]{$|pairs| = \frac{n(n-1)}{2}$})\;
+    Calculate the estimated collision times of each pair
+    (this is actually very involved considering all cases)\;
+    \While{Grains are still growing}{
+        Search for pair with shortest collision time\;
+        Let $g1$ and $g2$ represent both grains in the pair\;
+        \If{$g1$ is growing}{
+            set the radius of $g1$ to what was estimated\;
+        }
+        \If{$g2$ is growing}{
+            set the radius of $g2$ to what was estimated\;
+        }
+        \For(\tcp*[f]{With an appropriate data structure this is very quick})
+        {$pair$ in $pairs$ that contain $g1$}{
+            Let the elements of the pair be called $g1$ and $g_{other}$\;
+            Recalculate the collision time of this $pair$\;
+            \eIf{new collision time is better than $g_{other}$'s best
+            stationary pair}{
+                Remove $g_{other}$'s best stationary pair from $pairs$\;
+                Set $g_{other}$'s best stationary pair to $pair$\;
+            }{
+                Remove $pair$ from $pairs$\;
+            }
+        }
+        Repeat process for $g2$\;
+    }
+    \caption{Algorithm for \texttt{solvelp}}
+\end{algorithm}
 
 \end{document}

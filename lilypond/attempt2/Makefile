@@ -2,6 +2,7 @@
 
 CC=gcc
 CFLAGS=-Wall -pedantic -std=gnu99 -pthread -lm
+#CFLAGS+= -pthread
 
 DEPS=grain.h
 OBJ=grain.o solvelp.o

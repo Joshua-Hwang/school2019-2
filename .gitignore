@@ -31,7 +31,7 @@
 *.ccls-cache/*
 
 # Debug files
-.gdb_history
+.gdb*
 
 ## Object files
 *.o

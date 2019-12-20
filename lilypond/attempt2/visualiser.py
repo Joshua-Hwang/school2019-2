@@ -6,6 +6,8 @@ import math
 import argparse
 import fileinput
 
+import lp
+
 from matplotlib import pyplot as plt
 from matplotlib import animation
 
@@ -14,48 +16,27 @@ parser.add_argument("inputfile", help="if specified reads a *.lp formatted file 
 
 showLines = True
 
-class Circle:
-    def __init__(self, ID, x, y, t, v, r, i):
-        self.id = ID
-        self.x = x
-        self.y = y
-        self.t = t
-        self.v = v
-        self.r = r
-        self.i = i
-        # line generation happens in visualise()
-        self.shape = plt.Circle((x,y), 0, color='cornflowerblue')
-
-    def __repr__(self):
-        return "Circle:{id: %d, x: %f, y: %f, t: %f, v: %f, r: %f, i: %d}" \
-                % (self.id, *self.xy, self.t, self.v, self.r, self.i)
-
 def main():
     reader = csv.reader(row for row in fileinput.input() if not row.startswith('#'))
 
-    circles = []
-    dimX, dimY, dimT = (math.inf, -math.inf), (math.inf, -math.inf), (0, 0)
-    n = 0 # this is the index of the next circle
-    try: # parsing
-        for row in reader:
-            # Alphabet characters are used to halt parsing
-            if row[0].isalpha():
-                break
-            x, y, t, v, r, i = row # see example.lp for these values
-            # perform a very forgiving parse of the file
-            x, y, t, v, r, i = float(x), float(y), abs(float(t)), abs(float(v)), abs(float(r)), abs(int(i))
-            dimX = (min(dimX[0], x), max(dimX[1], x))
-            dimY = (min(dimY[0], y), max(dimY[1], y))
-            if v != 0:
-                dimT = (0, math.ceil(max(dimT[1], t + r/v))) # this is determined by the birth and how long it takes to reach max radius
-            circles.append(Circle(n, x, y, t, v, r, i))
-            n += 1
-    except ValueError as e:
-        raise ValueError("Parsing error has occurred in %s at %s" % (fileinput.filename(), row[0]))
+    parsed = lp.parse_all(reader)
+    circles = parsed["grains"]
+    dimT = (0, 0)
+    dimX, dimY = (math.inf, -math.inf), (math.inf, -math.inf)
+    if "dims" in parsed:
+        dimX = (parsed["dims"]["min_0"], parsed["dims"]["max_0"])
+        dimY = (parsed["dims"]["min_1"], parsed["dims"]["max_1"])
 
     # check that all i < n
-    for circle in (circle for circle in circles if circle.i >= n):
+    for circle in (circle for circle in circles if circle.i >= len(circles)):
         raise IndexError("circle %d collides with circle %d which does not exist" % (circle.id, circle.i))
+
+    for circle in circles:
+        circle.shape = plt.Circle((circle.x,circle.y), 0, color='cornflowerblue')
+        dimX = (min(dimX[0], circle.x), max(dimX[1], circle.x))
+        dimY = (min(dimY[0], circle.y), max(dimY[1], circle.y))
+        if circle.v != 0:
+            dimT = (0, math.ceil(max(dimT[1], circle.t + circle.r/circle.v))) # this is determined by the birth and how long it takes to reach max radius
 
     visualise(circles, dimX, dimY, dimT)
     print(__file__, "num frames:", dimT[1])
@@ -97,7 +78,7 @@ def visualise(circles, dimX, dimY, dimT):
             else:
                 # show line between each circle
                 circle.shape.set_radius(circle.r)
-                if showLines and circle.r > 0:
+                if showLines and circle.r > 0 and circle.i >= 0:
                     circle.line.set_visible(True)
         return artistShapes
 

@@ -16,6 +16,28 @@
 
 /* Structs */
 /**
+ * Small struct that contains dimension info
+ */
+struct DimInfo {
+    double dmin, dmax;
+    enum BorderStyle dstyle;
+};
+
+/**
+ * Contains info regarding various properties the system
+ * could have. i.e. what occurs at the boundaries.
+ */
+struct SystemInfo {
+    struct DimInfo dims[NUM_DIMENSIONS];
+    enum MeasureStyle measure;
+};
+
+/**
+ * [IMPL] Later on it might be better to convert this into a union
+ * especially if we're considering numerous shapes idk
+ */
+
+/**
  * Contains all information about a collision between two grains
  * time contains the cached value of the time/distance/general metric
  * between two grains. Should be updated every timestep.
@@ -24,10 +46,10 @@
  * g2lst is the grain 2 node attached to this GrainPair.
  */
 struct GrainPair {
-    struct Grain* g1;
-    struct Grain* g2;
     double time;
     double dist;
+    struct Grain* g1;
+    struct Grain* g2;
     struct GrainPairListNode *glst;
     struct GrainPairListNode *g1lst;
     struct GrainPairListNode *g2lst;
@@ -48,14 +70,16 @@ struct GrainPairListNode {
  * x,y are spatial coordinates
  * t is the birth time
  * v is growth rate
- * r is maximum radius. Set to -1 if unknown and 0 if suffocated.
+ * r is maximum radius. Set to UNINITIALISED_RADIUS if unknown and 0 if suffocated.
  * i is the Grain it collides with if r is positive
  * lst is a linkedlist of all pairs it's a part of
  * spair is a special pair since it's the best pair involving a stationary
  */
 struct Grain {
     size_t id;
-    double x, y, t;
+    /* position is now defined by a vector called x */
+    double x[NUM_DIMENSIONS];
+    double t;
     double v;
     double r;
     ssize_t i;
@@ -74,28 +98,83 @@ struct GrainPairArray {
 };
 
 /* Private Prototypes */
-struct GrainPairListNode **get_gp_glst(struct GrainPair *gp, struct Grain *g);
+//struct GrainPairListNode **get_gp_glst(struct GrainPair *gp, struct Grain *g);
 void free_gpln_l(struct GrainPairListNode *lst);
 void free_gpln_r(struct GrainPairListNode *lst);
 
 /* Functions */
+struct SystemInfo *new_si() {
+    struct SystemInfo *ret = calloc(1, sizeof(*ret));
+
+    for (int i = 0; i < NUM_DIMENSIONS; i++) {
+        ret->dims[i].dstyle = BORDER_NONE;
+    }
+
+    ret->measure = MEASURE_L2_NORM;
+
+    return ret;
+}
+
+/**
+ * Alters the type of border we experience in the d dimension
+ */
+void set_si_dim(struct SystemInfo *si,
+        Dimension d, double dmin, double dmax, enum BorderStyle dstyle) {
+    si->dims[d].dmin = dmin; 
+    si->dims[d].dmax = dmax; 
+    si->dims[d].dstyle = dstyle; 
+}
+
+/**
+ * Gets various dimension related info
+ */
+double get_si_dmin(struct SystemInfo *si, Dimension d) {
+    return si->dims[d].dmin;
+}
+
+double get_si_dmax(struct SystemInfo *si, Dimension d) {
+    return si->dims[d].dmax;
+}
+
+enum BorderStyle get_si_dstyle(struct SystemInfo *si, Dimension d) {
+    return si->dims[d].dstyle;
+}
+
+/**
+ * Sets what kind of measure our system will be working with
+ */
+void set_si_measure(struct SystemInfo *si, enum MeasureStyle measure) {
+    si->measure = measure;
+}
+
+/**
+ * Gets what kind of measure our system will be working with
+ */
+enum MeasureStyle get_si_measure(struct SystemInfo *si) {
+    return si->measure;
+}
+
 /**
  * Creates (calloc) space for a new GrainPair
  * Returns a new GrainPair on success
  * NULL on failure
  */
-struct Grain *new_g(size_t id, double x, double y, double t,
-        double v) {
+struct Grain *new_g(struct SystemInfo *si, size_t id, double x, double y,
+        double t, double v) {
     struct Grain *ret = calloc(1, sizeof(*ret));
 
     ret->id = id;
-    ret->x = x;
-    ret->y = y;
+    ret->x[0] = x;
+    ret->x[1] = y;
     ret->t = t;
     ret->v = v;
 
-    ret->r = -1;
-    ret->i = -1;
+    ret->spair = new_gp(si, ret, NULL);
+    /* Remove from lst since it's not used in lst */
+    rm_gpln(ret->spair->g1lst);
+
+    ret->r = UNINITIALISED_RADIUS;
+    ret->i = NO_INDEX;
     ret->lst.gp = NULL;
     ret->lst.l = NULL;
     ret->lst.r = NULL;
@@ -171,7 +250,7 @@ double calc_g_r(struct Grain *g, double time) {
  * Also consider setting itself as a grains spair if it's the best.
  * Keep in mind when we're replacing spair we have to remove an entry from glst
  */
-void set_g(struct Grain *g, double r, size_t i, struct GrainPairArray *gpa) {
+void set_g(struct Grain *g, double r, ssize_t i, struct GrainPairArray *gpa) {
     g->r = r;
     g->i = i;
 
@@ -221,7 +300,7 @@ void set_g(struct Grain *g, double r, size_t i, struct GrainPairArray *gpa) {
             double gptime = calc_gp_time(gp);
             set_gp_time(gp, gptime);
 
-            double sptime = (og->spair) ? get_gp_time(og->spair) : DBL_MAX;
+            double sptime = (og->spair) ? get_gp_time(og->spair) : INFINITY;
             /* XXX this is what needs to get changed don't free the spair but move it */
             /* Which of these isn't us */
             if (gptime < sptime) { /* replace the old spair */
@@ -240,16 +319,25 @@ void set_g(struct Grain *g, double r, size_t i, struct GrainPairArray *gpa) {
     }
 }
 
+/**
+ * Returns the minimum stationary pair for the grain.
+ * This was defined because we need a way to get the stationary pair
+ * developed with regards to collisions with the boundaries.
+ */
+struct GrainPair *get_g_spair(struct Grain *g) {
+    return g->spair;
+}
+
 size_t get_g_id(struct Grain *g) {
     return g->id;
 }
 
 double get_g_x(struct Grain *g) {
-    return g->x;
+    return g->x[0];
 }
 
 double get_g_y(struct Grain *g) {
-    return g->y;
+    return g->x[1];
 }
 
 double get_g_t(struct Grain *g) {
@@ -261,7 +349,7 @@ double get_g_v(struct Grain *g) {
 }
 
 /**
- * r is maximum radius. Set to -1 if unknown and 0 if suffocated.
+ * r is maximum radius. Set to UNINITIALISED_RADIUS if unknown and 0 if suffocated.
  */
 double get_g_r(struct Grain *g) {
     return g->r;
@@ -269,7 +357,7 @@ double get_g_r(struct Grain *g) {
 
 /**
  * i is the Grain it collides with if r is positive
- * otherwise return -1
+ * otherwise return NO_INDEX 
  */
 ssize_t get_g_i(struct Grain *g) {
     return g->i;
@@ -287,16 +375,19 @@ bool is_g_done(struct Grain *g) {
  * Returns a new GrainPair on success
  * NULL on failure
  *
+ * If g2 is NULL then we treat it as if it's up against a wall.
+ *
  * [IMPL] This function should append itself to each grains linked
  * list. We can do this because these pairs are expected to be unique
  * unlike the GrainPairListNodes
  */
-struct GrainPair *new_gp(struct Grain *g1, struct Grain *g2) {
+struct GrainPair *new_gp(struct SystemInfo *si,
+        struct Grain *g1, struct Grain *g2) {
     struct GrainPair *ret = calloc(1, sizeof(*ret));
     ret->g1 = g1;
     ret->g2 = g2;
     /* update time */
-    ret->dist = calc_gp_dist(ret);
+    ret->dist = calc_gp_dist(si, ret);
     set_gp_time(ret, calc_gp_time(ret));
     ret->glst = NULL;
 
@@ -305,9 +396,11 @@ struct GrainPair *new_gp(struct Grain *g1, struct Grain *g2) {
     ret->g1lst = g1lst;
     add_gpln_r(&(g1->lst), g1lst);
 
-    struct GrainPairListNode *g2lst = new_gpln(ret);
-    ret->g2lst = g2lst;
-    add_gpln_r(&(g2->lst), g2lst);
+    if (g2) { /* NOTNULL */
+        struct GrainPairListNode *g2lst = new_gpln(ret);
+        ret->g2lst = g2lst;
+        add_gpln_r(&(g2->lst), g2lst);
+    }
 
     return ret;
 }
@@ -365,13 +458,17 @@ struct Grain *get_gp_2(struct GrainPair *gp) {
 
 /**
  * Assuming g is actually in the grain pair return the other
- * Returns NULL on failure
+ * Returns NULL on failure (which unfortunately coincides with
+ * the type of the wall.
  * [IMPL] This is done by comparing the id of each grain
  */
 struct Grain *get_gp_other(struct GrainPair *gp, struct Grain *g) {
     size_t id = get_g_id(g);
     size_t id1 = get_g_id(get_gp_1(gp));
-    size_t id2 = get_g_id(get_gp_2(gp));
+    /* Extra checks since g2 can be NULL */
+    struct Grain *g2 = get_gp_2(gp);
+    /* No index has address NO_INDEX */
+    size_t id2 = g2 ? get_g_id(get_gp_2(gp)) : NO_INDEX;
 
     if (id == id1) {
         return get_gp_2(gp);
@@ -388,20 +485,21 @@ struct Grain *get_gp_other(struct GrainPair *gp, struct Grain *g) {
  * Returns NULL on failure
  * [IMPL] This is done by comparing the id of each grain
  */
-struct GrainPairListNode **get_gp_glst(struct GrainPair *gp,
-        struct Grain *g) {
-    size_t id = get_g_id(g);
-    size_t id1 = get_g_id(get_gp_1(gp));
-    size_t id2 = get_g_id(get_gp_2(gp));
-
-    if (id == id1) {
-        return &(gp->g1lst);
-    } else if (id == id2) {
-        return &(gp->g2lst);
-    } else {
-        return NULL;
-    }
-}
+// ZZZ I'M SURE THIS IS FINE
+//struct GrainPairListNode **get_gp_glst(struct GrainPair *gp,
+//        struct Grain *g) {
+//    size_t id = get_g_id(g);
+//    size_t id1 = get_g_id(get_gp_1(gp));
+//    size_t id2 = get_g_id(get_gp_2(gp));
+//
+//    if (id == id1) {
+//        return &(gp->g1lst);
+//    } else if (id == id2) {
+//        return &(gp->g2lst);
+//    } else {
+//        return NULL;
+//    }
+//}
 
 /**
  * Checks if both grains in the pair are already realised
@@ -421,21 +519,46 @@ void set_gp_glst(struct GrainPair *gp, struct GrainPairListNode *glst) {
 /**
  * Computes the distance between the grains in the GrainPair
  */
-double calc_gp_dist(struct GrainPair *gp) {
+double calc_gp_dist(struct SystemInfo *si, struct GrainPair *gp) {
     struct Grain *g1 = get_gp_1(gp);
     struct Grain *g2 = get_gp_2(gp);
 
-    double distx = fabs(get_g_x(g1) - get_g_x(g2));
-    double disty = fabs(get_g_y(g1) - get_g_y(g2));
+    if (!g2) { /* NULL */
+        /* g1 against a wall */
+        /* Find minimum in both directions and return which is best */
+        double mindist = INFINITY;
+        for (Dimension d = 0; d < NUM_DIMENSIONS; d++) {
+            /* If BOUNDARY_NONE then return INFINITY */
+            if (si->dims[d].dstyle == BORDER_HARD) {
+                mindist = fmin(mindist,
+                        fmin(g1->x[d] - si->dims[d].dmin,
+                        si->dims[d].dmax - g1->x[d]));
+            }
+        }
 
-    /* ZZZ changing to Manhattan or L-2 or L-inf
-    double dist = sqrt(distx*distx + disty*disty);
-    double dist = distx + disty;
-    double dist = (distx > disty) ? distx : disty;
-    */
-    double dist = sqrt(distx*distx + disty*disty);
+        /* return that distance */
+        return mindist;
+    }
 
-    return dist;
+    /* distance vector */
+    double dists[NUM_DIMENSIONS] = { fabs(get_g_x(g1) - get_g_x(g2)),
+        fabs(get_g_y(g1) - get_g_y(g2)) };
+
+    for (Dimension d = 0; d < NUM_DIMENSIONS; d++) {
+        /* If BOUNDARY_WRAP then do wrapping calc */
+        if (si->dims[d].dstyle == BORDER_WRAP) {
+            dists[d] = fmin(dists[d],
+                    si->dims[d].dmax - si->dims[d].dmin - dists[d]);
+        }
+    }
+
+    /* the distance squared */
+    double sqrdist = 0;
+    for (Dimension d = 0; d < NUM_DIMENSIONS; d++) {
+        sqrdist += dists[d] * dists[d];
+    }
+
+    return sqrt(sqrdist);
 }
 
 /**
@@ -449,8 +572,12 @@ double calc_gp_time(struct GrainPair *gp) {
     double dist = get_gp_dist(gp);
 
     double v1 = get_g_v(g1);
-    double v2 = get_g_v(g2);
     double t1 = get_g_t(g1);
+    if (!g2) { /* NULL */
+        return dist/v1 + t1;
+    }
+
+    double v2 = get_g_v(g2);
     double t2 = get_g_t(g2);
 
     /* check if one of them is realised */
@@ -469,7 +596,7 @@ double calc_gp_time(struct GrainPair *gp) {
 
     /* One of them is stationary */
     /* vg is the growth rate of the grower */
-    /* rs is the growth rate of the stopper */
+    /* rs is the final radius of the stationary */
     double vg, tg, rs;
     if ((rs = get_g_r(g1)) >= 0) {
         /* g1 is the stationary */
@@ -482,7 +609,7 @@ double calc_gp_time(struct GrainPair *gp) {
         tg = t1;
     }
     /* Everything works out fine */
-    return (rs != 0) ? (dist - rs)/(vg) + tg : DBL_MAX;
+    return (rs != 0) ? (dist - rs)/(vg) + tg : INFINITY;
 }
 
 /**
@@ -526,6 +653,15 @@ void set_gp(struct GrainPair *gp, struct GrainPairArray *gpa) {
 
     double time = get_gp_time(gp);
     double r1 = calc_g_r(g1, time);
+    
+    if (!g2) { /* NULL */
+        /* This g1 is with a wall */
+        if (!is_g_done(g1)) {
+            set_g(g1, r1, NO_INDEX, gpa);
+        }
+        return;
+    }
+
     double r2 = calc_g_r(g2, time);
 
     /* Check if growing AND if it wasn't a case of suffocation */
