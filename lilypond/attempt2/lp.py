@@ -175,6 +175,6 @@ def parse_extensions(reader, grains):
     except ValueError:
         raise ValueError("Parsing error has occurred in at %s" % row[0])
 
-    collisions.sort(key=lambda x: x[2])
+    collisions.sort(key=lambda x: x[2], reverse=True)
     return collisions, c
         

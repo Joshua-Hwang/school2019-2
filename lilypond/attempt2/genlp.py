@@ -11,7 +11,7 @@ useThreads = False
 
 dimX = (0, 1)
 dimY = (0, 1)
-dimT = (0, 100)
+dimT = (0, 0)
 dimV = (0.05, 0.05)
 
 # numerical integration is slow. Precompute for speed. None for numeric.
@@ -95,8 +95,8 @@ if __name__ == "__main__":
 
     # print the dimensions
     print("DDDDDDDDDD")
-    print("0," + ",".join(repr(i) for i in dimX) + ",W")
-    print("1," + ",".join(repr(i) for i in dimY) + ",W")
+    print("0," + ",".join(repr(i) for i in dimX) + ",H")
+    print("1," + ",".join(repr(i) for i in dimY) + ",H")
 
     # print the grains after ZZZZZZZZZZ
     print("ZZZZZZZZZZ")
